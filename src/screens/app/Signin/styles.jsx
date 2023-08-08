@@ -2,18 +2,8 @@ import { StyleSheet } from 'react-native';
 import { colors } from '../../../utils/colors';
 
 export const styles = StyleSheet.create({
-    container: { padding: 24 },
-    titleContainer: {
-        marginVertical: 54
-    },
-    title: {
-        fontSize: 40,
-        fontWeight: 'bold',
-        textAlign: 'center'
-    },
-    innerTitle: {
-        color: colors.orange,
-        textDecorationLine: 'underline'
+    container: {
+        padding: 24
     },
     agreeRow: {
         flexDirection: 'row',
@@ -28,5 +18,13 @@ export const styles = StyleSheet.create({
     },
     button: {
         marginVertical: 20
+    },
+    footerText: {
+        color: colors.blue,
+        marginBottom: 56,
+        textAlign: 'center'
+    },
+    footerLink: {
+        fontWeight: 'bold'
     }
 });

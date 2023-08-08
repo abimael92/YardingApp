@@ -18,14 +18,14 @@ export const styles = StyleSheet.create({
         borderColor: colors.grey,
         borderRadius: 14,
         flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 5
+        alignItems: 'center'
+        // paddingVertical: 5
     },
     input: {
         paddingHorizontal: 16,
         paddingVertical: 20,
-        flex: 1,
-        padding: 5
+        flex: 1
+        // padding: 5
         // backgroundColor: colors.yellow
     },
     eyeButton: {

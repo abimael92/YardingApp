@@ -5,16 +5,17 @@ export const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 54
+        marginVertical: 20
     },
-    image: {
-        width: 18,
-        height: 18
+    line: {
+        height: 1,
+        flex: 1,
+        backgroundColor: colors.lightGrey
     },
-    title: {
-        fontSize: 26,
+    text: {
         fontWeight: '500',
+        // textAlign: 'center',
         color: colors.blue,
-        paddingHorizontal: 16
+        marginHorizontal: 8
     }
 });

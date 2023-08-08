@@ -2,10 +2,7 @@ import React from 'react';
 import { Image, Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { styles } from './styles';
 
-const AuthHeader = ({ title }) => {
-    const onBackPress = () => {
-        console.log('Button Clicked!');
-    };
+const AuthHeader = ({ title, onBackPress }) => {
     return (
         <View style={styles.container}>
             <Pressable hitSlop={20} onPress={onBackPress}>
