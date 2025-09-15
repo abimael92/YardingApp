@@ -1,4 +1,4 @@
-// src/app/page.tsx
+// app/page.tsx
 'use client'
 
 import { motion } from 'framer-motion'
@@ -10,35 +10,32 @@ export default function Home() {
   return (
     <div className="space-y-24 pb-16">
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-700 via-emerald-600 to-green-700">
+      <section className="relative h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat" 
+               style={{ backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(/images/hero-landscape.jpg)' }}>
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+            <h1 className="text-5xl md:text-7xl font-bold font-poppins mb-6 leading-tight">
               Transform Your
-              <span className="block text-emerald-300 mt-2">Arizona Landscape</span>
+              <span className="block text-emerald-400">Arizona Landscape</span>
             </h1>
-            <p className="text-lg md:text-xl lg:text-2xl mb-8 max-w-3xl mx-auto font-light">
+            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto font-light">
               Professional landscaping, lawn care, and outdoor services across the Valley. 
               Creating beautiful, sustainable outdoor spaces for Arizona homes.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-white text-emerald-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-semibold text-lg transition-colors duration-200">
-                Get Free Estimate
-              </button>
-              <button className="border-2 border-white text-white hover:bg-white hover:text-emerald-600 px-8 py-4 rounded-lg font-semibold text-lg transition-colors duration-200">
-                View Our Work
-              </button>
+              <button className="btn-primary text-lg px-8 py-4">Get Free Estimate</button>
+              <button className="btn-secondary text-lg px-8 py-4">View Our Work</button>
             </div>
           </motion.div>
         </div>
       </section>
 
       {/* Services Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
             className="text-center mb-12"
@@ -46,12 +43,12 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Our Professional Services
             </h2>
-            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-              From weekly lawn maintenance to complete landscape transformations, we provide
-              comprehensive outdoor services tailored to Arizonaa&#39;s unique climate.
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+              From weekly lawn maintenance to complete landscape transformations, we provide 
+              comprehensive outdoor services tailored to Arizona&#39;s unique climate.
             </p>
           </motion.div>
 
@@ -72,7 +69,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -80,49 +77,24 @@ export default function Home() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
                 Why Choose AZ Landscapes?
               </h2>
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900 rounded-lg flex items-center justify-center flex-shrink-0">
                     <span className="ri-shield-check-line text-emerald-600 text-xl"></span>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                       Licensed & Insured
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-300">
                       Fully licensed and insured professionals with years of Arizona landscaping experience.
                     </p>
                   </div>
                 </div>
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="ri-drop-line text-emerald-600 text-xl"></span>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      Water Conservation
-                    </h3>
-                    <p className="text-gray-600">
-                     Drought-resistant designs and efficient irrigation systems perfect for Arizona&#39;s climate.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="ri-customer-service-2-line text-emerald-600 text-xl"></span>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      24/7 Support
-                    </h3>
-                    <p className="text-gray-600">
-                      Round-the-clock customer support and emergency services for your peace of mind.
-                    </p>
-                  </div>
-                </div>
+                {/* Add more feature items */}
               </div>
             </motion.div>
 
@@ -132,30 +104,29 @@ export default function Home() {
               viewport={{ once: true }}
               className="relative"
             >
-              <div className="w-full h-80 bg-gradient-to-br from-emerald-400 to-green-600 rounded-xl shadow-lg flex items-center justify-center">
-                <span className="ri-image-line text-6xl text-white opacity-50"></span>
-                <span className="absolute bottom-4 left-4 text-sm text-white opacity-70">
-                  Professional landscaping team image
-                </span>
-              </div>
+              <img 
+                src="/images/team-working.jpg" 
+                alt="Professional landscaping team" 
+                className="rounded-xl shadow-lg object-cover w-full h-96"
+              />
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
+          <motion.div 
             className="text-center mb-12"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
               What Our Clients Say
             </h2>
-            <p className="text-lg md:text-xl text-gray-600">
+            <p className="text-xl text-gray-600 dark:text-gray-300">
               Hear from satisfied homeowners across Arizona
             </p>
           </motion.div>
@@ -177,25 +148,25 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-emerald-600">
+      <section className="py-16 bg-emerald-600 dark:bg-emerald-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-4xl font-bold text-white mb-4">
               Ready to Transform Your Outdoor Space?
             </h2>
-            <p className="text-lg md:text-xl text-emerald-100 mb-8 max-w-2xl mx-auto">
-              Get a free estimate today and discover how we can enhance your Arizona landscape
+            <p className="text-xl text-emerald-100 mb-8 max-w-2xl mx-auto">
+              Get a free estimate today and discover how we can enhance your Arizona landscape 
               with professional, sustainable solutions.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-white text-emerald-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-semibold text-lg transition-colors duration-200">
+              <button className="bg-white text-emerald-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-semibold text-lg transition-colors">
                 Schedule Consultation
               </button>
-              <button className="border-2 border-white text-white hover:bg-white hover:text-emerald-600 px-8 py-4 rounded-lg font-semibold text-lg transition-colors duration-200">
+              <button className="border-2 border-white text-white hover:bg-white hover:text-emerald-600 px-8 py-4 rounded-lg font-semibold text-lg transition-colors">
                 Call (602) 555-0100
               </button>
             </div>
