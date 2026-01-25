@@ -4,11 +4,28 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { setMockRole, type MockRole } from "@/src/features/auth/services/mockAuth"
 
-const mockUser = {
-  email: "josue.garcia@jjdesertlandscaping.com",
-  password: "Desert2024!",
-  role: "admin" as MockRole,
-}
+const mockUsers = [
+  {
+    email: "client@client.com",
+    password: "Arizona2025!",
+    role: "client" as MockRole,
+  },
+  {
+    email: "worker@worker.com",
+    password: "Arizona2025!",
+    role: "worker" as MockRole,
+  },
+  {
+    email: "supervisor@supervisor.com",
+    password: "Arizona2025!",
+    role: "supervisor" as MockRole,
+  },
+  {
+    email: "josue.garcia@jjdesertlandscaping.com",
+    password: "Desert2024!",
+    role: "admin" as MockRole,
+  },
+]
 
 export default function LoginPage() {
   const router = useRouter()
@@ -16,15 +33,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
 
   useEffect(() => {
-    console.info("Mock login credentials", mockUser)
+    console.info("Mock login credentials", mockUsers)
   }, [])
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    console.info("Mock login submit", { email, password, mockUser })
-    if (email === mockUser.email && password === mockUser.password) {
-      setMockRole(mockUser.role)
-      router.push(`/${mockUser.role}`)
+    console.info("Mock login submit", { email, password, mockUsers })
+    const matchedUser = mockUsers.find(
+      (user) => user.email === email && user.password === password
+    )
+    if (matchedUser) {
+      setMockRole(matchedUser.role)
+      router.push(`/${matchedUser.role}`)
     } else {
       console.warn("Mock login failed")
     }
