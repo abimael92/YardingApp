@@ -1,7 +1,15 @@
 "use client"
 
 import { motion } from "framer-motion"
-import type { HeroIcon } from "@heroicons/react/24/outline"
+import type { SVGProps } from "react"
+import type { ForwardRefExoticComponent, RefAttributes } from "react"
+
+type HeroIcon = ForwardRefExoticComponent<
+  Omit<SVGProps<SVGSVGElement>, "ref"> & {
+    title?: string | undefined
+    titleId?: string | undefined
+  } & RefAttributes<SVGSVGElement>
+>
 
 interface StatsCardProps {
   title: string
