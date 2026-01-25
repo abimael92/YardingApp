@@ -99,6 +99,8 @@ const WorkerDashboard = () => {
                 src="/professional-lawn-worker.jpg"
                 alt="Mike Rodriguez"
                 className="w-10 h-10 rounded-full object-cover"
+                loading="lazy"
+                decoding="async"
               />
             </div>
           </div>

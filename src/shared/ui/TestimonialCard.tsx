@@ -26,6 +26,8 @@ const TestimonialCard = ({ testimonial }: TestimonialCardProps) => {
           src={testimonial.avatar || "/placeholder.svg"}
           alt={testimonial.name}
           className="w-12 h-12 rounded-full object-cover mr-4"
+          loading="lazy"
+          decoding="async"
         />
         <div>
           <div className="font-semibold text-gray-900 dark:text-white">

@@ -39,6 +39,8 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
           src={service.image}
           alt={service.name}
           className="w-full h-48 object-cover object-top"
+          loading="lazy"
+          decoding="async"
         />
         {/* Category chip */}
         <div
