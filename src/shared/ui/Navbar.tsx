@@ -1,21 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { playfair } from "@/src/shared/styles/fonts"
 import {
-  Bars3Icon,
-  XMarkIcon,
-  SunIcon,
-  MoonIcon,
   HomeIcon,
   UserGroupIcon,
   EyeIcon,
   UserIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/24/outline"
-import { RiLeafLine } from "react-icons/ri"
 
 interface NavbarProps {
   darkMode: boolean
@@ -38,17 +32,24 @@ const Navbar = ({ darkMode, setDarkMode }: NavbarProps) => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <a href="#home" className="flex items-center space-x-2">
+          <a href="#home" className="flex items-center space-x-3">
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="w-8 h-8 bg-gradient-to-br from-primary-500 to-earth-500 rounded-lg flex items-center justify-center"
+              className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden bg-black"
             >
-              <RiLeafLine className="w-6 h-6 text-white" />
+              <img
+                src="/brand-logo.png"
+                alt="J&J Desert Landscaping LLC logo"
+                width={40}
+                height={40}
+                className="h-10 w-10 object-contain"
+                decoding="async"
+              />
             </motion.div>
             <span
               className={`${playfair.variable} font-serif font-bold text-xl text-gray-900 dark:text-white`}
             >
-              Chochue Landscaping
+              J&J Desert Landscaping LLC
             </span>
           </a>
 

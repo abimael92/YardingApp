@@ -1,10 +1,7 @@
 import { motion } from "framer-motion"
 import {
-  RiLeafLine,
   RiFacebookFill,
   RiInstagramFill,
-  RiTwitterFill,
-  RiLinkedinFill,
   RiTwitterXFill,
 } from "react-icons/ri"
 
@@ -15,12 +12,19 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand & Social */}
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 flex items-center justify-center text-emerald-500">
-                <RiLeafLine className="w-6 h-6" />
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-9 h-9 flex items-center justify-center overflow-hidden rounded-lg bg-black">
+                <img
+                  src="/brand-logo.png"
+                  alt="J&J Desert Landscaping LLC logo"
+                  width={36}
+                  height={36}
+                  className="h-9 w-9 object-contain"
+                  decoding="async"
+                />
               </div>
               <span className="font-pacifico text-xl text-emerald-500">
-                Chochue Landscaping
+                J&J Desert Landscaping LLC
               </span>
             </div>
             <p className="text-gray-400 mb-6 max-w-md">
@@ -108,7 +112,7 @@ export default function Footer() {
         <div className="border-t border-gray-800 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
-              © {new Date().getFullYear()} Chochue Landscaping. All rights
+              © {new Date().getFullYear()} J&J Desert Landscaping LLC. All rights
               reserved.
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">

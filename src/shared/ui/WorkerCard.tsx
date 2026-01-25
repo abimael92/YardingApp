@@ -44,6 +44,8 @@ const WorkerCard = ({ worker, showActions = false }: WorkerCardProps) => {
             src={worker.avatar || "/placeholder.svg"}
             alt={worker.name}
             className="w-12 h-12 rounded-full object-cover"
+            loading="lazy"
+            decoding="async"
           />
           <div
             className={`absolute -bottom-1 -right-1 w-4 h-4 ${getStatusDot(

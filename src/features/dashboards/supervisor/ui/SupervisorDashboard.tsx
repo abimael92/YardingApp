@@ -131,6 +131,8 @@ const SupervisorDashboard = () => {
                 src="/female-landscape-designer.jpg"
                 alt="Supervisor"
                 className="w-10 h-10 rounded-full object-cover"
+                loading="lazy"
+                decoding="async"
               />
             </div>
           </div>
