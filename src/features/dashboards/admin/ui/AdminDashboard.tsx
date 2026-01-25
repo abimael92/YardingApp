@@ -26,6 +26,7 @@ import {
   AreaChart,
   Area,
 } from "recharts"
+import type { User } from "@/src/domain/models"
 import Sidebar from "@/src/shared/ui/Sidebar"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import StatsCard from "@/src/shared/ui/StatsCard"
@@ -92,7 +93,7 @@ const AdminDashboard = () => {
     { day: "Sun", efficiency: 84, satisfaction: 91 },
   ]
 
-  const recentUsers = [
+  const recentUsers: User[] = [
     {
       id: "1",
       name: "Maria Rodriguez",

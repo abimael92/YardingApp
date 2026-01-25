@@ -32,6 +32,15 @@ export interface Worker {
   completedTasks: number
 }
 
+export interface User {
+  id: string
+  name: string
+  email: string
+  role: "Admin" | "Client" | "Supervisor" | "Worker"
+  status: "Active" | "Pending" | "Inactive"
+  joinDate: string
+}
+
 export interface Client {
   id: string
   name: string
