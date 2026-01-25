@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { testimonials } from "@/src/data/mockData"
+import { getTestimonials } from "@/src/services/testimonialService"
 import TestimonialCard from "@/src/shared/ui/TestimonialCard"
 
 export default function ClientTestimonialsSection() {
@@ -24,7 +24,7 @@ export default function ClientTestimonialsSection() {
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
+          {getTestimonials().map((testimonial, index) => (
             <motion.div
               key={testimonial.id}
               initial={{ opacity: 0, y: 30 }}

@@ -15,7 +15,7 @@ import Sidebar from "@/src/shared/ui/Sidebar"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import ServiceCard from "@/src/shared/ui/ServiceCard"
 import StatsCard from "@/src/shared/ui/StatsCard"
-import { services } from "@/src/data/mockData"
+import { getServices } from "@/src/services/serviceCatalog"
 
 const ClientDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -378,7 +378,7 @@ const ClientDashboard = () => {
               Available Services
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {services.map((service, index) => (
+              {getServices().map((service, index) => (
                 <motion.div
                   key={service.id}
                   initial={{ opacity: 0, y: 20 }}
