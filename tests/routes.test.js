@@ -7,7 +7,7 @@ const projectRoot = process.cwd()
 
 const requiredRoutes = [
   "app/(marketing)/page.tsx",
-  "app/(marketing)/login/page.tsx",
+  "app/login/page.tsx",
   "app/(dashboard)/admin/page.tsx",
   "app/(dashboard)/admin/analytics/page.tsx",
   "app/(dashboard)/admin/users/page.tsx",
