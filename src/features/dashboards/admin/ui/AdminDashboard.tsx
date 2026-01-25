@@ -26,9 +26,9 @@ import {
   AreaChart,
   Area,
 } from "recharts"
-import Sidebar from "../src/components/Sidebar"
-import Breadcrumbs from "../src/components/Breadcrumbs"
-import StatsCard from "../src/components/StatsCard"
+import Sidebar from "@/src/shared/ui/Sidebar"
+import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
+import StatsCard from "@/src/shared/ui/StatsCard"
 
 const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -167,19 +167,31 @@ const AdminDashboard = () => {
                 <Bars3Icon className="w-6 h-6" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-                <p className="text-gray-600 dark:text-gray-400">System Overview & Management</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Admin Dashboard
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">
+                  System Overview & Management
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <div className="text-sm text-gray-500 dark:text-gray-400">System Status</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  System Status
+                </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">All Systems Online</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    All Systems Online
+                  </span>
                 </div>
               </div>
-              <img src="/asian-business-woman.png" alt="Admin" className="w-10 h-10 rounded-full object-cover" />
+              <img
+                src="/asian-business-woman.png"
+                alt="Admin"
+                className="w-10 h-10 rounded-full object-cover"
+              />
             </div>
           </div>
         </div>
@@ -212,7 +224,9 @@ const AdminDashboard = () => {
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="card p-6"
               >
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Revenue & Client Growth</h2>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                  Revenue & Client Growth
+                </h2>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={revenueData}>
@@ -256,7 +270,9 @@ const AdminDashboard = () => {
               transition={{ duration: 0.5, delay: 0.5 }}
               className="card p-6"
             >
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Service Distribution</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Service Distribution
+              </h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -281,10 +297,15 @@ const AdminDashboard = () => {
                 {serviceDistribution.map((item) => (
                   <div key={item.name} className="flex items-center justify-between text-sm">
                     <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: item.color }}
+                      ></div>
                       <span className="text-gray-600 dark:text-gray-300">{item.name}</span>
                     </div>
-                    <span className="font-medium text-gray-900 dark:text-white">{item.value}%</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {item.value}%
+                    </span>
                   </div>
                 ))}
               </div>
@@ -298,7 +319,9 @@ const AdminDashboard = () => {
             transition={{ duration: 0.5, delay: 0.6 }}
             className="card p-6 mb-8"
           >
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Weekly Performance Metrics</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+              Weekly Performance Metrics
+            </h2>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={performanceData}>
@@ -312,8 +335,18 @@ const AdminDashboard = () => {
                       borderRadius: "8px",
                     }}
                   />
-                  <Bar dataKey="efficiency" fill="#f59e0b" name="Efficiency %" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="satisfaction" fill="#22c55e" name="Satisfaction %" radius={[4, 4, 0, 0]} />
+                  <Bar
+                    dataKey="efficiency"
+                    fill="#f59e0b"
+                    name="Efficiency %"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="satisfaction"
+                    fill="#22c55e"
+                    name="Satisfaction %"
+                    radius={[4, 4, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -328,17 +361,29 @@ const AdminDashboard = () => {
               className="card p-6"
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Users</h2>
-                <button className="text-sm text-primary-600 dark:text-primary-400 hover:underline">View All</button>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Recent Users
+                </h2>
+                <button className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+                  View All
+                </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-2 text-gray-600 dark:text-gray-400">Name</th>
-                      <th className="text-left py-2 text-gray-600 dark:text-gray-400">Role</th>
-                      <th className="text-left py-2 text-gray-600 dark:text-gray-400">Status</th>
-                      <th className="text-left py-2 text-gray-600 dark:text-gray-400">Actions</th>
+                      <th className="text-left py-2 text-gray-600 dark:text-gray-400">
+                        Name
+                      </th>
+                      <th className="text-left py-2 text-gray-600 dark:text-gray-400">
+                        Role
+                      </th>
+                      <th className="text-left py-2 text-gray-600 dark:text-gray-400">
+                        Status
+                      </th>
+                      <th className="text-left py-2 text-gray-600 dark:text-gray-400">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -352,11 +397,17 @@ const AdminDashboard = () => {
                       >
                         <td className="py-3">
                           <div>
-                            <div className="font-medium text-gray-900 dark:text-white">{user.name}</div>
-                            <div className="text-gray-500 dark:text-gray-400">{user.email}</div>
+                            <div className="font-medium text-gray-900 dark:text-white">
+                              {user.name}
+                            </div>
+                            <div className="text-gray-500 dark:text-gray-400">
+                              {user.email}
+                            </div>
                           </div>
                         </td>
-                        <td className="py-3 text-gray-600 dark:text-gray-300">{user.role}</td>
+                        <td className="py-3 text-gray-600 dark:text-gray-300">
+                          {user.role}
+                        </td>
                         <td className="py-3">
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -408,8 +459,12 @@ const AdminDashboard = () => {
               className="card p-6"
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">System Alerts</h2>
-                <span className="text-sm text-gray-500 dark:text-gray-400">{systemAlerts.length} alerts</span>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  System Alerts
+                </h2>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {systemAlerts.length} alerts
+                </span>
               </div>
               <div className="space-y-4">
                 {systemAlerts.map((alert, index) => (
@@ -428,9 +483,15 @@ const AdminDashboard = () => {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-900 dark:text-white text-sm">{alert.title}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{alert.description}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{alert.time}</p>
+                        <h3 className="font-medium text-gray-900 dark:text-white text-sm">
+                          {alert.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                          {alert.description}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          {alert.time}
+                        </p>
                       </div>
                       <div
                         className={`w-2 h-2 rounded-full mt-1 ${

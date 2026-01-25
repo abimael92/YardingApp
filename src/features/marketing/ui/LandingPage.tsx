@@ -3,10 +3,10 @@
 import { motion } from "framer-motion"
 import { ChevronRightIcon } from "@heroicons/react/24/solid"
 import { PhoneIcon } from "@heroicons/react/24/outline"
-import ServicesSection from "@/src/components/ServicesSection"
-import HeroSection from "@/src/components/HeroSection"
-import WhyChooseUsSection from "@/src/components/WhyChooseUsSection"
-import ClientTestimonialsSection from "@/src/components/ClientTestimonialsSection"
+import ServicesSection from "./ServicesSection"
+import HeroSection from "./HeroSection"
+import WhyChooseUsSection from "./WhyChooseUsSection"
+import ClientTestimonialsSection from "./ClientTestimonialsSection"
 
 const LandingPage = () => {
   return (
@@ -38,10 +38,7 @@ const LandingPage = () => {
       </section>
 
       {/* Contact / CTA Section */}
-      <section
-        id="contact"
-        className="py-20 bg-emerald-600 dark:bg-emerald-700"
-      >
+      <section id="contact" className="py-20 bg-emerald-600 dark:bg-emerald-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}

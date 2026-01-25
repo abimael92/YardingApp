@@ -89,7 +89,9 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
       >
         <div className="p-4">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white capitalize">{userRole} Portal</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
+              {userRole} Portal
+            </h2>
             <div className="relative">
               <BellIcon className="w-6 h-6 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer" />
               <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs"></span>
@@ -102,7 +104,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
               return (
                 <Link
                   key={item.name}
-                  to={item.href}
+                  href={item.href}
                   onClick={() => setIsOpen(false)}
                   className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                     isActive(item.href)

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { StarIcon, ChatBubbleLeftIcon, PhoneIcon } from "@heroicons/react/24/outline"
-import type { Worker } from "../types"
+import type { Worker } from "@/src/domain/models"
 
 interface WorkerCardProps {
   worker: Worker
@@ -46,18 +46,28 @@ const WorkerCard = ({ worker, showActions = false }: WorkerCardProps) => {
             className="w-12 h-12 rounded-full object-cover"
           />
           <div
-            className={`absolute -bottom-1 -right-1 w-4 h-4 ${getStatusDot(worker.status)} rounded-full border-2 border-white dark:border-gray-800`}
+            className={`absolute -bottom-1 -right-1 w-4 h-4 ${getStatusDot(
+              worker.status
+            )} rounded-full border-2 border-white dark:border-gray-800`}
           ></div>
         </div>
 
         <div className="flex-1">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="font-semibold text-gray-900 dark:text-white">{worker.name}</h3>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(worker.status)}`}>
+            <h3 className="font-semibold text-gray-900 dark:text-white">
+              {worker.name}
+            </h3>
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                worker.status
+              )}`}
+            >
               {worker.status}
             </span>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{worker.role}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+            {worker.role}
+          </p>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">

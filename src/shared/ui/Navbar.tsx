@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { playfair } from "@/src/fonts"
+import { playfair } from "@/src/shared/styles/fonts"
 import {
   Bars3Icon,
   XMarkIcon,
@@ -70,8 +70,7 @@ const Navbar = ({ darkMode, setDarkMode }: NavbarProps) => {
           </div>
 
           {/* Dark Mode Toggle & Mobile Menu Button */}
-          <div className="flex items-center space-x-4">
-            </div>
+          <div className="flex items-center space-x-4"></div>
           {/* <div className="flex items-center space-x-4">
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -86,7 +85,7 @@ const Navbar = ({ darkMode, setDarkMode }: NavbarProps) => {
               )}
             </motion.button>
 
-            {/* Mobile menu button */}   {/*
+            {/* Mobile menu button */} {/*
             <div className="md:hidden">
               <motion.button
                 whileHover={{ scale: 1.05 }}

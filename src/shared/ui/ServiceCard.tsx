@@ -3,24 +3,30 @@
 
 import { motion } from "framer-motion"
 import { CheckIcon } from "@heroicons/react/24/solid"
-import type { Service } from "../types"
+import type { Service } from "@/src/domain/models"
 
 interface ServiceCardProps {
   service: Service
 }
 
 const categoryColors: Record<string, string> = {
-  "Lawn Care": "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
-  "Tree Services": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  "Landscaping": "bg-sage-100 text-sage-800 dark:bg-sage-900 dark:text-sage-200",
-  "Irrigation": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  "Hardscaping": "bg-stone-100 text-stone-800 dark:bg-stone-900 dark:text-stone-200",
+  "Lawn Care":
+    "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+  "Tree Services":
+    "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  Landscaping:
+    "bg-sage-100 text-sage-800 dark:bg-sage-900 dark:text-sage-200",
+  Irrigation:
+    "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  Hardscaping:
+    "bg-stone-100 text-stone-800 dark:bg-stone-900 dark:text-stone-200",
   // add more categories as needed
 }
 
-
 const ServiceCard = ({ service }: ServiceCardProps) => {
-   const chipColor = categoryColors[service.category] || "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+  const chipColor =
+    categoryColors[service.category] ||
+    "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
 
   return (
     <motion.div
@@ -34,8 +40,10 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
           alt={service.name}
           className="w-full h-48 object-cover object-top"
         />
-         {/* Category chip */}
-      <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-medium ${chipColor}`}>
+        {/* Category chip */}
+        <div
+          className={`absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-medium ${chipColor}`}
+        >
           {service.category}
         </div>
       </div>
@@ -46,22 +54,27 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
       </h3>
 
       {/* Description */}
-      <p className="text-gray-600 dark:text-gray-300 mb-4">{service.description}</p>
+      <p className="text-gray-600 dark:text-gray-300 mb-4">
+        {service.description}
+      </p>
 
       {/* Price */}
       <div className="text-lg font-semibold text-emerald-600 dark:text-emerald-400 ">
         {service.price}
       </div>
 
-      {/* Duration */ }
-        <div className="text-sm font-light text-gray-300 dark:text-gray-500 mb-4">
+      {/* Duration */}
+      <div className="text-sm font-light text-gray-300 dark:text-gray-500 mb-4">
         {service.duration}
       </div>
 
       {/* Features */}
       <ul className="space-y-2 mb-6">
         {service.features.map((feature, idx) => (
-          <li key={idx} className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+          <li
+            key={idx}
+            className="flex items-center text-sm text-gray-600 dark:text-gray-300"
+          >
             <CheckIcon className="w-4 h-4 text-emerald-600 mr-2 flex-shrink-0" />
             {feature}
           </li>

@@ -2,13 +2,20 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { HomeIcon, CalendarIcon, CreditCardIcon, StarIcon, PlusIcon, Bars3Icon } from "@heroicons/react/24/outline"
+import {
+  HomeIcon,
+  CalendarIcon,
+  CreditCardIcon,
+  StarIcon,
+  PlusIcon,
+  Bars3Icon,
+} from "@heroicons/react/24/outline"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import Sidebar from "../src/components/Sidebar"
-import Breadcrumbs from "../src/components/Breadcrumbs"
-import ServiceCard from "../src/components/ServiceCard"
-import StatsCard from "../src/components/StatsCard"
-import { services } from "../src/utils/dummyData"
+import Sidebar from "@/src/shared/ui/Sidebar"
+import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
+import ServiceCard from "@/src/shared/ui/ServiceCard"
+import StatsCard from "@/src/shared/ui/StatsCard"
+import { services } from "@/src/data/mockData"
 
 const ClientDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -122,8 +129,12 @@ const ClientDashboard = () => {
                 <Bars3Icon className="w-6 h-6" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Client Dashboard</h1>
-                <p className="text-gray-600 dark:text-gray-400">Welcome back, Jennifer Martinez</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Client Dashboard
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Welcome back, Jennifer Martinez
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -171,7 +182,9 @@ const ClientDashboard = () => {
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="card p-6"
               >
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Monthly Spending</h2>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                  Monthly Spending
+                </h2>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={spendingData}>
@@ -207,7 +220,9 @@ const ClientDashboard = () => {
               transition={{ duration: 0.5, delay: 0.5 }}
               className="card p-6"
             >
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Property Overview</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Property Overview
+              </h3>
               <div className="space-y-4">
                 <div className="relative rounded-lg overflow-hidden">
                   <img
@@ -216,7 +231,9 @@ const ClientDashboard = () => {
                     className="w-full h-32 object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                  <div className="absolute bottom-2 left-2 text-white text-sm font-medium">1234 Desert View Dr</div>
+                  <div className="absolute bottom-2 left-2 text-white text-sm font-medium">
+                    1234 Desert View Dr
+                  </div>
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -228,7 +245,9 @@ const ClientDashboard = () => {
                     <span className="text-gray-900 dark:text-white">3,200 sq ft</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Irrigation Zones:</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Irrigation Zones:
+                    </span>
                     <span className="text-gray-900 dark:text-white">4 zones</span>
                   </div>
                   <div className="flex justify-between">
@@ -249,8 +268,12 @@ const ClientDashboard = () => {
               className="card p-6"
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Upcoming Services</h2>
-                <span className="text-sm text-gray-500 dark:text-gray-400">{upcomingServices.length} scheduled</span>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Upcoming Services
+                </h2>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {upcomingServices.length} scheduled
+                </span>
               </div>
               <div className="space-y-4">
                 {upcomingServices.map((service, index) => (
@@ -262,7 +285,9 @@ const ClientDashboard = () => {
                     className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-medium text-gray-900 dark:text-white">{service.service}</h3>
+                      <h3 className="font-medium text-gray-900 dark:text-white">
+                        {service.service}
+                      </h3>
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           service.status === "confirmed"
@@ -300,8 +325,12 @@ const ClientDashboard = () => {
               className="card p-6"
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Activity</h2>
-                <button className="text-sm text-primary-600 dark:text-primary-400 hover:underline">View All</button>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Recent Activity
+                </h2>
+                <button className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+                  View All
+                </button>
               </div>
               <div className="space-y-4">
                 {recentActivity.map((activity, index) => (
@@ -322,9 +351,15 @@ const ClientDashboard = () => {
                       }`}
                     ></div>
                     <div className="flex-1">
-                      <h3 className="font-medium text-gray-900 dark:text-white text-sm">{activity.action}</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">{activity.description}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activity.date}</p>
+                      <h3 className="font-medium text-gray-900 dark:text-white text-sm">
+                        {activity.action}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {activity.description}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {activity.date}
+                      </p>
                     </div>
                   </motion.div>
                 ))}
@@ -339,7 +374,9 @@ const ClientDashboard = () => {
             transition={{ duration: 0.5, delay: 0.8 }}
             className="mt-8"
           >
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Available Services</h2>
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
+              Available Services
+            </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {services.map((service, index) => (
                 <motion.div

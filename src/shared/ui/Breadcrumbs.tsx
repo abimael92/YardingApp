@@ -33,7 +33,10 @@ const Breadcrumbs = () => {
 
   return (
     <nav className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
-      <Link href="/" className="flex items-center hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+      <Link
+        href="/"
+        className="flex items-center hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+      >
         <HomeIcon className="w-4 h-4" />
       </Link>
 
@@ -45,9 +48,14 @@ const Breadcrumbs = () => {
           <div key={name} className="flex items-center space-x-2">
             <ChevronRightIcon className="w-4 h-4" />
             {isLast ? (
-              <span className="text-gray-900 dark:text-white font-medium">{getBreadcrumbName(name)}</span>
+              <span className="text-gray-900 dark:text-white font-medium">
+                {getBreadcrumbName(name)}
+              </span>
             ) : (
-              <Link href={routeTo} className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+              <Link
+                href={routeTo}
+                className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+              >
                 {getBreadcrumbName(name)}
               </Link>
             )}

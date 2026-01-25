@@ -11,7 +11,7 @@ import {
   PlayIcon,
   PauseIcon,
 } from "@heroicons/react/24/outline"
-import type { Task } from "../types"
+import type { Task } from "@/src/domain/models"
 
 interface TaskCardProps {
   task: Task
@@ -19,7 +19,11 @@ interface TaskCardProps {
   isDraggable?: boolean
 }
 
-const TaskCard = ({ task, showActions = false, isDraggable = false }: TaskCardProps) => {
+const TaskCard = ({
+  task,
+  showActions = false,
+  isDraggable = false,
+}: TaskCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const getStatusColor = (status: string) => {
@@ -59,10 +63,16 @@ const TaskCard = ({ task, showActions = false, isDraggable = false }: TaskCardPr
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{task.title}</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{task.description}</p>
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+            {task.title}
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+            {task.description}
+          </p>
         </div>
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}
+        >
           {task.status.replace("-", " ")}
         </span>
       </div>
@@ -139,20 +149,36 @@ const TaskCard = ({ task, showActions = false, isDraggable = false }: TaskCardPr
         >
           <div className="space-y-2 text-sm">
             <div>
-              <span className="font-medium text-gray-900 dark:text-white">Priority: </span>
+              <span className="font-medium text-gray-900 dark:text-white">
+                Priority:{" "}
+              </span>
               <span
-                className={`capitalize ${task.priority === "high" ? "text-red-600" : task.priority === "medium" ? "text-yellow-600" : "text-green-600"}`}
+                className={`capitalize ${
+                  task.priority === "high"
+                    ? "text-red-600"
+                    : task.priority === "medium"
+                      ? "text-yellow-600"
+                      : "text-green-600"
+                }`}
               >
                 {task.priority}
               </span>
             </div>
             <div>
-              <span className="font-medium text-gray-900 dark:text-white">Full Address: </span>
-              <span className="text-gray-600 dark:text-gray-300">{task.location}</span>
+              <span className="font-medium text-gray-900 dark:text-white">
+                Full Address:{" "}
+              </span>
+              <span className="text-gray-600 dark:text-gray-300">
+                {task.location}
+              </span>
             </div>
             <div>
-              <span className="font-medium text-gray-900 dark:text-white">Estimated Duration: </span>
-              <span className="text-gray-600 dark:text-gray-300">{task.estimatedDuration}</span>
+              <span className="font-medium text-gray-900 dark:text-white">
+                Estimated Duration:{" "}
+              </span>
+              <span className="text-gray-600 dark:text-gray-300">
+                {task.estimatedDuration}
+              </span>
             </div>
           </div>
         </motion.div>

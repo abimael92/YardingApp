@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronRightIcon, PhoneIcon, StarIcon } from "@heroicons/react/24/solid"
 import { useState, useEffect } from "react"
-import StatsSection from './StatsSection'
+import StatsSection from "./StatsSection"
 
 const heroImages = [
   "/Desert Landscape(1).jpg",
@@ -26,7 +26,6 @@ const heroQuotes = [
 export default function HeroSection() {
   const [current, setCurrent] = useState(0)
   const [imageLoaded, setImageLoaded] = useState(false)
-  
 
   // Rotate images every 5 seconds
   useEffect(() => {
@@ -41,7 +40,6 @@ export default function HeroSection() {
     <section className="relative bg-gradient-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800 py-20 lg:py-32">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-
           {/* Text Column */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -53,8 +51,8 @@ export default function HeroSection() {
               <span className="text-emerald-600 block">Outdoor Space</span>
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
-              Professional lawn care and landscaping services in Phoenix. From weekly maintenance to complete
-              landscape transformations, we bring your vision to life.
+              Professional lawn care and landscaping services in Phoenix. From weekly
+              maintenance to complete landscape transformations, we bring your vision to life.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -125,13 +123,16 @@ export default function HeroSection() {
                       {heroQuotes[current].rating}/5
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">{heroQuotes[current].text}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">- {heroQuotes[current].author}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {heroQuotes[current].text}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    - {heroQuotes[current].author}
+                  </p>
                 </motion.div>
               )}
             </AnimatePresence>
           </motion.div>
-
         </div>
       </div>
     </section>

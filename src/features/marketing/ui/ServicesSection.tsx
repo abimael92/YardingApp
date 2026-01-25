@@ -1,12 +1,12 @@
 "use client"
 
 import { motion } from "framer-motion"
-import ServiceCard from "../components/ServiceCard"
-import { services } from "../utils/dummyData"
+import ServiceCard from "@/src/shared/ui/ServiceCard"
+import { services } from "@/src/data/mockData"
 
 const ServicesSection = () => {
   return (
- <section className="py-20 bg-white dark:bg-gray-900">
+    <section className="py-20 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -20,8 +20,8 @@ const ServicesSection = () => {
             Our Professional Services
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            From weekly lawn maintenance to complete landscape transformations, we provide comprehensive outdoor
-            services tailored to Phoenix's unique climate.
+            From weekly lawn maintenance to complete landscape transformations, we provide
+            comprehensive outdoor services tailored to Phoenix's unique climate.
           </p>
         </motion.div>
 

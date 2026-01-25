@@ -9,13 +9,24 @@ import {
   ExclamationTriangleIcon,
   Bars3Icon,
 } from "@heroicons/react/24/outline"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
-import Sidebar from "../src/components/Sidebar"
-import Breadcrumbs from "../src/components/Breadcrumbs"
-import TaskCard from "../src/components/TaskCard"
-import StatsCard from "../src/components/StatsCard"
-import WorkerCard from "../src/components/WorkerCard"
-import { tasks, workers } from "../src/utils/dummyData"
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts"
+import Sidebar from "@/src/shared/ui/Sidebar"
+import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
+import TaskCard from "@/src/shared/ui/TaskCard"
+import StatsCard from "@/src/shared/ui/StatsCard"
+import WorkerCard from "@/src/shared/ui/WorkerCard"
+import { tasks, workers } from "@/src/data/mockData"
 
 const SupervisorDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -23,7 +34,9 @@ const SupervisorDashboard = () => {
   const stats = [
     {
       title: "Active Workers",
-      value: workers.filter((w) => w.status === "available" || w.status === "busy").length.toString(),
+      value: workers
+        .filter((w) => w.status === "available" || w.status === "busy")
+        .length.toString(),
       icon: UserGroupIcon,
       color: "primary" as const,
       change: "3 available, 1 busy",
@@ -69,11 +82,17 @@ const SupervisorDashboard = () => {
     { name: "Cancelled", value: 10, color: "#ef4444" },
   ]
 
-  const activeTasks = tasks.filter((task) => task.status === "in-progress" || task.status === "pending")
+  const activeTasks = tasks.filter(
+    (task) => task.status === "in-progress" || task.status === "pending"
+  )
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} userRole="supervisor" />
+      <Sidebar
+        isOpen={sidebarOpen}
+        setIsOpen={setSidebarOpen}
+        userRole="supervisor"
+      />
 
       <div className="flex-1 lg:ml-64">
         {/* Header */}
@@ -87,16 +106,24 @@ const SupervisorDashboard = () => {
                 <Bars3Icon className="w-6 h-6" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Supervisor Dashboard</h1>
-                <p className="text-gray-600 dark:text-gray-400">Team Overview & Management</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Supervisor Dashboard
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Team Overview & Management
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <div className="text-sm text-gray-500 dark:text-gray-400">Team Status</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Team Status
+                </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">All Systems Operational</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    All Systems Operational
+                  </span>
                 </div>
               </div>
               <img
@@ -135,7 +162,9 @@ const SupervisorDashboard = () => {
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="card p-6"
               >
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Weekly Performance</h2>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                  Weekly Performance
+                </h2>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={weeklyData}>
@@ -149,8 +178,18 @@ const SupervisorDashboard = () => {
                           borderRadius: "8px",
                         }}
                       />
-                      <Bar dataKey="completed" fill="#22c55e" name="Completed" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="assigned" fill="#3b82f6" name="Assigned" radius={[4, 4, 0, 0]} />
+                      <Bar
+                        dataKey="completed"
+                        fill="#22c55e"
+                        name="Completed"
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="assigned"
+                        fill="#3b82f6"
+                        name="Assigned"
+                        radius={[4, 4, 0, 0]}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -164,7 +203,9 @@ const SupervisorDashboard = () => {
               transition={{ duration: 0.5, delay: 0.5 }}
               className="card p-6"
             >
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Task Distribution</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Task Distribution
+              </h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -189,10 +230,15 @@ const SupervisorDashboard = () => {
                 {taskStatusData.map((item) => (
                   <div key={item.name} className="flex items-center justify-between text-sm">
                     <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: item.color }}
+                      ></div>
                       <span className="text-gray-600 dark:text-gray-300">{item.name}</span>
                     </div>
-                    <span className="font-medium text-gray-900 dark:text-white">{item.value}%</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {item.value}%
+                    </span>
                   </div>
                 ))}
               </div>
@@ -208,8 +254,12 @@ const SupervisorDashboard = () => {
               className="card p-6"
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Team Members</h2>
-                <span className="text-sm text-gray-500 dark:text-gray-400">{workers.length} workers</span>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Team Members
+                </h2>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {workers.length} workers
+                </span>
               </div>
               <div className="space-y-4">
                 {workers.map((worker, index) => (
@@ -233,8 +283,12 @@ const SupervisorDashboard = () => {
               className="card p-6"
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Active Tasks</h2>
-                <span className="text-sm text-gray-500 dark:text-gray-400">{activeTasks.length} active</span>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Active Tasks
+                </h2>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {activeTasks.length} active
+                </span>
               </div>
               <div className="space-y-4 max-h-96 overflow-y-auto">
                 {activeTasks.map((task, index) => (

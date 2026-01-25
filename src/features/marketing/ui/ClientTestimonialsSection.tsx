@@ -1,8 +1,8 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { testimonials } from "../utils/dummyData"
-import TestimonialCard from "./TestimonialCard"
+import { testimonials } from "@/src/data/mockData"
+import TestimonialCard from "@/src/shared/ui/TestimonialCard"
 
 export default function ClientTestimonialsSection() {
   return (
