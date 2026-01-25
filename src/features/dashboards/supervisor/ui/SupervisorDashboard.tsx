@@ -26,7 +26,8 @@ import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import TaskCard from "@/src/shared/ui/TaskCard"
 import StatsCard from "@/src/shared/ui/StatsCard"
 import WorkerCard from "@/src/shared/ui/WorkerCard"
-import { tasks, workers } from "@/src/data/mockData"
+import { getTasks } from "@/src/services/taskService"
+import { getWorkers } from "@/src/services/workerService"
 
 const SupervisorDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -34,7 +35,7 @@ const SupervisorDashboard = () => {
   const stats = [
     {
       title: "Active Workers",
-      value: workers
+      value: getWorkers()
         .filter((w) => w.status === "available" || w.status === "busy")
         .length.toString(),
       icon: UserGroupIcon,
@@ -43,7 +44,7 @@ const SupervisorDashboard = () => {
     },
     {
       title: "Tasks Today",
-      value: tasks.length.toString(),
+      value: getTasks().length.toString(),
       icon: ClipboardDocumentListIcon,
       color: "earth" as const,
       change: "2 completed, 1 in progress",
@@ -82,7 +83,7 @@ const SupervisorDashboard = () => {
     { name: "Cancelled", value: 10, color: "#ef4444" },
   ]
 
-  const activeTasks = tasks.filter(
+  const activeTasks = getTasks().filter(
     (task) => task.status === "in-progress" || task.status === "pending"
   )
 
@@ -258,11 +259,11 @@ const SupervisorDashboard = () => {
                   Team Members
                 </h2>
                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {workers.length} workers
+                  {getWorkers().length} workers
                 </span>
               </div>
               <div className="space-y-4">
-                {workers.map((worker, index) => (
+                {getWorkers().map((worker, index) => (
                   <motion.div
                     key={worker.id}
                     initial={{ opacity: 0, x: -20 }}

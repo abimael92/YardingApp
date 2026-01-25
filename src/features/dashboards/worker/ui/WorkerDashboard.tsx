@@ -14,13 +14,15 @@ import Sidebar from "@/src/shared/ui/Sidebar"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import TaskCard from "@/src/shared/ui/TaskCard"
 import StatsCard from "@/src/shared/ui/StatsCard"
-import { tasks } from "@/src/data/mockData"
+import { getTasks } from "@/src/services/taskService"
 
 const WorkerDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Filter tasks for worker view
-  const myTasks = tasks.filter((task) => task.assignedTo === "Mike Rodriguez")
+  const myTasks = getTasks().filter(
+    (task) => task.assignedTo === "Mike Rodriguez"
+  )
   const todayTasks = myTasks.filter((task) => {
     const today = new Date().toISOString().split("T")[0]
     return task.dueDate === today || task.status === "in-progress"
