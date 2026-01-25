@@ -1,13 +1,17 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { setMockRole, type MockRole } from "@/src/features/auth/services/mockAuth"
 
 const mockUser = {
   email: "josue.garcia@jjdesertlandscaping.com",
   password: "Desert2024!",
+  role: "admin" as MockRole,
 }
 
 export default function LoginPage() {
+  const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
 
@@ -18,6 +22,12 @@ export default function LoginPage() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     console.info("Mock login submit", { email, password, mockUser })
+    if (email === mockUser.email && password === mockUser.password) {
+      setMockRole(mockUser.role)
+      router.push(`/${mockUser.role}`)
+    } else {
+      console.warn("Mock login failed")
+    }
   }
 
   return (
