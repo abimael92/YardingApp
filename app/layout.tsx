@@ -1,24 +1,13 @@
-'use client'
+import { GeistSans } from "geist/font/sans"
+import { GeistMono } from "geist/font/mono"
+import { Analytics } from "@vercel/analytics/next"
+import "./globals.css"
 
-import { GeistSans } from 'geist/font/sans'
-import { GeistMono } from 'geist/font/mono'
-import { Analytics } from '@vercel/analytics/next'
-import { useState, useEffect } from 'react'
-import Navbar from '../src/components/Navbar'
-import Footer from '../src/components/Footer'
-import './globals.css'
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const [darkMode, setDarkMode] = useState(false)
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }, [darkMode])
-
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en">
       <head>
@@ -30,10 +19,8 @@ html {
 }
         `}</style>
       </head>
-      <body className="flex flex-col min-h-screen">
-        <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
-        <main className="flex-1">{children}</main>
-        <Footer />
+      <body className="min-h-screen">
+        {children}
         <Analytics />
       </body>
     </html>
