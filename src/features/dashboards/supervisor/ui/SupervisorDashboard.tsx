@@ -95,7 +95,7 @@ const SupervisorDashboard = () => {
         userRole="supervisor"
       />
 
-      <div className="flex-1 lg:ml-64">
+      <div className="flex-1">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4">
           <div className="flex items-center justify-between">

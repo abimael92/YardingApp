@@ -12,8 +12,12 @@ export const metadata: Metadata = {
   description:
     "Professional landscaping services in Phoenix, Arizona. Lawn care, desert landscaping, irrigation, and hardscaping tailored for the Arizona climate.",
   icons: {
-    icon: "/favicon.png",
-    apple: "/favicon.png",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
   openGraph: {
     title: "J&J Desert Landscaping LLC",
@@ -37,6 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="manifest" href="/site.webmanifest" />
         <style>{`
 html {
   font-family: ${GeistSans.style.fontFamily};
