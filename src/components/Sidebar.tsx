@@ -1,6 +1,7 @@
 "use client"
 
-import { Link, useLocation } from "react-router-dom"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import {
   HomeIcon,
@@ -20,7 +21,7 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
-  const location = useLocation()
+  const pathname = usePathname()
 
   const getNavigationItems = () => {
     const baseItems = [{ name: "Dashboard", href: `/${userRole}`, icon: HomeIcon }]
@@ -62,7 +63,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
   }
 
   const navigationItems = getNavigationItems()
-  const isActive = (path: string) => location.pathname === path
+  const isActive = (path: string) => pathname === path
 
   return (
     <>
