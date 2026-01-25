@@ -1,8 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
+import { clearMockRole } from "@/src/features/auth/services/mockAuth"
 import {
   HomeIcon,
   ChartBarIcon,
@@ -22,6 +24,16 @@ interface SidebarProps {
 
 const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
   const pathname = usePathname()
+  const router = useRouter()
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1024px)")
+    const update = () => setIsDesktop(mediaQuery.matches)
+    update()
+    mediaQuery.addEventListener("change", update)
+    return () => mediaQuery.removeEventListener("change", update)
+  }, [])
 
   const getNavigationItems = () => {
     const baseItems = [{ name: "Dashboard", href: `/${userRole}`, icon: HomeIcon }]
@@ -81,13 +93,13 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
       {/* Sidebar */}
       <motion.aside
         initial={{ x: -300 }}
-        animate={{ x: isOpen ? 0 : -300 }}
+        animate={{ x: isDesktop ? 0 : isOpen ? 0 : -300 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-50 lg:relative lg:top-0 lg:h-screen lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="p-4">
+        <div className="p-4 flex flex-col h-full">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
               {userRole} Portal
@@ -98,7 +110,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
             </div>
           </div>
 
-          <nav className="space-y-2">
+          <nav className="space-y-2 flex-1">
             {navigationItems.map((item) => {
               const Icon = item.icon
               return (
@@ -118,6 +130,16 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
               )
             })}
           </nav>
+          <button
+            type="button"
+            onClick={() => {
+              clearMockRole()
+              router.push("/login")
+            }}
+            className="mt-6 w-full text-sm text-left px-3 py-2 rounded-lg font-medium text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+          >
+            Logout
+          </button>
         </div>
       </motion.aside>
     </>
