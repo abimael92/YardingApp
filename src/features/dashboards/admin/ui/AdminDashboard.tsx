@@ -30,38 +30,55 @@ import type { User } from "@/src/domain/models"
 import Sidebar from "@/src/shared/ui/Sidebar"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import StatsCard from "@/src/shared/ui/StatsCard"
+import { getClients } from "@/src/services/clientService"
+import { getEmployees } from "@/src/services/employeeService"
+import { getPayments } from "@/src/services/paymentService"
+import { getJobs } from "@/src/services/jobService"
 
 const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  // Get data from services
+  const clients = getClients()
+  const employees = getEmployees()
+  const payments = getPayments()
+  const jobs = getJobs()
+
+  // Calculate stats from services
+  const totalRevenue = payments
+    .filter((p) => p.status === "completed")
+    .reduce((sum, p) => sum + p.amount.amount, 0)
+  const activeClients = clients.filter((c) => c.status === "active").length
+  const activeEmployees = employees.filter((e) => e.status === "active").length
+
   const stats = [
     {
       title: "Total Revenue",
-      value: "$24,580",
+      value: `$${totalRevenue.toLocaleString()}`,
       icon: CurrencyDollarIcon,
       color: "primary" as const,
       change: "+12% from last month",
     },
     {
       title: "Active Clients",
-      value: "156",
+      value: activeClients.toString(),
       icon: UserGroupIcon,
       color: "green" as const,
-      change: "+8 new this week",
+      change: `${clients.length} total clients`,
     },
     {
       title: "Team Members",
-      value: "12",
+      value: activeEmployees.toString(),
       icon: UserGroupIcon,
       color: "earth" as const,
-      change: "3 available, 9 busy",
+      change: `${employees.length} total employees`,
     },
     {
-      title: "System Health",
-      value: "99.2%",
+      title: "Active Jobs",
+      value: jobs.filter((j) => j.status === "in_progress" || j.status === "scheduled").length.toString(),
       icon: ChartBarIcon,
       color: "sand" as const,
-      change: "All systems operational",
+      change: `${jobs.length} total jobs`,
     },
   ]
 
