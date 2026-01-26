@@ -15,6 +15,23 @@ import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import TaskCard from "@/src/shared/ui/TaskCard"
 import StatsCard from "@/src/shared/ui/StatsCard"
 import { getTasks } from "@/src/services/taskService"
+import type { SVGProps } from "react"
+import type { ForwardRefExoticComponent, RefAttributes } from "react"
+
+type HeroIcon = ForwardRefExoticComponent<
+  Omit<SVGProps<SVGSVGElement>, "ref"> & {
+    title?: string | undefined
+    titleId?: string | undefined
+  } & RefAttributes<SVGSVGElement>
+>
+
+interface StatItem {
+  title: string
+  value: string
+  icon: HeroIcon
+  color: "primary" | "green" | "earth" | "sand" | "blue" | "red"
+  change: string
+}
 
 const WorkerDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -28,7 +45,7 @@ const WorkerDashboard = () => {
     return task.dueDate === today || task.status === "in-progress"
   })
 
-  const stats = [
+  const stats: StatItem[] = [
     {
       title: "Today's Tasks",
       value: todayTasks.length.toString(),
