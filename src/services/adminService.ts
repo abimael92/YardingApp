@@ -10,6 +10,7 @@ import { getAllClients } from "./clientService"
 import { getAllEmployees } from "./employeeService"
 import { getTasks } from "./taskService"
 import { mockStore } from "@/src/data/mockStore"
+import { PaymentStatus } from "@/src/domain/entities"
 
 // ============================================================================
 // Service Interface (API-ready)
@@ -50,8 +51,8 @@ export const adminService: AdminService = {
     const tasks = getTasks()
     const payments = mockStore.getPayments()
 
-    const completedPayments = payments.filter((p) => p.status === "completed")
-    const pendingPayments = payments.filter((p) => p.status === "pending")
+    const completedPayments = payments.filter((p) => p.status === PaymentStatus.COMPLETED)
+    const pendingPayments = payments.filter((p) => p.status === PaymentStatus.PENDING)
 
     return {
       totalUsers: users.length,
@@ -59,14 +60,17 @@ export const adminService: AdminService = {
       totalClients: clients.length,
       activeClients: clients.length, // All clients are considered active in mock
       totalEmployees: employees.length,
-      activeEmployees: employees.filter((e) => e.status === "available" || e.status === "busy")
-        .length,
+      activeEmployees: employees.filter((e) => {
+        // Handle both Employee entity status and Worker model status
+        const status = (e as any).status
+        return status === "available" || status === "busy" || status === "active"
+      }).length,
       totalTasks: tasks.length,
       pendingTasks: tasks.filter((t) => t.status === "pending").length,
       inProgressTasks: tasks.filter((t) => t.status === "in-progress").length,
       completedTasks: tasks.filter((t) => t.status === "completed").length,
-      totalRevenue: completedPayments.reduce((sum, p) => sum + (p.amount || 0), 0),
-      pendingRevenue: pendingPayments.reduce((sum, p) => sum + (p.amount || 0), 0),
+      totalRevenue: completedPayments.reduce((sum, p) => sum + (p.amount?.amount || 0), 0),
+      pendingRevenue: pendingPayments.reduce((sum, p) => sum + (p.amount?.amount || 0), 0),
     }
   },
 
