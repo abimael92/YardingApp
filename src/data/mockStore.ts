@@ -158,10 +158,74 @@ class MockStore {
   }
 
   // ============================================================================
-  // Mutation Methods (Phase 2 - Placeholders for now)
+  // Mutation Methods (CRUD Operations)
   // ============================================================================
 
-  // These are called by services but will be no-ops in Phase 1
+  // Clients
+  createClient(client: Omit<Client, "id" | "createdAt" | "updatedAt">): Client {
+    const newClient: Client = {
+      ...client,
+      id: `client-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+    this.clients.push(newClient)
+    return newClient
+  }
+
+  updateClient(id: string, updates: Partial<Client>): Client | undefined {
+    const client = this.getClientById(id)
+    if (!client) return undefined
+    const updated = { ...client, ...updates, updatedAt: new Date().toISOString() }
+    const index = this.clients.findIndex((c) => c.id === id)
+    if (index >= 0) {
+      this.clients[index] = updated
+    }
+    return updated
+  }
+
+  deleteClient(id: string): boolean {
+    const index = this.clients.findIndex((c) => c.id === id)
+    if (index >= 0) {
+      this.clients.splice(index, 1)
+      return true
+    }
+    return false
+  }
+
+  // Employees
+  createEmployee(employee: Omit<Employee, "id" | "createdAt" | "updatedAt">): Employee {
+    const newEmployee: Employee = {
+      ...employee,
+      id: `employee-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+    this.employees.push(newEmployee)
+    return newEmployee
+  }
+
+  updateEmployee(id: string, updates: Partial<Employee>): Employee | undefined {
+    const employee = this.getEmployeeById(id)
+    if (!employee) return undefined
+    const updated = { ...employee, ...updates, updatedAt: new Date().toISOString() }
+    const index = this.employees.findIndex((e) => e.id === id)
+    if (index >= 0) {
+      this.employees[index] = updated
+    }
+    return updated
+  }
+
+  deleteEmployee(id: string): boolean {
+    const index = this.employees.findIndex((e) => e.id === id)
+    if (index >= 0) {
+      this.employees.splice(index, 1)
+      return true
+    }
+    return false
+  }
+
+  // Jobs
   createJob(job: Omit<Job, "id" | "jobNumber" | "createdAt" | "updatedAt">): Job {
     // Phase 1: No mutations - return a mock job
     const newJob: Job = {
