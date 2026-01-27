@@ -8,19 +8,20 @@ import { mockStore } from "@/src/data/mockStore"
 import type { Schedule, EntityId, ScheduleStatus } from "@/src/domain/entities"
 import { ScheduleStatus as ScheduleStatusEnum } from "@/src/domain/entities"
 import { getJobs } from "./jobService"
-import { getEmployees } from "./employeeService"
+import { getAllEmployees } from "./employeeService"
+import { asyncify, asyncifyWithError } from "./utils"
 
 // Initialize with seed data if empty (lazy initialization)
 let schedulesInitialized = false
-const initializeSchedules = () => {
+const initializeSchedules = async () => {
   if (schedulesInitialized || mockStore.getSchedules().length > 0) {
     schedulesInitialized = true
     return
   }
   
   try {
-    const jobs = getJobs()
-    const employees = getEmployees()
+    const jobs = await getJobs()
+    const employees = await getAllEmployees()
     
     if (jobs.length > 0 && employees.length > 0) {
       const job = jobs[0]
@@ -55,14 +56,14 @@ const initializeSchedules = () => {
 // ============================================================================
 
 export interface ScheduleService {
-  getAll(): Schedule[]
-  getById(id: EntityId): Schedule | undefined
-  getByJobId(jobId: EntityId): Schedule[]
-  getByEmployeeId(employeeId: EntityId): Schedule[]
-  getByStatus(status: ScheduleStatus): Schedule[]
-  create(schedule: Omit<Schedule, "id" | "createdAt" | "updatedAt">): Schedule
-  update(id: EntityId, updates: Partial<Schedule>): Schedule | undefined
-  delete(id: EntityId): boolean
+  getAll(): Promise<Schedule[]>
+  getById(id: EntityId): Promise<Schedule | undefined>
+  getByJobId(jobId: EntityId): Promise<Schedule[]>
+  getByEmployeeId(employeeId: EntityId): Promise<Schedule[]>
+  getByStatus(status: ScheduleStatus): Promise<Schedule[]>
+  create(schedule: Omit<Schedule, "id" | "createdAt" | "updatedAt">): Promise<Schedule>
+  update(id: EntityId, updates: Partial<Schedule>): Promise<Schedule | undefined>
+  delete(id: EntityId): Promise<boolean>
 }
 
 // ============================================================================
@@ -70,36 +71,54 @@ export interface ScheduleService {
 // ============================================================================
 
 export const scheduleService: ScheduleService = {
-  getAll: () => {
-    initializeSchedules()
-    return mockStore.getSchedules()
+  getAll: async () => {
+    await initializeSchedules()
+    return asyncify(() => mockStore.getSchedules())()
   },
 
-  getById: (id: EntityId) => {
-    initializeSchedules()
-    return mockStore.getScheduleById(id)
+  getById: async (id: EntityId) => {
+    await initializeSchedules()
+    return asyncify(() => mockStore.getScheduleById(id))()
   },
 
-  getByJobId: (jobId: EntityId) => {
-    initializeSchedules()
-    return mockStore.getSchedulesByJobId(jobId)
+  getByJobId: async (jobId: EntityId) => {
+    await initializeSchedules()
+    return asyncify(() => mockStore.getSchedulesByJobId(jobId))()
   },
 
-  getByEmployeeId: (employeeId: EntityId) => {
-    initializeSchedules()
-    return mockStore.getSchedulesByEmployeeId(employeeId)
+  getByEmployeeId: async (employeeId: EntityId) => {
+    await initializeSchedules()
+    return asyncify(() => mockStore.getSchedulesByEmployeeId(employeeId))()
   },
 
-  getByStatus: (status: ScheduleStatus) => {
-    initializeSchedules()
-    return mockStore.getSchedules().filter((schedule) => schedule.status === status)
+  getByStatus: async (status: ScheduleStatus) => {
+    await initializeSchedules()
+    return asyncify(() => mockStore.getSchedules().filter((schedule) => schedule.status === status))()
   },
 
-  create: (schedule) => mockStore.createSchedule(schedule),
+  create: (schedule) =>
+    asyncifyWithError(() => {
+      const newSchedule = mockStore.createSchedule(schedule)
+      return newSchedule
+    }),
 
-  update: (id, updates) => mockStore.updateSchedule(id, updates),
+  update: (id, updates) =>
+    asyncifyWithError(() => {
+      const updated = mockStore.updateSchedule(id, updates)
+      if (!updated) {
+        throw new Error(`Schedule with id ${id} not found`)
+      }
+      return updated
+    }),
 
-  delete: (id) => mockStore.deleteSchedule(id),
+  delete: (id) =>
+    asyncifyWithError(() => {
+      const deleted = mockStore.deleteSchedule(id)
+      if (!deleted) {
+        throw new Error(`Schedule with id ${id} not found`)
+      }
+      return deleted
+    }),
 }
 
 // ============================================================================

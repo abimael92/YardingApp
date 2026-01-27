@@ -7,22 +7,23 @@
 import { mockStore } from "@/src/data/mockStore"
 import type { Communication, EntityId } from "@/src/domain/entities"
 import { CommunicationType, CommunicationDirection, Priority } from "@/src/domain/entities"
-import { getClients } from "./clientService"
-import { getEmployees } from "./employeeService"
+import { getAllClients } from "./clientService"
+import { getAllEmployees } from "./employeeService"
 import { getJobs } from "./jobService"
+import { asyncify, asyncifyWithError } from "./utils"
 
 // Initialize with seed data if empty (lazy initialization)
 let communicationsInitialized = false
-const initializeCommunications = () => {
+const initializeCommunications = async () => {
   if (communicationsInitialized || mockStore.getCommunications().length > 0) {
     communicationsInitialized = true
     return
   }
   
   try {
-    const clients = getClients()
-    const employees = getEmployees()
-    const jobs = getJobs()
+    const clients = await getAllClients()
+    const employees = await getAllEmployees()
+    const jobs = await getJobs()
     
     if (clients.length > 0 && employees.length > 0 && jobs.length > 0) {
       const client = clients[0]
@@ -53,16 +54,16 @@ const initializeCommunications = () => {
 // ============================================================================
 
 export interface CommunicationService {
-  getAll(): Communication[]
-  getById(id: EntityId): Communication | undefined
-  getByClientId(clientId: EntityId): Communication[]
-  getByJobId(jobId: EntityId): Communication[]
-  getByEmployeeId(employeeId: EntityId): Communication[]
+  getAll(): Promise<Communication[]>
+  getById(id: EntityId): Promise<Communication | undefined>
+  getByClientId(clientId: EntityId): Promise<Communication[]>
+  getByJobId(jobId: EntityId): Promise<Communication[]>
+  getByEmployeeId(employeeId: EntityId): Promise<Communication[]>
   create(
     communication: Omit<Communication, "id" | "createdAt" | "updatedAt">
-  ): Communication
-  update(id: EntityId, updates: Partial<Communication>): Communication | undefined
-  delete(id: EntityId): boolean
+  ): Promise<Communication>
+  update(id: EntityId, updates: Partial<Communication>): Promise<Communication | undefined>
+  delete(id: EntityId): Promise<boolean>
 }
 
 // ============================================================================
@@ -70,38 +71,56 @@ export interface CommunicationService {
 // ============================================================================
 
 export const communicationService: CommunicationService = {
-  getAll: () => {
-    initializeCommunications()
-    return mockStore.getCommunications()
+  getAll: async () => {
+    await initializeCommunications()
+    return asyncify(() => mockStore.getCommunications())()
   },
 
-  getById: (id: EntityId) => {
-    initializeCommunications()
-    return mockStore.getCommunicationById(id)
+  getById: async (id: EntityId) => {
+    await initializeCommunications()
+    return asyncify(() => mockStore.getCommunicationById(id))()
   },
 
-  getByClientId: (clientId: EntityId) => {
-    initializeCommunications()
-    return mockStore.getCommunicationsByClientId(clientId)
+  getByClientId: async (clientId: EntityId) => {
+    await initializeCommunications()
+    return asyncify(() => mockStore.getCommunicationsByClientId(clientId))()
   },
 
-  getByJobId: (jobId: EntityId) => {
-    initializeCommunications()
-    return mockStore.getCommunicationsByJobId(jobId)
+  getByJobId: async (jobId: EntityId) => {
+    await initializeCommunications()
+    return asyncify(() => mockStore.getCommunicationsByJobId(jobId))()
   },
 
-  getByEmployeeId: (employeeId: EntityId) => {
-    initializeCommunications()
-    return mockStore
-      .getCommunications()
-      .filter((comm) => comm.employeeId === employeeId)
+  getByEmployeeId: async (employeeId: EntityId) => {
+    await initializeCommunications()
+    return asyncify(() =>
+      mockStore.getCommunications().filter((comm) => comm.employeeId === employeeId)
+    )()
   },
 
-  create: (communication) => mockStore.createCommunication(communication),
+  create: (communication) =>
+    asyncifyWithError(() => {
+      const newComm = mockStore.createCommunication(communication)
+      return newComm
+    }),
 
-  update: (id, updates) => mockStore.updateCommunication(id, updates),
+  update: (id, updates) =>
+    asyncifyWithError(() => {
+      const updated = mockStore.updateCommunication(id, updates)
+      if (!updated) {
+        throw new Error(`Communication with id ${id} not found`)
+      }
+      return updated
+    }),
 
-  delete: (id) => mockStore.deleteCommunication(id),
+  delete: (id) =>
+    asyncifyWithError(() => {
+      const deleted = mockStore.deleteCommunication(id)
+      if (!deleted) {
+        throw new Error(`Communication with id ${id} not found`)
+      }
+      return deleted
+    }),
 }
 
 // ============================================================================
