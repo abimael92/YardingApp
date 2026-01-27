@@ -31,8 +31,7 @@ import Sidebar from "@/src/shared/ui/Sidebar"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import StatsCard from "@/src/shared/ui/StatsCard"
 import { getAdminStats, getRecentUsers, getSystemHealth } from "@/src/services/adminService"
-import { getAllClients } from "@/src/services/clientService"
-import { getAllEmployees } from "@/src/services/employeeService"
+import { getEmployees } from "@/src/services/employeeService"
 import { getTasks } from "@/src/services/taskService"
 
 const AdminDashboard = () => {
@@ -41,10 +40,12 @@ const AdminDashboard = () => {
   // Get data from services (read-only)
   const stats = getAdminStats()
   const recentUsers = getRecentUsers(4)
-  const clients = getAllClients()
-  const employees = getAllEmployees()
+  const employees = getEmployees()
   const tasks = getTasks()
   const systemHealth = getSystemHealth()
+  
+  // Mock clients data since clientService is not available
+  const clients = stats.totalClients ? Array(stats.totalClients).fill(null) : []
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -171,13 +172,12 @@ const AdminDashboard = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <div
-                    className={`w-2 h-2 rounded-full ${
-                      systemHealth.status === "healthy"
+                    className={`w-2 h-2 rounded-full ${systemHealth.status === "healthy"
                         ? "bg-green-500"
                         : systemHealth.status === "warning"
                           ? "bg-yellow-500"
                           : "bg-red-500"
-                    }`}
+                      }`}
                   ></div>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     {systemHealth.status === "healthy"
@@ -413,11 +413,10 @@ const AdminDashboard = () => {
                         </td>
                         <td className="py-3">
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              user.status === "Active"
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${user.status === "Active"
                                 ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                                 : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                            }`}
+                              }`}
                           >
                             {user.status}
                           </span>
@@ -448,14 +447,7 @@ const AdminDashboard = () => {
                           </div>
                         </td>
                       </motion.tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={4} className="py-8 text-center text-gray-500 dark:text-gray-400">
-                          No users found
-                        </td>
-                      </tr>
-                    )}
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -483,13 +475,12 @@ const AdminDashboard = () => {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
-                    className={`p-4 rounded-lg border-l-4 ${
-                      alert.type === "warning"
+                    className={`p-4 rounded-lg border-l-4 ${alert.type === "warning"
                         ? "bg-yellow-50 dark:bg-yellow-900/20 border-l-yellow-500"
                         : alert.type === "success"
                           ? "bg-green-50 dark:bg-green-900/20 border-l-green-500"
                           : "bg-blue-50 dark:bg-blue-900/20 border-l-blue-500"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -504,13 +495,12 @@ const AdminDashboard = () => {
                         </p>
                       </div>
                       <div
-                        className={`w-2 h-2 rounded-full mt-1 ${
-                          alert.type === "warning"
+                        className={`w-2 h-2 rounded-full mt-1 ${alert.type === "warning"
                             ? "bg-yellow-500"
                             : alert.type === "success"
                               ? "bg-green-500"
                               : "bg-blue-500"
-                        }`}
+                          }`}
                       ></div>
                     </div>
                   </motion.div>
