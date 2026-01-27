@@ -7,18 +7,19 @@
 import { mockStore } from "@/src/data/mockStore"
 import type { Quote, EntityId, QuoteStatus } from "@/src/domain/entities"
 import { QuoteStatus as QuoteStatusEnum } from "@/src/domain/entities"
-import { getClients } from "./clientService"
+import { getAllClients } from "./clientService"
+import { asyncify, asyncifyWithError } from "./utils"
 
 // Initialize with seed data if empty (lazy initialization)
 let quotesInitialized = false
-const initializeQuotes = () => {
+const initializeQuotes = async () => {
   if (quotesInitialized || mockStore.getQuotes().length > 0) {
     quotesInitialized = true
     return
   }
   
   try {
-    const clients = getClients()
+    const clients = await getAllClients()
     
     if (clients.length > 0) {
       const client = clients[0]
@@ -58,13 +59,13 @@ const initializeQuotes = () => {
 // ============================================================================
 
 export interface QuoteService {
-  getAll(): Quote[]
-  getById(id: EntityId): Quote | undefined
-  getByClientId(clientId: EntityId): Quote[]
-  getByStatus(status: QuoteStatus): Quote[]
-  create(quote: Omit<Quote, "id" | "quoteNumber" | "createdAt" | "updatedAt">): Quote
-  update(id: EntityId, updates: Partial<Quote>): Quote | undefined
-  delete(id: EntityId): boolean
+  getAll(): Promise<Quote[]>
+  getById(id: EntityId): Promise<Quote | undefined>
+  getByClientId(clientId: EntityId): Promise<Quote[]>
+  getByStatus(status: QuoteStatus): Promise<Quote[]>
+  create(quote: Omit<Quote, "id" | "quoteNumber" | "createdAt" | "updatedAt">): Promise<Quote>
+  update(id: EntityId, updates: Partial<Quote>): Promise<Quote | undefined>
+  delete(id: EntityId): Promise<boolean>
 }
 
 // ============================================================================
@@ -72,31 +73,49 @@ export interface QuoteService {
 // ============================================================================
 
 export const quoteService: QuoteService = {
-  getAll: () => {
-    initializeQuotes()
-    return mockStore.getQuotes()
+  getAll: async () => {
+    await initializeQuotes()
+    return asyncify(() => mockStore.getQuotes())()
   },
 
-  getById: (id: EntityId) => {
-    initializeQuotes()
-    return mockStore.getQuoteById(id)
+  getById: async (id: EntityId) => {
+    await initializeQuotes()
+    return asyncify(() => mockStore.getQuoteById(id))()
   },
 
-  getByClientId: (clientId: EntityId) => {
-    initializeQuotes()
-    return mockStore.getQuotesByClientId(clientId)
+  getByClientId: async (clientId: EntityId) => {
+    await initializeQuotes()
+    return asyncify(() => mockStore.getQuotesByClientId(clientId))()
   },
 
-  getByStatus: (status: QuoteStatus) => {
-    initializeQuotes()
-    return mockStore.getQuotes().filter((quote) => quote.status === status)
+  getByStatus: async (status: QuoteStatus) => {
+    await initializeQuotes()
+    return asyncify(() => mockStore.getQuotes().filter((quote) => quote.status === status))()
   },
 
-  create: (quote) => mockStore.createQuote(quote),
+  create: (quote) =>
+    asyncifyWithError(() => {
+      const newQuote = mockStore.createQuote(quote)
+      return newQuote
+    }),
 
-  update: (id, updates) => mockStore.updateQuote(id, updates),
+  update: (id, updates) =>
+    asyncifyWithError(() => {
+      const updated = mockStore.updateQuote(id, updates)
+      if (!updated) {
+        throw new Error(`Quote with id ${id} not found`)
+      }
+      return updated
+    }),
 
-  delete: (id) => mockStore.deleteQuote(id),
+  delete: (id) =>
+    asyncifyWithError(() => {
+      const deleted = mockStore.deleteQuote(id)
+      if (!deleted) {
+        throw new Error(`Quote with id ${id} not found`)
+      }
+      return deleted
+    }),
 }
 
 // ============================================================================

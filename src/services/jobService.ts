@@ -7,20 +7,21 @@
 import { mockStore } from "@/src/data/mockStore"
 import type { Job, EntityId, JobStatus, Priority } from "@/src/domain/entities"
 import { JobStatus as JobStatusEnum, Priority as PriorityEnum } from "@/src/domain/entities"
-import { getClients } from "./clientService"
-import { getEmployees } from "./employeeService"
+import { getAllClients } from "./clientService"
+import { getAllEmployees } from "./employeeService"
+import { asyncify, asyncifyWithError } from "./utils"
 
 // Initialize with seed data if empty (lazy initialization)
 let initialized = false
-const initializeJobs = () => {
+const initializeJobs = async () => {
   if (initialized || mockStore.getJobs().length > 0) {
     initialized = true
     return
   }
   
   try {
-    const clients = getClients()
-    const employees = getEmployees()
+    const clients = await getAllClients()
+    const employees = await getAllEmployees()
     
     if (clients.length > 0 && employees.length > 0) {
       const client = clients[0]
@@ -71,14 +72,14 @@ const initializeJobs = () => {
 // ============================================================================
 
 export interface JobService {
-  getAll(): Job[]
-  getById(id: EntityId): Job | undefined
-  getByClientId(clientId: EntityId): Job[]
-  getByEmployeeId(employeeId: EntityId): Job[]
-  getByStatus(status: JobStatus): Job[]
-  create(job: Omit<Job, "id" | "jobNumber" | "createdAt" | "updatedAt">): Job
-  update(id: EntityId, updates: Partial<Job>): Job | undefined
-  delete(id: EntityId): boolean
+  getAll(): Promise<Job[]>
+  getById(id: EntityId): Promise<Job | undefined>
+  getByClientId(clientId: EntityId): Promise<Job[]>
+  getByEmployeeId(employeeId: EntityId): Promise<Job[]>
+  getByStatus(status: JobStatus): Promise<Job[]>
+  create(job: Omit<Job, "id" | "jobNumber" | "createdAt" | "updatedAt">): Promise<Job>
+  update(id: EntityId, updates: Partial<Job>): Promise<Job | undefined>
+  delete(id: EntityId): Promise<boolean>
 }
 
 // ============================================================================
@@ -86,36 +87,54 @@ export interface JobService {
 // ============================================================================
 
 export const jobService: JobService = {
-  getAll: () => {
-    initializeJobs()
-    return mockStore.getJobs()
+  getAll: async () => {
+    await initializeJobs()
+    return asyncify(() => mockStore.getJobs())()
   },
 
-  getById: (id: EntityId) => {
-    initializeJobs()
-    return mockStore.getJobById(id)
+  getById: async (id: EntityId) => {
+    await initializeJobs()
+    return asyncify(() => mockStore.getJobById(id))()
   },
 
-  getByClientId: (clientId: EntityId) => {
-    initializeJobs()
-    return mockStore.getJobsByClientId(clientId)
+  getByClientId: async (clientId: EntityId) => {
+    await initializeJobs()
+    return asyncify(() => mockStore.getJobsByClientId(clientId))()
   },
 
-  getByEmployeeId: (employeeId: EntityId) => {
-    initializeJobs()
-    return mockStore.getJobsByEmployeeId(employeeId)
+  getByEmployeeId: async (employeeId: EntityId) => {
+    await initializeJobs()
+    return asyncify(() => mockStore.getJobsByEmployeeId(employeeId))()
   },
 
-  getByStatus: (status: JobStatus) => {
-    initializeJobs()
-    return mockStore.getJobs().filter((job) => job.status === status)
+  getByStatus: async (status: JobStatus) => {
+    await initializeJobs()
+    return asyncify(() => mockStore.getJobs().filter((job) => job.status === status))()
   },
 
-  create: (job) => mockStore.createJob(job),
+  create: (job) =>
+    asyncifyWithError(() => {
+      const newJob = mockStore.createJob(job)
+      return newJob
+    }),
 
-  update: (id, updates) => mockStore.updateJob(id, updates),
+  update: (id, updates) =>
+    asyncifyWithError(() => {
+      const updated = mockStore.updateJob(id, updates)
+      if (!updated) {
+        throw new Error(`Job with id ${id} not found`)
+      }
+      return updated
+    }),
 
-  delete: (id) => mockStore.deleteJob(id),
+  delete: (id) =>
+    asyncifyWithError(() => {
+      const deleted = mockStore.deleteJob(id)
+      if (!deleted) {
+        throw new Error(`Job with id ${id} not found`)
+      }
+      return deleted
+    }),
 }
 
 // ============================================================================
@@ -126,6 +145,7 @@ export const getJobs = () => jobService.getAll()
 export const getJobById = (id: EntityId) => jobService.getById(id)
 export const getJobsByClientId = (clientId: EntityId) => jobService.getByClientId(clientId)
 export const getJobsByEmployeeId = (employeeId: EntityId) => jobService.getByEmployeeId(employeeId)
+export const getJobsByStatus = (status: JobStatus) => jobService.getByStatus(status)
 export const createJob = (job: Omit<Job, "id" | "jobNumber" | "createdAt" | "updatedAt">) =>
   jobService.create(job)
 export const updateJob = (id: EntityId, updates: Partial<Job>) => jobService.update(id, updates)
