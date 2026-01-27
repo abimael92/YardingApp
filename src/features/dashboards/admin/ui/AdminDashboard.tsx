@@ -30,67 +30,71 @@ import type { User } from "@/src/domain/models"
 import Sidebar from "@/src/shared/ui/Sidebar"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import StatsCard from "@/src/shared/ui/StatsCard"
-import { getClients } from "@/src/services/clientService"
-import { getEmployees } from "@/src/services/employeeService"
-import { getPayments } from "@/src/services/paymentService"
-import { getJobs } from "@/src/services/jobService"
+import { getAdminStats, getRecentUsers, getSystemHealth } from "@/src/services/adminService"
+import { getAllClients } from "@/src/services/clientService"
+import { getAllEmployees } from "@/src/services/employeeService"
+import { getTasks } from "@/src/services/taskService"
 
 const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  // Get data from services
-  const clients = getClients()
-  const employees = getEmployees()
-  const payments = getPayments()
-  const jobs = getJobs()
+  // Get data from services (read-only)
+  const stats = getAdminStats()
+  const recentUsers = getRecentUsers(4)
+  const clients = getAllClients()
+  const employees = getAllEmployees()
+  const tasks = getTasks()
+  const systemHealth = getSystemHealth()
 
-  // Calculate stats from services
-  const totalRevenue = payments
-    .filter((p) => p.status === "completed")
-    .reduce((sum, p) => sum + p.amount.amount, 0)
-  const activeClients = clients.filter((c) => c.status === "active").length
-  const activeEmployees = employees.filter((e) => e.status === "active").length
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
+  }
 
-  const stats = [
+  const dashboardStats = [
     {
       title: "Total Revenue",
-      value: `$${totalRevenue.toLocaleString()}`,
+      value: formatCurrency(stats.totalRevenue),
       icon: CurrencyDollarIcon,
       color: "primary" as const,
-      change: "+12% from last month",
+      change: `Pending: ${formatCurrency(stats.pendingRevenue)}`,
     },
     {
       title: "Active Clients",
-      value: activeClients.toString(),
+      value: stats.activeClients.toString(),
       icon: UserGroupIcon,
       color: "green" as const,
-      change: `${clients.length} total clients`,
+      change: `${stats.totalClients} total clients`,
     },
     {
       title: "Team Members",
-      value: activeEmployees.toString(),
+      value: stats.activeEmployees.toString(),
       icon: UserGroupIcon,
       color: "earth" as const,
-      change: `${employees.length} total employees`,
+      change: `${stats.totalEmployees} total employees`,
     },
     {
-      title: "Active Jobs",
-      value: jobs.filter((j) => j.status === "in_progress" || j.status === "scheduled").length.toString(),
+      title: "Active Tasks",
+      value: (stats.pendingTasks + stats.inProgressTasks).toString(),
       icon: ChartBarIcon,
       color: "sand" as const,
-      change: `${jobs.length} total jobs`,
+      change: `${stats.completedTasks} completed`,
     },
   ]
 
-  // Sample data for charts
+  // Calculate revenue data from payments (mock data for now)
   const revenueData = [
-    { month: "Jul", revenue: 18500, clients: 142 },
-    { month: "Aug", revenue: 22300, clients: 148 },
-    { month: "Sep", revenue: 19800, clients: 145 },
-    { month: "Oct", revenue: 25600, clients: 152 },
-    { month: "Nov", revenue: 23400, clients: 149 },
-    { month: "Dec", revenue: 26800, clients: 154 },
-    { month: "Jan", revenue: 24580, clients: 156 },
+    { month: "Jul", revenue: 18500, clients: Math.max(0, clients.length - 14) },
+    { month: "Aug", revenue: 22300, clients: Math.max(0, clients.length - 8) },
+    { month: "Sep", revenue: 19800, clients: Math.max(0, clients.length - 11) },
+    { month: "Oct", revenue: 25600, clients: Math.max(0, clients.length - 4) },
+    { month: "Nov", revenue: 23400, clients: Math.max(0, clients.length - 7) },
+    { month: "Dec", revenue: 26800, clients: Math.max(0, clients.length - 2) },
+    { month: "Jan", revenue: stats.totalRevenue, clients: clients.length },
   ]
 
   const serviceDistribution = [
@@ -110,40 +114,7 @@ const AdminDashboard = () => {
     { day: "Sun", efficiency: 84, satisfaction: 91 },
   ]
 
-  const recentUsers: User[] = [
-    {
-      id: "1",
-      name: "Maria Rodriguez",
-      email: "maria@email.com",
-      role: "Client",
-      status: "Active",
-      joinDate: "2024-01-15",
-    },
-    {
-      id: "2",
-      name: "James Wilson",
-      email: "james@email.com",
-      role: "Worker",
-      status: "Active",
-      joinDate: "2024-01-12",
-    },
-    {
-      id: "3",
-      name: "Sarah Johnson",
-      email: "sarah@email.com",
-      role: "Client",
-      status: "Pending",
-      joinDate: "2024-01-10",
-    },
-    {
-      id: "4",
-      name: "Mike Chen",
-      email: "mike@email.com",
-      role: "Supervisor",
-      status: "Active",
-      joinDate: "2024-01-08",
-    },
-  ]
+  // recentUsers is now loaded from service above
 
   const systemAlerts = [
     {
@@ -199,9 +170,21 @@ const AdminDashboard = () => {
                   System Status
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      systemHealth.status === "healthy"
+                        ? "bg-green-500"
+                        : systemHealth.status === "warning"
+                          ? "bg-yellow-500"
+                          : "bg-red-500"
+                    }`}
+                  ></div>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    All Systems Online
+                    {systemHealth.status === "healthy"
+                      ? "All Systems Online"
+                      : systemHealth.status === "warning"
+                        ? "System Warning"
+                        : "System Critical"}
                   </span>
                 </div>
               </div>
@@ -222,7 +205,7 @@ const AdminDashboard = () => {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {stats.map((stat, index) => (
+            {dashboardStats.map((stat, index) => (
               <motion.div
                 key={stat.title}
                 initial={{ opacity: 0, y: 20 }}
@@ -465,7 +448,14 @@ const AdminDashboard = () => {
                           </div>
                         </td>
                       </motion.tr>
-                    ))}
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="py-8 text-center text-gray-500 dark:text-gray-400">
+                          No users found
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

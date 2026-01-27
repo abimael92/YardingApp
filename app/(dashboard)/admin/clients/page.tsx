@@ -1,10 +1,12 @@
-import TaskList from "@/src/features/admin/tasks/ui/TaskList"
+"use client"
+
+import ClientList from "@/src/features/admin/clients/ui/ClientList"
 import Sidebar from "@/src/shared/ui/Sidebar"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import { useState } from "react"
 import { Bars3Icon } from "@heroicons/react/24/outline"
 
-export default function TasksPage() {
+export default function ClientsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
@@ -24,10 +26,10 @@ export default function TasksPage() {
               </button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Task Overview
+                  Client Management
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
-                  View and manage all tasks
+                  Manage all clients
                 </p>
               </div>
             </div>
@@ -37,7 +39,7 @@ export default function TasksPage() {
         {/* Main Content */}
         <div className="p-6">
           <Breadcrumbs />
-          <TaskList />
+          <ClientList />
         </div>
       </div>
     </div>

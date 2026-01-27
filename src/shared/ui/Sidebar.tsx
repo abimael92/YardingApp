@@ -66,6 +66,8 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
           ...baseItems,
           { name: "Analytics", href: `/${userRole}/analytics`, icon: ChartBarIcon },
           { name: "User Management", href: `/${userRole}/users`, icon: UserGroupIcon },
+          { name: "Clients", href: `/${userRole}/clients`, icon: UserGroupIcon },
+          { name: "Employees", href: `/${userRole}/employees`, icon: UserGroupIcon },
           { name: "Task Overview", href: `/${userRole}/tasks`, icon: ClipboardDocumentListIcon },
           { name: "Settings", href: `/${userRole}/settings`, icon: Cog6ToothIcon },
         ]
