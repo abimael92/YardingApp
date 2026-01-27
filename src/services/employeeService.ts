@@ -1,16 +1,22 @@
 /**
  * Employee Service
- * 
+ *
  * Service layer for employee management operations.
  */
 
-import { mockStore } from "@/src/data/mockStore"
+import {
+  getEmployees as getEmployeesFromStore,
+  createEmployee as createEmployeeInStore,
+  getEmployeeById as getEmployeeByIdFromStore,
+  updateEmployee as updateEmployeeInStore,
+  deleteEmployee as deleteEmployeeFromStore,
+} from "@/src/data/mockStore"
 import type { Employee, EntityId } from "@/src/domain/entities"
 import { EmployeeRole, EmployeeStatus } from "@/src/domain/entities"
 
 // Initialize with seed data if empty
 const initializeEmployees = () => {
-  if (mockStore.getEmployees().length === 0) {
+  if (getEmployeesFromStore().length === 0) {
     const now = new Date().toISOString()
     const defaultAvailability = {
       monday: [],
@@ -22,7 +28,7 @@ const initializeEmployees = () => {
       sunday: [],
     }
 
-    mockStore.createEmployee({
+    createEmployeeInStore({
       firstName: "Mike",
       lastName: "Rodriguez",
       displayName: "Mike Rodriguez",
@@ -40,7 +46,7 @@ const initializeEmployees = () => {
       avatar: "/professional-lawn-worker.jpg",
     })
 
-    mockStore.createEmployee({
+    createEmployeeInStore({
       firstName: "Sarah",
       lastName: "Chen",
       displayName: "Sarah Chen",
@@ -58,7 +64,7 @@ const initializeEmployees = () => {
       avatar: "/female-landscape-designer.jpg",
     })
 
-    mockStore.createEmployee({
+    createEmployeeInStore({
       firstName: "David",
       lastName: "Wilson",
       displayName: "David Wilson",
@@ -100,21 +106,21 @@ export interface EmployeeService {
 // ============================================================================
 
 export const employeeService: EmployeeService = {
-  getAll: () => mockStore.getEmployees(),
+  getAll: (): Employee[] => getEmployeesFromStore(),
 
-  getById: (id: EntityId) => mockStore.getEmployeeById(id),
+  getById: (id: EntityId): Employee | undefined => getEmployeeByIdFromStore(id),
 
-  getByRole: (role: EmployeeRole) =>
-    mockStore.getEmployees().filter((emp) => emp.role === role),
+  getByRole: (role: EmployeeRole): Employee[] =>
+    getEmployeesFromStore().filter((emp: Employee) => emp.role === role),
 
-  getByStatus: (status: EmployeeStatus) =>
-    mockStore.getEmployees().filter((emp) => emp.status === status),
+  getByStatus: (status: EmployeeStatus): Employee[] =>
+    getEmployeesFromStore().filter((emp: Employee) => emp.status === status),
 
-  create: (employee) => mockStore.createEmployee(employee),
+  create: (employee: Omit<Employee, "id" | "createdAt" | "updatedAt">): Employee => createEmployeeInStore(employee),
 
-  update: (id, updates) => mockStore.updateEmployee(id, updates),
+  update: (id: EntityId, updates: Partial<Employee>): Employee | undefined => updateEmployeeInStore(id, updates),
 
-  delete: (id) => mockStore.deleteEmployee(id),
+  delete: (id: EntityId): boolean => deleteEmployeeFromStore(id),
 }
 
 // ============================================================================
