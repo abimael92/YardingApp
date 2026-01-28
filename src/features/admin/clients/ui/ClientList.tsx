@@ -88,7 +88,7 @@ const ClientList = () => {
   }
 
   const getStatusBadge = (status: ClientStatus) => {
-    const colors = {
+    const colors: Record<ClientStatus, string> = {
       [ClientStatus.ACTIVE]: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
       [ClientStatus.INACTIVE]:
         "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",

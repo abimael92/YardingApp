@@ -80,7 +80,7 @@ const EmployeeList = () => {
   }
 
   const getStatusBadge = (status: EmployeeStatus) => {
-    const colors = {
+    const colors: Record<EmployeeStatus, string> = {
       [EmployeeStatus.ACTIVE]: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
       [EmployeeStatus.INACTIVE]: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
       [EmployeeStatus.ON_LEAVE]: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",

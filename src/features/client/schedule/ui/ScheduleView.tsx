@@ -65,7 +65,7 @@ const ScheduleView = () => {
   }
 
   const getStatusBadge = (status: ScheduleStatus) => {
-    const colors = {
+    const colors: Record<ScheduleStatus, string> = {
       [ScheduleStatus.SCHEDULED]: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
       [ScheduleStatus.IN_PROGRESS]: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
       [ScheduleStatus.COMPLETED]: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
@@ -73,7 +73,7 @@ const ScheduleView = () => {
       [ScheduleStatus.RESCHEDULED]: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
     }
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[status] || "bg-gray-100 text-gray-800"}`}>
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[status]}`}>
         {status.replace("_", " ")}
       </span>
     )
