@@ -1,6 +1,6 @@
 "use client"
 
-import SettingsPage from "@/src/features/admin/settings/ui/SettingsPage"
+import PaymentsPage from "@/src/features/admin/payments/ui/PaymentsPage"
 import Sidebar from "@/src/shared/ui/Sidebar"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import { useState } from "react"
@@ -26,10 +26,10 @@ export default function Page() {
               </button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Settings
+                  Payments
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Manage company settings and preferences
+                  Payment processing and tracking
                 </p>
               </div>
             </div>
@@ -38,7 +38,7 @@ export default function Page() {
 
         <div className="p-6">
           <Breadcrumbs />
-          <SettingsPage />
+          <PaymentsPage />
         </div>
       </div>
     </div>
