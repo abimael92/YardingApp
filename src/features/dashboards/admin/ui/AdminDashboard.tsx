@@ -1,51 +1,130 @@
+/**
+ * Comprehensive Admin Dashboard
+ * 
+ * Full-featured dashboard with stats, charts, activity, and system health
+ */
+
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import {
-  UserGroupIcon,
   CurrencyDollarIcon,
-  ChartBarIcon,
+  UserGroupIcon,
+  BriefcaseIcon,
+  ClipboardDocumentListIcon,
+  ArrowPathIcon,
+  ArrowDownTrayIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  XCircleIcon,
+  ClockIcon,
   Bars3Icon,
-  EyeIcon,
-  PencilIcon,
-  TrashIcon,
 } from "@heroicons/react/24/outline"
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  AreaChart,
-  Area,
+  Legend,
 } from "recharts"
-import type { User } from "@/src/domain/models"
 import Sidebar from "@/src/shared/ui/Sidebar"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import StatsCard from "@/src/shared/ui/StatsCard"
-import { getAdminStats, getRecentUsers, getSystemHealth } from "@/src/services/adminService"
-import { getEmployees } from "@/src/services/employeeService"
-import { getTasks } from "@/src/services/taskService"
+import LoadingState from "@/src/shared/ui/LoadingState"
+import {
+  getAdminStats,
+  getRevenueHistory,
+  getRecentActivity,
+  getPendingActions,
+  getSystemHealth,
+  type ActivityLog,
+  type PendingAction,
+} from "@/src/services/adminService"
 
 const AdminDashboard = () => {
+  const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [stats, setStats] = useState<any>(null)
+  const [revenueHistory, setRevenueHistory] = useState<Array<{ month: string; revenue: number }>>([])
+  const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([])
+  const [pendingActions, setPendingActions] = useState<PendingAction[]>([])
+  const [systemHealth, setSystemHealth] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [dateRange, setDateRange] = useState<"6m" | "12m" | "ytd">("6m")
 
-  // Get data from services (read-only)
-  const stats = getAdminStats()
-  const recentUsers = getRecentUsers(4)
-  const employees = getEmployees()
-  const tasks = getTasks()
-  const systemHealth = getSystemHealth()
-  
-  // Mock clients data since clientService is not available
-  const clients = stats.totalClients ? Array(stats.totalClients).fill(null) : []
+  const loadDashboardData = async () => {
+    setIsLoading(true)
+    try {
+      const [statsData, revenueData, activityData, actionsData, healthData] = await Promise.all([
+        getAdminStats(),
+        getRevenueHistory(dateRange === "6m" ? 6 : dateRange === "12m" ? 12 : undefined),
+        getRecentActivity(10),
+        getPendingActions(),
+        Promise.resolve(getSystemHealth()),
+      ])
+      setStats(statsData)
+      setRevenueHistory(revenueData)
+      setRecentActivity(activityData)
+      setPendingActions(actionsData)
+      setSystemHealth(healthData)
+    } catch (error) {
+      console.error("Failed to load dashboard data:", error)
+      setStats({
+        totalUsers: 0,
+        activeUsers: 0,
+        totalClients: 0,
+        activeClients: 0,
+        newClientsThisMonth: 0,
+        totalEmployees: 0,
+        activeEmployees: 0,
+        availableEmployees: 0,
+        totalTasks: 0,
+        pendingTasks: 0,
+        inProgressTasks: 0,
+        completedTasks: 0,
+        totalRevenue: 0,
+        revenueChangePercent: 0,
+        pendingRevenue: 0,
+        activeJobs: 0,
+        pendingJobs: 0,
+        completedJobs: 0,
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadDashboardData()
+  }, [dateRange])
+
+  const handleRefresh = () => {
+    loadDashboardData()
+  }
+
+  const handleExportReport = () => {
+    const report = {
+      generatedAt: new Date().toISOString(),
+      stats,
+      revenueHistory,
+      recentActivity,
+      pendingActions,
+      systemHealth,
+    }
+
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `admin-dashboard-report-${new Date().toISOString().split("T")[0]}.json`
+    a.click()
+    window.URL.revokeObjectURL(url)
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -56,96 +135,112 @@ const AdminDashboard = () => {
     }).format(amount)
   }
 
-  const dashboardStats = [
-    {
-      title: "Total Revenue",
-      value: formatCurrency(stats.totalRevenue),
-      icon: CurrencyDollarIcon,
-      color: "primary" as const,
-      change: `Pending: ${formatCurrency(stats.pendingRevenue)}`,
-    },
-    {
-      title: "Active Clients",
-      value: stats.activeClients.toString(),
-      icon: UserGroupIcon,
-      color: "green" as const,
-      change: `${stats.totalClients} total clients`,
-    },
-    {
-      title: "Team Members",
-      value: stats.activeEmployees.toString(),
-      icon: UserGroupIcon,
-      color: "earth" as const,
-      change: `${stats.totalEmployees} total employees`,
-    },
-    {
-      title: "Active Tasks",
-      value: (stats.pendingTasks + stats.inProgressTasks).toString(),
-      icon: ChartBarIcon,
-      color: "sand" as const,
-      change: `${stats.completedTasks} completed`,
-    },
-  ]
+  const formatActivityType = (type: ActivityLog["type"]) => {
+    const types = {
+      user_created: "User Created",
+      job_created: "Job Created",
+      job_updated: "Job Updated",
+      payment_received: "Payment Received",
+      client_created: "Client Created",
+      employee_created: "Employee Created",
+    }
+    return types[type] || type
+  }
 
-  // Calculate revenue data from payments (mock data for now)
-  const revenueData = [
-    { month: "Jul", revenue: 18500, clients: Math.max(0, clients.length - 14) },
-    { month: "Aug", revenue: 22300, clients: Math.max(0, clients.length - 8) },
-    { month: "Sep", revenue: 19800, clients: Math.max(0, clients.length - 11) },
-    { month: "Oct", revenue: 25600, clients: Math.max(0, clients.length - 4) },
-    { month: "Nov", revenue: 23400, clients: Math.max(0, clients.length - 7) },
-    { month: "Dec", revenue: 26800, clients: Math.max(0, clients.length - 2) },
-    { month: "Jan", revenue: stats.totalRevenue, clients: clients.length },
-  ]
+  const getActivityIcon = (type: ActivityLog["type"]) => {
+    switch (type) {
+      case "user_created":
+      case "client_created":
+      case "employee_created":
+        return UserGroupIcon
+      case "job_created":
+      case "job_updated":
+        return ClipboardDocumentListIcon
+      case "payment_received":
+        return CurrencyDollarIcon
+      default:
+        return ClockIcon
+    }
+  }
 
-  const serviceDistribution = [
-    { name: "Lawn Mowing", value: 45, color: "#22c55e" },
-    { name: "Landscaping", value: 25, color: "#3b82f6" },
-    { name: "Tree Services", value: 20, color: "#f59e0b" },
-    { name: "Irrigation", value: 10, color: "#ef4444" },
-  ]
+  const getActivityColor = (type: ActivityLog["type"]) => {
+    switch (type) {
+      case "payment_received":
+        return "text-green-600 dark:text-green-400"
+      case "user_created":
+      case "client_created":
+      case "employee_created":
+        return "text-blue-600 dark:text-blue-400"
+      case "job_created":
+      case "job_updated":
+        return "text-purple-600 dark:text-purple-400"
+      default:
+        return "text-gray-600 dark:text-gray-400"
+    }
+  }
 
-  const performanceData = [
-    { day: "Mon", efficiency: 85, satisfaction: 92 },
-    { day: "Tue", efficiency: 88, satisfaction: 94 },
-    { day: "Wed", efficiency: 82, satisfaction: 89 },
-    { day: "Thu", efficiency: 91, satisfaction: 96 },
-    { day: "Fri", efficiency: 87, satisfaction: 93 },
-    { day: "Sat", efficiency: 89, satisfaction: 95 },
-    { day: "Sun", efficiency: 84, satisfaction: 91 },
-  ]
+  const getPriorityColor = (priority: PendingAction["priority"]) => {
+    switch (priority) {
+      case "high":
+        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+      case "medium":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+      case "low":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+    }
+  }
 
-  // recentUsers is now loaded from service above
+  const getHealthStatusColor = (status: string) => {
+    switch (status) {
+      case "healthy":
+        return "text-green-600 dark:text-green-400"
+      case "warning":
+        return "text-yellow-600 dark:text-yellow-400"
+      case "critical":
+        return "text-red-600 dark:text-red-400"
+      default:
+        return "text-gray-600 dark:text-gray-400"
+    }
+  }
 
-  const systemAlerts = [
-    {
-      id: "1",
-      type: "warning",
-      title: "High Server Load",
-      description: "Server CPU usage at 85%. Consider scaling resources.",
-      time: "5 minutes ago",
-    },
-    {
-      id: "2",
-      type: "info",
-      title: "Scheduled Maintenance",
-      description: "System maintenance scheduled for tonight at 2 AM.",
-      time: "2 hours ago",
-    },
-    {
-      id: "3",
-      type: "success",
-      title: "Backup Completed",
-      description: "Daily database backup completed successfully.",
-      time: "6 hours ago",
-    },
-  ]
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} userRole="admin" />
+        <div className="flex-1 flex items-center justify-center">
+          <LoadingState message="Loading dashboard..." fullScreen />
+        </div>
+      </div>
+    )
+  }
+
+  if (!stats) {
+    return (
+      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} userRole="admin" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-600 dark:text-red-400">Failed to load dashboard data</p>
+            <button
+              onClick={handleRefresh}
+              className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const revenueChangeColor = stats.revenueChangePercent >= 0 ? "text-green-600" : "text-red-600"
+  const revenueChangeIcon = stats.revenueChangePercent >= 0 ? "↑" : "↓"
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} userRole="admin" />
 
-      <div className="flex-1">
+      <div className="flex-1 lg:ml-64">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4">
           <div className="flex items-center justify-between">
@@ -157,44 +252,39 @@ const AdminDashboard = () => {
                 <Bars3Icon className="w-6 h-6" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Admin Dashboard
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400">
-                  System Overview & Management
-                </p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+                <p className="text-gray-600 dark:text-gray-400">System Overview & Management</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  System Status
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div
-                    className={`w-2 h-2 rounded-full ${systemHealth.status === "healthy"
-                        ? "bg-green-500"
-                        : systemHealth.status === "warning"
-                          ? "bg-yellow-500"
-                          : "bg-red-500"
-                      }`}
-                  ></div>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {systemHealth.status === "healthy"
-                      ? "All Systems Online"
-                      : systemHealth.status === "warning"
-                        ? "System Warning"
-                        : "System Critical"}
-                  </span>
-                </div>
-              </div>
-              <img
-                src="/asian-business-woman.png"
-                alt="Admin"
-                className="w-10 h-10 rounded-full object-cover"
-                loading="lazy"
-                decoding="async"
-              />
+            <div className="flex items-center space-x-3">
+              {/* Date Range Selector */}
+              <select
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value as "6m" | "12m" | "ytd")}
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+              >
+                <option value="6m">Last 6 Months</option>
+                <option value="12m">Last 12 Months</option>
+                <option value="ytd">Year to Date</option>
+              </select>
+
+              {/* Export Button */}
+              <button
+                onClick={handleExportReport}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+              >
+                <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
+                Export Report
+              </button>
+
+              {/* Refresh Button */}
+              <button
+                onClick={handleRefresh}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                title="Refresh Dashboard"
+              >
+                <ArrowPathIcon className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -203,308 +293,287 @@ const AdminDashboard = () => {
         <div className="p-6">
           <Breadcrumbs />
 
-          {/* Stats Grid */}
+          {/* Quick Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {dashboardStats.map((stat, index) => (
-              <motion.div
-                key={stat.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <StatsCard {...stat} />
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Charts Row */}
-          <div className="grid lg:grid-cols-3 gap-6 mb-8">
-            {/* Revenue Chart */}
-            <div className="lg:col-span-2">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                className="card p-6"
-              >
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-                  Revenue & Client Growth
-                </h2>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={revenueData}>
-                      <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                      <XAxis dataKey="month" className="text-gray-600 dark:text-gray-400" />
-                      <YAxis className="text-gray-600 dark:text-gray-400" />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "var(--color-background)",
-                          border: "1px solid var(--color-border)",
-                          borderRadius: "8px",
-                        }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="revenue"
-                        stackId="1"
-                        stroke="#22c55e"
-                        fill="#22c55e"
-                        fillOpacity={0.6}
-                        name="Revenue ($)"
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="clients"
-                        stroke="#3b82f6"
-                        strokeWidth={3}
-                        dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
-                        name="Clients"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Service Distribution */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-              className="card p-6"
+              transition={{ duration: 0.3 }}
+              onClick={() => router.push("/admin/payments")}
+              className="cursor-pointer"
             >
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Service Distribution
-              </h3>
-              <div className="h-64">
+              <StatsCard
+                title="Total Revenue"
+                value={formatCurrency(stats.totalRevenue)}
+                icon={CurrencyDollarIcon}
+                color="primary"
+                change={
+                  <span className={revenueChangeColor}>
+                    {revenueChangeIcon} {Math.abs(stats.revenueChangePercent)}% from last month
+                  </span>
+                }
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              onClick={() => router.push("/admin/clients")}
+              className="cursor-pointer"
+            >
+              <StatsCard
+                title="Active Clients"
+                value={stats.activeClients.toString()}
+                icon={UserGroupIcon}
+                color="green"
+                change={`${stats.newClientsThisMonth} new this month`}
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              onClick={() => router.push("/admin/employees")}
+              className="cursor-pointer"
+            >
+              <StatsCard
+                title="Team Members"
+                value={`${stats.availableEmployees}/${stats.totalEmployees}`}
+                icon={BriefcaseIcon}
+                color="earth"
+                change={`${stats.activeEmployees} active`}
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.3 }}
+              onClick={() => router.push("/admin/jobs")}
+              className="cursor-pointer"
+            >
+              <StatsCard
+                title="Active Jobs"
+                value={stats.activeJobs.toString()}
+                icon={ClipboardDocumentListIcon}
+                color="sand"
+                change={`${stats.pendingJobs} pending, ${stats.completedJobs} completed`}
+              />
+            </motion.div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {/* Revenue Chart */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.4 }}
+              className="lg:col-span-2 card p-6"
+            >
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                Revenue Trend
+              </h2>
+              <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={serviceDistribution}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={40}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {serviceDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
+                  <LineChart data={revenueHistory}>
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis
+                      dataKey="month"
+                      className="text-gray-600 dark:text-gray-400"
+                      tick={{ fill: "currentColor" }}
+                    />
+                    <YAxis
+                      className="text-gray-600 dark:text-gray-400"
+                      tick={{ fill: "currentColor" }}
+                      tickFormatter={(value) => `$${value / 1000}k`}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "var(--color-background)",
+                        border: "1px solid var(--color-border)",
+                        borderRadius: "8px",
+                      }}
+                      formatter={(value: number) => [formatCurrency(value), "Revenue"]}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#22c55e"
+                      strokeWidth={3}
+                      dot={{ fill: "#22c55e", strokeWidth: 2, r: 6 }}
+                      activeDot={{ r: 8 }}
+                    />
+                  </LineChart>
                 </ResponsiveContainer>
               </div>
-              <div className="mt-4 space-y-2">
-                {serviceDistribution.map((item) => (
-                  <div key={item.name} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center space-x-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: item.color }}
-                      ></div>
-                      <span className="text-gray-600 dark:text-gray-300">{item.name}</span>
-                    </div>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {item.value}%
+            </motion.div>
+
+            {/* System Health */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.5 }}
+              className="card p-6"
+            >
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                System Health
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Overall Status
+                    </span>
+                    <span
+                      className={`text-sm font-semibold ${getHealthStatusColor(systemHealth?.status || "healthy")}`}
+                    >
+                      {systemHealth?.status?.toUpperCase() || "HEALTHY"}
                     </span>
                   </div>
-                ))}
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <span>Uptime: {systemHealth?.uptime || 99.2}%</span>
+                    <span>{systemHealth?.activeConnections || 156} connections</span>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-3">
+                  {systemHealth?.services?.map((service: any, index: number) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{service.name}</span>
+                      <div className="flex items-center space-x-2">
+                        {service.status === "healthy" && (
+                          <CheckCircleIcon className="w-5 h-5 text-green-500" />
+                        )}
+                        {service.status === "warning" && (
+                          <ExclamationTriangleIcon className="w-5 h-5 text-yellow-500" />
+                        )}
+                        {service.status === "critical" && (
+                          <XCircleIcon className="w-5 h-5 text-red-500" />
+                        )}
+                        <span
+                          className={`text-xs font-medium ${getHealthStatusColor(service.status)}`}
+                        >
+                          {service.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </motion.div>
           </div>
 
-          {/* Performance Chart */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="card p-6 mb-8"
-          >
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-              Weekly Performance Metrics
-            </h2>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={performanceData}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis dataKey="day" className="text-gray-600 dark:text-gray-400" />
-                  <YAxis className="text-gray-600 dark:text-gray-400" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--color-background)",
-                      border: "1px solid var(--color-border)",
-                      borderRadius: "8px",
-                    }}
-                  />
-                  <Bar
-                    dataKey="efficiency"
-                    fill="#f59e0b"
-                    name="Efficiency %"
-                    radius={[4, 4, 0, 0]}
-                  />
-                  <Bar
-                    dataKey="satisfaction"
-                    fill="#22c55e"
-                    name="Satisfaction %"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </motion.div>
-
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* Recent Users */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Activity */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.7 }}
+              transition={{ duration: 0.3, delay: 0.6 }}
               className="card p-6"
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Recent Users
-                </h2>
-                <button className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Activity</h2>
+                <button
+                  onClick={() => router.push("/admin/analytics")}
+                  className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
+                >
                   View All
                 </button>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-2 text-gray-600 dark:text-gray-400">
-                        Name
-                      </th>
-                      <th className="text-left py-2 text-gray-600 dark:text-gray-400">
-                        Role
-                      </th>
-                      <th className="text-left py-2 text-gray-600 dark:text-gray-400">
-                        Status
-                      </th>
-                      <th className="text-left py-2 text-gray-600 dark:text-gray-400">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentUsers.map((user, index) => (
-                      <motion.tr
-                        key={user.id}
+              <div className="space-y-4">
+                {recentActivity.length === 0 ? (
+                  <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                    No recent activity
+                  </p>
+                ) : (
+                  recentActivity.map((activity, index) => {
+                    const Icon = getActivityIcon(activity.type)
+                    return (
+                      <motion.div
+                        key={activity.id}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.1 }}
-                        className="border-b border-gray-100 dark:border-gray-800"
+                        transition={{ duration: 0.3, delay: 0.7 + index * 0.1 }}
+                        className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                       >
-                        <td className="py-3">
-                          <div>
-                            <div className="font-medium text-gray-900 dark:text-white">
-                              {user.name}
-                            </div>
-                            <div className="text-gray-500 dark:text-gray-400">
-                              {user.email}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3 text-gray-600 dark:text-gray-300">
-                          {user.role}
-                        </td>
-                        <td className="py-3">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${user.status === "Active"
-                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                              }`}
-                          >
-                            {user.status}
-                          </span>
-                        </td>
-                        <td className="py-3">
-                          <div className="flex items-center space-x-2">
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-                            >
-                              <EyeIcon className="w-4 h-4" />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              className="p-1 text-gray-400 hover:text-green-600 dark:hover:text-green-400"
-                            >
-                              <PencilIcon className="w-4 h-4" />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-                            >
-                              <TrashIcon className="w-4 h-4" />
-                            </motion.button>
-                          </div>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
+                        <div className={`p-2 rounded-lg bg-gray-100 dark:bg-gray-700 ${getActivityColor(activity.type)}`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            {formatActivityType(activity.type)}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                            {activity.description}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {new Date(activity.timestamp).toLocaleString()}
+                          </p>
+                        </div>
+                      </motion.div>
+                    )
+                  })
+                )}
               </div>
             </motion.div>
 
-            {/* System Alerts */}
+            {/* Pending Actions */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
+              transition={{ duration: 0.3, delay: 0.7 }}
               className="card p-6"
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  System Alerts
-                </h2>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {systemAlerts.length} alerts
-                </span>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Pending Actions</h2>
+                {pendingActions.length > 0 && (
+                  <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 text-xs font-semibold rounded-full">
+                    {pendingActions.length}
+                  </span>
+                )}
               </div>
-              <div className="space-y-4">
-                {systemAlerts.map((alert, index) => (
-                  <motion.div
-                    key={alert.id}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                    className={`p-4 rounded-lg border-l-4 ${alert.type === "warning"
-                        ? "bg-yellow-50 dark:bg-yellow-900/20 border-l-yellow-500"
-                        : alert.type === "success"
-                          ? "bg-green-50 dark:bg-green-900/20 border-l-green-500"
-                          : "bg-blue-50 dark:bg-blue-900/20 border-l-blue-500"
+              <div className="space-y-3">
+                {pendingActions.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircleIcon className="w-12 h-12 text-green-500 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500 dark:text-gray-400">All clear! No pending actions</p>
+                  </div>
+                ) : (
+                  pendingActions.map((action, index) => (
+                    <motion.div
+                      key={action.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: 0.8 + index * 0.1 }}
+                      onClick={() => action.link && router.push(action.link)}
+                      className={`p-4 rounded-lg border-l-4 cursor-pointer transition-all ${
+                        action.priority === "high"
+                          ? "border-red-500 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20"
+                          : action.priority === "medium"
+                            ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10 hover:bg-yellow-100 dark:hover:bg-yellow-900/20"
+                            : "border-blue-500 bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/20"
                       }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900 dark:text-white text-sm">
-                          {alert.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                          {alert.description}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                          {alert.time}
-                        </p>
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {action.title}
+                            </h3>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(action.priority)}`}
+                            >
+                              {action.priority}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">{action.description}</p>
+                        </div>
                       </div>
-                      <div
-                        className={`w-2 h-2 rounded-full mt-1 ${alert.type === "warning"
-                            ? "bg-yellow-500"
-                            : alert.type === "success"
-                              ? "bg-green-500"
-                              : "bg-blue-500"
-                          }`}
-                      ></div>
-                    </div>
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  ))
+                )}
               </div>
             </motion.div>
           </div>

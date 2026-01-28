@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import {
   UserGroupIcon,
@@ -31,11 +31,29 @@ import { getWorkers } from "@/src/services/workerService"
 
 const SupervisorDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [tasks, setTasks] = useState<any[]>([])
+  const [workers, setWorkers] = useState<any[]>([])
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [tasksData, workersData] = await Promise.all([
+          getTasks(),
+          Promise.resolve(getWorkers()),
+        ])
+        setTasks(tasksData)
+        setWorkers(workersData)
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error)
+      }
+    }
+    loadData()
+  }, [])
 
   const stats = [
     {
       title: "Active Workers",
-      value: getWorkers()
+      value: workers
         .filter((w) => w.status === "available" || w.status === "busy")
         .length.toString(),
       icon: UserGroupIcon,
@@ -44,7 +62,7 @@ const SupervisorDashboard = () => {
     },
     {
       title: "Tasks Today",
-      value: getTasks().length.toString(),
+      value: tasks.length.toString(),
       icon: ClipboardDocumentListIcon,
       color: "earth" as const,
       change: "2 completed, 1 in progress",
@@ -83,7 +101,7 @@ const SupervisorDashboard = () => {
     { name: "Cancelled", value: 10, color: "#ef4444" },
   ]
 
-  const activeTasks = getTasks().filter(
+  const activeTasks = tasks.filter(
     (task) => task.status === "in-progress" || task.status === "pending"
   )
 
