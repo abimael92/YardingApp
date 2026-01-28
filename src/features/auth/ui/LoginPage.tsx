@@ -36,7 +36,7 @@ export default function LoginPage() {
     console.info("Mock login credentials", mockUsers)
   }, [])
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     console.info("Mock login submit", { email, password, mockUsers })
     const matchedUser = mockUsers.find(
@@ -44,9 +44,13 @@ export default function LoginPage() {
     )
     if (matchedUser) {
       setMockRole(matchedUser.role)
+      // Small delay to ensure cookie is set
+      await new Promise(resolve => setTimeout(resolve, 100))
       router.push(`/${matchedUser.role}`)
+      router.refresh() // Refresh to update navbar
     } else {
       console.warn("Mock login failed")
+      alert("Invalid email or password")
     }
   }
 
