@@ -1,3 +1,5 @@
+"use client"
+
 import TaskList from "@/src/features/admin/tasks/ui/TaskList"
 import Sidebar from "@/src/shared/ui/Sidebar"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"

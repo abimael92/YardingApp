@@ -1,12 +1,12 @@
 "use client"
 
-import UserManagement from "@/src/features/admin/users/ui/UserManagement"
+import JobList from "@/src/features/admin/jobs/ui/JobList"
 import Sidebar from "@/src/shared/ui/Sidebar"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import { useState } from "react"
 import { Bars3Icon } from "@heroicons/react/24/outline"
 
-export default function UsersPage() {
+export default function JobsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
@@ -25,11 +25,9 @@ export default function UsersPage() {
                 <Bars3Icon className="w-6 h-6" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  User Management
-                </h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Jobs</h1>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Manage all system users
+                  Manage all jobs and work orders
                 </p>
               </div>
             </div>
@@ -39,7 +37,7 @@ export default function UsersPage() {
         {/* Main Content */}
         <div className="p-6">
           <Breadcrumbs />
-          <UserManagement />
+          <JobList />
         </div>
       </div>
     </div>
