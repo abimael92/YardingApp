@@ -15,6 +15,7 @@ import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import TaskCard from "@/src/shared/ui/TaskCard"
 import StatsCard from "@/src/shared/ui/StatsCard"
 import { getTasks } from "@/src/services/taskService"
+import type { Task } from "@/src/domain/models"
 import type { SVGProps } from "react"
 import type { ForwardRefExoticComponent, RefAttributes } from "react"
 
@@ -35,8 +36,8 @@ interface StatItem {
 
 const WorkerDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [myTasks, setMyTasks] = useState<any[]>([])
-  const [todayTasks, setTodayTasks] = useState<any[]>([])
+  const [myTasks, setMyTasks] = useState<Task[]>([])
+  const [todayTasks, setTodayTasks] = useState<Task[]>([])
 
   useEffect(() => {
     const loadTasks = async () => {
