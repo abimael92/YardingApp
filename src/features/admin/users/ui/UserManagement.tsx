@@ -73,11 +73,10 @@ const UserManagement = () => {
     try {
       let data = await getAllUsers()
 
-      // Role-based filtering
-      if (currentRole === "supervisor") {
-        // Supervisors only see workers and clients
-        data = data.filter((u) => u.role === "Worker" || u.role === "Client")
-      }
+      // System Users: Only show Client or Worker roles, and only Active status
+      data = data.filter((u) => 
+        (u.role === "Client" || u.role === "Worker") && u.status === "Active"
+      )
 
       // Add mock lastLogin and avatar
       const extendedData: ExtendedUser[] = data.map((user) => ({

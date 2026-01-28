@@ -28,8 +28,10 @@ const ClientList = () => {
   const loadClients = async () => {
     setIsLoading(true)
     try {
-      const data = await getAllClients()
-      setClients(data)
+      // Only show Active clients
+      const allClients = await getAllClients()
+      const activeClients = allClients.filter((c) => c.status === ClientStatus.ACTIVE)
+      setClients(activeClients)
     } catch (error) {
       console.error("Failed to load clients:", error)
     } finally {
