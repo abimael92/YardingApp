@@ -1,14 +1,18 @@
 /**
  * Job Detail Component
- * 
- * Displays detailed view of a job
+ *
+ * Displays detailed view of a job and cost calculator for invoice generation.
  */
 
 "use client"
 
+import { useCallback, useEffect } from "react"
 import FormModal from "@/src/shared/ui/FormModal"
 import type { Job, Client, Employee } from "@/src/domain/entities"
 import { JobStatus, Priority } from "@/src/domain/entities"
+import { mockStore } from "@/src/data/mockStore"
+import JobCostCalculator from "./JobCostCalculator"
+import type { CalculatorResult } from "./JobCostCalculator"
 
 interface JobDetailProps {
   isOpen: boolean
@@ -16,9 +20,52 @@ interface JobDetailProps {
   job: Job
   clients: Client[]
   employees: Employee[]
+  onInvoiceGenerated?: () => void
 }
 
-const JobDetail = ({ isOpen, onClose, job, clients, employees }: JobDetailProps) => {
+const JobDetail = ({ isOpen, onClose, job, clients, employees, onInvoiceGenerated }: JobDetailProps) => {
+  const clientName = (() => {
+    const c = clients.find((x) => x.id === job.clientId)
+    return c?.name ?? "Unknown"
+  })()
+
+  useEffect(() => {
+    if (isOpen && job) {
+      console.log("[JobDetail] Fetch job details for calculator", {
+        jobId: job.id,
+        jobNumber: job.jobNumber,
+        title: job.title,
+        clientId: job.clientId,
+        clientName,
+      })
+    }
+  }, [isOpen, job, clientName])
+
+  const handleGenerateInvoice = useCallback(
+    (result: CalculatorResult) => {
+      console.log("[JobDetail] Creating invoice from calculator", {
+        jobId: job.id,
+        jobNumber: job.jobNumber,
+        clientId: job.clientId,
+        clientName,
+        ...result,
+      })
+      mockStore.createInvoice({
+        clientId: job.clientId,
+        clientName,
+        jobId: job.id,
+        status: "draft",
+        amount: result.subtotal,
+        tax: result.tax,
+        total: result.total,
+        dueDate: result.dueDate,
+        lineItems: result.lineItems,
+      })
+      onInvoiceGenerated?.()
+      onClose()
+    },
+    [job.id, job.jobNumber, job.clientId, clientName, onClose, onInvoiceGenerated]
+  )
   const formatCurrency = (money: { amount: number; currency: string }) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -208,6 +255,12 @@ const JobDetail = ({ isOpen, onClose, job, clients, employees }: JobDetailProps)
             </div>
           </div>
         )}
+
+        <JobCostCalculator
+          job={job}
+          clientName={clientName}
+          onGenerateInvoice={handleGenerateInvoice}
+        />
       </div>
     </FormModal>
   )

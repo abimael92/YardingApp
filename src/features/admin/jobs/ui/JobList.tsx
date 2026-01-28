@@ -239,6 +239,10 @@ const JobList = () => {
           job={selectedJob}
           clients={clients}
           employees={employees}
+          onInvoiceGenerated={() => {
+            console.log("[JobList] Invoice generated from job, refetching data")
+            loadData()
+          }}
         />
       )}
     </>
