@@ -66,7 +66,7 @@ const ClientCommunication = ({ client, isOpen, onClose }: ClientCommunicationPro
     const selected = templates[communicationType].find((t) => t.name === templateName)
     if (selected) {
       setTemplate(templateName)
-      if ("subject" in selected) {
+      if ("subject" in selected && typeof selected.subject === "string") {
         setSubject(selected.subject)
       }
       setMessage(selected.body)
