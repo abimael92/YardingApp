@@ -9,6 +9,9 @@ import { mockStore } from "@/src/data/mockStore"
 import type { Client, EntityId } from "@/src/domain/entities"
 import { asyncify, asyncifyWithError } from "./utils"
 
+// Re-export Client type for convenience
+export type { Client } from "@/src/domain/entities"
+
 // ============================================================================
 // Service Interface (API-ready)
 // ============================================================================

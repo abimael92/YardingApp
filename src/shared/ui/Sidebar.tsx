@@ -20,7 +20,7 @@ import {
   DocumentChartBarIcon,
   ClockIcon,
   BanknotesIcon,
-  ReceiptRefundIcon,
+  DocumentDuplicateIcon,
 } from "@heroicons/react/24/outline"
 import { getJobs } from "@/src/services/jobService"
 import { JobStatus } from "@/src/domain/entities"
@@ -150,7 +150,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
             title: "FINANCIAL",
             items: [
               { name: "Payments", href: `/${userRole}/payments`, icon: BanknotesIcon },
-              { name: "Invoices", href: `/${userRole}/invoices`, icon: ReceiptRefundIcon },
+              { name: "Invoices", href: `/${userRole}/invoices`, icon: DocumentDuplicateIcon },
               { name: "Reports", href: `/${userRole}/reports`, icon: DocumentChartBarIcon },
             ],
           },
