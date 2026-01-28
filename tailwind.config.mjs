@@ -1,12 +1,14 @@
 /** @type {import('tailwindcss').Config} */
-const defaultTheme = require("tailwindcss/defaultTheme");
+import defaultTheme from "tailwindcss/defaultTheme";
+import tailwindcssAnimate from "tailwindcss-animate";
 
-module.exports = {
+/** @type {import('tailwindcss').Config} */
+export default {
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
-    "./node_modules/@shadcn/ui/**/*.{js,ts,jsx,tsx}" // shadcn
+    "./node_modules/@shadcn/ui/**/*.{js,ts,jsx,tsx}", // shadcn
   ],
   theme: {
     extend: {
@@ -40,5 +42,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate],
 };

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import {
   ClipboardDocumentListIcon,
@@ -35,15 +35,28 @@ interface StatItem {
 
 const WorkerDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [myTasks, setMyTasks] = useState<any[]>([])
+  const [todayTasks, setTodayTasks] = useState<any[]>([])
 
-  // Filter tasks for worker view
-  const myTasks = getTasks().filter(
-    (task) => task.assignedTo === "Mike Rodriguez"
-  )
-  const todayTasks = myTasks.filter((task) => {
-    const today = new Date().toISOString().split("T")[0]
-    return task.dueDate === today || task.status === "in-progress"
-  })
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        const allTasks = await getTasks()
+        const filtered = allTasks.filter(
+          (task) => task.assignedTo === "Mike Rodriguez"
+        )
+        setMyTasks(filtered)
+        const today = new Date().toISOString().split("T")[0]
+        const todayFiltered = filtered.filter(
+          (task) => task.dueDate === today || task.status === "in-progress"
+        )
+        setTodayTasks(todayFiltered)
+      } catch (error) {
+        console.error("Failed to load tasks:", error)
+      }
+    }
+    loadTasks()
+  }, [])
 
   const stats: StatItem[] = [
     {

@@ -11,7 +11,7 @@ import { PlusIcon } from "@heroicons/react/24/outline"
 import DataTable, { Column } from "@/src/shared/ui/DataTable"
 import LoadingState from "@/src/shared/ui/LoadingState"
 import EmptyState from "@/src/shared/ui/EmptyState"
-import { getAllClients, deleteClient, type Client } from "@/src/services/clientService"
+import { getAllClients, deleteClient } from "@/src/services/clientService"
 import type { Client as ClientEntity } from "@/src/domain/entities"
 import { ClientStatus, ClientSegment } from "@/src/domain/entities"
 import ClientForm from "./ClientForm"
@@ -88,7 +88,7 @@ const ClientList = () => {
   }
 
   const getStatusBadge = (status: ClientStatus) => {
-    const colors = {
+    const colors: Record<ClientStatus, string> = {
       [ClientStatus.ACTIVE]: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
       [ClientStatus.INACTIVE]:
         "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",

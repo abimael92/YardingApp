@@ -13,15 +13,15 @@ import type { Employee, Client, Job, Payment, Schedule, Quote, Communication } f
 // ============================================================================
 
 class MockStore {
-  // In-memory storage (read-only access in Phase 1)
-  private readonly users: User[] = []
-  private readonly employees: Employee[] = []
-  private readonly clients: Client[] = []
-  private readonly jobs: Job[] = []
-  private readonly payments: Payment[] = []
-  private readonly schedules: Schedule[] = []
-  private readonly quotes: Quote[] = []
-  private readonly communications: Communication[] = []
+  // In-memory storage
+  private users: User[] = []
+  private employees: Employee[] = []
+  private clients: Client[] = []
+  private jobs: Job[] = []
+  private payments: Payment[] = []
+  private schedules: Schedule[] = []
+  private quotes: Quote[] = []
+  private communications: Communication[] = []
   private settings: Record<string, any> = {}
 
   constructor() {
@@ -160,6 +160,37 @@ class MockStore {
   // ============================================================================
   // Mutation Methods (CRUD Operations)
   // ============================================================================
+
+  // Users
+  createUser(user: Omit<User, "id" | "joinDate">): User {
+    const newUser: User = {
+      ...user,
+      id: `user-${Date.now()}`,
+      joinDate: new Date().toISOString().split("T")[0],
+    }
+    this.users.push(newUser)
+    return newUser
+  }
+
+  updateUser(id: string, updates: Partial<User>): User | undefined {
+    const user = this.getUserById(id)
+    if (!user) return undefined
+    const updated = { ...user, ...updates }
+    const index = this.users.findIndex((u) => u.id === id)
+    if (index >= 0) {
+      this.users[index] = updated
+    }
+    return updated
+  }
+
+  deleteUser(id: string): boolean {
+    const index = this.users.findIndex((u) => u.id === id)
+    if (index >= 0) {
+      this.users.splice(index, 1)
+      return true
+    }
+    return false
+  }
 
   // Clients
   createClient(client: Omit<Client, "id" | "createdAt" | "updatedAt">): Client {
@@ -390,7 +421,7 @@ class MockStore {
   // ============================================================================
 
   private initializeSeedData() {
-    // Seed Users (basic seed data)
+    // Seed Users (comprehensive seed data)
     this.users.push(
       {
         id: "user-1",
@@ -409,12 +440,68 @@ class MockStore {
         joinDate: "2024-01-12",
       },
       {
+        id: "user-3",
+        name: "Sarah Chen",
+        email: "sarah@email.com",
+        role: "Worker",
+        status: "Active",
+        joinDate: "2024-01-10",
+      },
+      {
+        id: "user-4",
+        name: "Michael Thompson",
+        email: "michael@email.com",
+        role: "Supervisor",
+        status: "Active",
+        joinDate: "2023-11-20",
+      },
+      {
         id: "user-5",
         name: "Josue Garcia",
         email: "josue.garcia@jjdesertlandscaping.com",
         role: "Admin",
         status: "Active",
         joinDate: "2023-12-01",
+      },
+      {
+        id: "user-6",
+        name: "Emily Johnson",
+        email: "emily@email.com",
+        role: "Client",
+        status: "Active",
+        joinDate: "2024-02-01",
+      },
+      {
+        id: "user-7",
+        name: "David Martinez",
+        email: "david@email.com",
+        role: "Client",
+        status: "Pending",
+        joinDate: "2024-02-15",
+      },
+      {
+        id: "user-8",
+        name: "Lisa Anderson",
+        email: "lisa@email.com",
+        role: "Worker",
+        status: "Active",
+        joinDate: "2024-01-05",
+      },
+      {
+        id: "user-9",
+        name: "Robert Brown",
+        email: "robert@email.com",
+        role: "Client",
+        status: "Inactive",
+        joinDate: "2023-10-15",
+      },
+      {
+        id: "user-10",
+        name: "Jennifer Lee",
+        email: "jennifer@email.com",
+        role: "Supervisor",
+        status: "Active",
+        joinDate: "2023-11-10",
       }
     )
 

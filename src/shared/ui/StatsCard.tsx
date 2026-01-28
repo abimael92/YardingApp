@@ -16,7 +16,7 @@ interface StatsCardProps {
   value: string
   icon: HeroIcon
   color: "primary" | "green" | "earth" | "sand" | "blue" | "red"
-  change?: string
+  change?: string | React.ReactNode
 }
 
 const StatsCard = ({ title, value, icon: Icon, color, change }: StatsCardProps) => {
@@ -50,9 +50,9 @@ const StatsCard = ({ title, value, icon: Icon, color, change }: StatsCardProps) 
             {value}
           </p>
           {change && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {change}
-            </p>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {typeof change === "string" ? <p>{change}</p> : change}
+            </div>
           )}
         </div>
         <div className={`p-3 rounded-lg ${getColorClasses(color)}`}>

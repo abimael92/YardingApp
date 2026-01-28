@@ -1,4 +1,6 @@
-import UserList from "@/src/features/admin/users/ui/UserList"
+"use client"
+
+import UserManagement from "@/src/features/admin/users/ui/UserManagement"
 import Sidebar from "@/src/shared/ui/Sidebar"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import { useState } from "react"
@@ -37,7 +39,7 @@ export default function UsersPage() {
         {/* Main Content */}
         <div className="p-6">
           <Breadcrumbs />
-          <UserList />
+          <UserManagement />
         </div>
       </div>
     </div>

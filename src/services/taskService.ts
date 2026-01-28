@@ -6,6 +6,7 @@
  */
 
 import { getJobs } from "./jobService"
+import { getEmployeeById } from "./employeeService"
 import type { Task } from "@/src/domain/models"
 import { JobStatus, Priority } from "@/src/domain/entities"
 
@@ -17,7 +18,7 @@ const jobToTask = (job: any): Task => {
     description: job.description,
     status: mapJobStatusToTaskStatus(job.status),
     priority: mapPriorityToTaskPriority(job.priority),
-    assignedTo: job.assignedEmployeeIds?.[0] ? getEmployeeName(job.assignedEmployeeIds[0]) : undefined,
+    assignedTo: undefined, // Will be set async if needed
     dueDate: job.scheduledStart ? new Date(job.scheduledStart).toISOString().split("T")[0] : "",
     location: `${job.address.street}, ${job.address.city}, ${job.address.state} ${job.address.zipCode}`,
     estimatedDuration: `${Math.round(job.estimatedDuration / 60)} hours`,
@@ -56,17 +57,27 @@ const mapPriorityToTaskPriority = (priority: string): "low" | "medium" | "high" 
   }
 }
 
-const getEmployeeName = (employeeId: string): string => {
+const getEmployeeName = async (employeeId: string): Promise<string> => {
   try {
-    const { getEmployeeById } = require("./employeeService")
-    const employee = getEmployeeById(employeeId)
+    const employee = await getEmployeeById(employeeId)
     return employee?.displayName || "Unknown"
   } catch {
     return "Unknown"
   }
 }
 
-export const getTasks = (): Task[] => {
-  const jobs = getJobs()
-  return jobs.map(jobToTask)
+export const getTasks = async (): Promise<Task[]> => {
+  const jobs = await getJobs()
+  // Map jobs to tasks, handling async employee name lookup
+  const tasks = await Promise.all(
+    jobs.map(async (job) => {
+      const task = jobToTask(job)
+      // Update assignedTo with async employee name if needed
+      if (job.assignedEmployeeIds?.[0]) {
+        task.assignedTo = await getEmployeeName(job.assignedEmployeeIds[0])
+      }
+      return task
+    })
+  )
+  return tasks
 }

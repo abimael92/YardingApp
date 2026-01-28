@@ -1,17 +1,17 @@
 "use client"
 
-import ServicesList from "@/src/features/client/services/ui/ServicesList"
+import JobList from "@/src/features/admin/jobs/ui/JobList"
 import Sidebar from "@/src/shared/ui/Sidebar"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import { useState } from "react"
 import { Bars3Icon } from "@heroicons/react/24/outline"
 
-export default function ServicesPage() {
+export default function JobsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} userRole="client" />
+      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} userRole="admin" />
 
       <div className="flex-1 lg:ml-64">
         {/* Header */}
@@ -25,9 +25,9 @@ export default function ServicesPage() {
                 <Bars3Icon className="w-6 h-6" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Services</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Jobs</h1>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Browse and manage your services
+                  Manage all jobs and work orders
                 </p>
               </div>
             </div>
@@ -37,7 +37,7 @@ export default function ServicesPage() {
         {/* Main Content */}
         <div className="p-6">
           <Breadcrumbs />
-          <ServicesList />
+          <JobList />
         </div>
       </div>
     </div>
