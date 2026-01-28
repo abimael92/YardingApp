@@ -8,10 +8,11 @@
 import { getJobs } from "./jobService"
 import { getEmployeeById } from "./employeeService"
 import type { Task } from "@/src/domain/models"
+import type { Job } from "@/src/domain/entities"
 import { JobStatus, Priority } from "@/src/domain/entities"
 
 // Convert Job to Task for backward compatibility
-const jobToTask = (job: any): Task => {
+const jobToTask = (job: Job): Task => {
   return {
     id: job.id,
     title: job.title,
