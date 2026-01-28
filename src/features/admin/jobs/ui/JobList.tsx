@@ -13,15 +13,15 @@ import LoadingState from "@/src/shared/ui/LoadingState"
 import { getJobs, deleteJob } from "@/src/services/jobService"
 import { getAllClients } from "@/src/services/clientService"
 import { getAllEmployees } from "@/src/services/employeeService"
-import type { Job } from "@/src/domain/entities"
+import type { Job, Client, Employee } from "@/src/domain/entities"
 import { JobStatus, Priority } from "@/src/domain/entities"
 import JobForm from "./JobForm"
 import JobDetail from "./JobDetail"
 
 const JobList = () => {
   const [jobs, setJobs] = useState<Job[]>([])
-  const [clients, setClients] = useState<any[]>([])
-  const [employees, setEmployees] = useState<any[]>([])
+  const [clients, setClients] = useState<Client[]>([])
+  const [employees, setEmployees] = useState<Employee[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isDetailOpen, setIsDetailOpen] = useState(false)

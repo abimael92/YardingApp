@@ -136,7 +136,14 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
   }
 
   // NavLink component with desert theme colors
-  const NavLink = ({ href, icon: Icon, onClick, children, badge }: any) => {
+  interface NavLinkProps {
+    href: string
+    icon: React.ComponentType<{ className?: string }>
+    onClick?: () => void
+    children: React.ReactNode
+    badge?: number | null
+  }
+  const NavLink = ({ href, icon: Icon, onClick, children, badge }: NavLinkProps) => {
     // Fix active detection: exact match or path starts with href + "/" (to avoid /admin matching /admin/users)
     const isActive = pathname === href || (pathname.startsWith(href + "/"))
 
@@ -322,7 +329,13 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
       { name: "Dashboard", href: `/${userRole}`, icon: HomeIcon, badge: null },
     ]
 
-    let roleItems: any[] = []
+    interface NavItem {
+      name: string
+      href: string
+      icon: React.ComponentType<{ className?: string }>
+      badge: number | null
+    }
+    let roleItems: NavItem[] = []
 
     if (userRole === "worker") {
       roleItems = [

@@ -154,7 +154,7 @@ const ClientProfile = ({ isOpen, onClose, client }: ClientProfileProps) => {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as "basic" | "services" | "properties" | "financial")}
                 className={`flex items-center space-x-1 sm:space-x-2 py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? "border-green-500 text-green-600 dark:text-green-400"

@@ -7,19 +7,20 @@
 
 import { getEmployees } from "./employeeService"
 import type { Worker } from "@/src/domain/models"
+import type { Employee } from "@/src/domain/entities"
 import { EmployeeRole, EmployeeStatus } from "@/src/domain/entities"
 
 // Convert Employee to Worker for backward compatibility
-const employeeToWorker = (employee: any): Worker => {
+const employeeToWorker = (employee: Employee): Worker => {
   return {
-    id: employee.id,
-    name: employee.displayName || employee.name,
-    role: employee.department || employee.role || "Worker",
-    avatar: employee.avatar || "/placeholder-user.jpg",
-    status: mapEmployeeStatusToWorkerStatus(employee.status),
-    rating: employee.rating || 0,
-    completedTasks: employee.completedJobsCount || employee.completedTasks || 0,
-  }
+		id: employee.id,
+		name: employee.displayName || `${employee.firstName} ${employee.lastName}`,
+		role: employee.department || employee.role || 'Worker',
+		avatar: employee.avatar || '/placeholder-user.jpg',
+		status: mapEmployeeStatusToWorkerStatus(employee.status),
+		rating: employee.rating || 0,
+		completedTasks: employee.completedJobsCount || 0,
+	};
 }
 
 const mapEmployeeStatusToWorkerStatus = (

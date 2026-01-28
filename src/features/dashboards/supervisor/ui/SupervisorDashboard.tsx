@@ -28,11 +28,13 @@ import StatsCard from "@/src/shared/ui/StatsCard"
 import WorkerCard from "@/src/shared/ui/WorkerCard"
 import { getTasks } from "@/src/services/taskService"
 import { getWorkers } from "@/src/services/workerService"
+import type { Task } from "@/src/domain/models"
+import type { Worker } from "@/src/domain/models"
 
 const SupervisorDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [tasks, setTasks] = useState<any[]>([])
-  const [workers, setWorkers] = useState<any[]>([])
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [workers, setWorkers] = useState<Worker[]>([])
 
   useEffect(() => {
     const loadData = async () => {
