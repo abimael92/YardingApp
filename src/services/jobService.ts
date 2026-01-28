@@ -89,27 +89,27 @@ export interface JobService {
 export const jobService: JobService = {
   getAll: async () => {
     await initializeJobs()
-    return asyncify(() => mockStore.getJobs())()
+    return asyncify(() => mockStore.getJobs())
   },
 
   getById: async (id: EntityId) => {
     await initializeJobs()
-    return asyncify(() => mockStore.getJobById(id))()
+    return asyncify(() => mockStore.getJobById(id))
   },
 
   getByClientId: async (clientId: EntityId) => {
     await initializeJobs()
-    return asyncify(() => mockStore.getJobsByClientId(clientId))()
+    return asyncify(() => mockStore.getJobsByClientId(clientId))
   },
 
   getByEmployeeId: async (employeeId: EntityId) => {
     await initializeJobs()
-    return asyncify(() => mockStore.getJobsByEmployeeId(employeeId))()
+    return asyncify(() => mockStore.getJobsByEmployeeId(employeeId))
   },
 
   getByStatus: async (status: JobStatus) => {
     await initializeJobs()
-    return asyncify(() => mockStore.getJobs().filter((job) => job.status === status))()
+    return asyncify(() => mockStore.getJobs().filter((job) => job.status === status))
   },
 
   create: (job) =>
