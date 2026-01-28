@@ -29,7 +29,7 @@ import StatsCard from "@/src/shared/ui/StatsCard"
 import { getAllClients } from "@/src/services/clientService"
 import { getJobs } from "@/src/services/jobService"
 import { getPayments } from "@/src/services/paymentService"
-import type { Client } from "@/src/domain/entities"
+import type { Client, Job, Payment } from "@/src/domain/entities"
 import { ClientStatus, ClientSegment } from "@/src/domain/entities"
 import { JobStatus } from "@/src/domain/entities"
 import ClientForm from "./ClientForm"
@@ -45,8 +45,8 @@ const ClientDirectory = () => {
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set())
   const [showAnalytics, setShowAnalytics] = useState(false)
-  const [allJobs, setAllJobs] = useState<any[]>([])
-  const [allPayments, setAllPayments] = useState<any[]>([])
+  const [allJobs, setAllJobs] = useState<Job[]>([])
+  const [allPayments, setAllPayments] = useState<Payment[]>([])
 
   // Filters and search
   const [searchQuery, setSearchQuery] = useState("")
@@ -523,7 +523,7 @@ const ClientDirectory = () => {
                 </label>
                 <select
                   value={dateRangeFilter}
-                  onChange={(e) => setDateRangeFilter(e.target.value as any)}
+                  onChange={(e) => setDateRangeFilter(e.target.value as "all" | "thisMonth" | "lastMonth" | "thisYear")}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="all">All Time</option>
