@@ -73,29 +73,29 @@ export interface CommunicationService {
 export const communicationService: CommunicationService = {
   getAll: async () => {
     await initializeCommunications()
-    return asyncify(() => mockStore.getCommunications())()
+    return asyncify(() => mockStore.getCommunications())
   },
 
   getById: async (id: EntityId) => {
     await initializeCommunications()
-    return asyncify(() => mockStore.getCommunicationById(id))()
+    return asyncify(() => mockStore.getCommunicationById(id))
   },
 
   getByClientId: async (clientId: EntityId) => {
     await initializeCommunications()
-    return asyncify(() => mockStore.getCommunicationsByClientId(clientId))()
+    return asyncify(() => mockStore.getCommunicationsByClientId(clientId))
   },
 
   getByJobId: async (jobId: EntityId) => {
     await initializeCommunications()
-    return asyncify(() => mockStore.getCommunicationsByJobId(jobId))()
+    return asyncify(() => mockStore.getCommunicationsByJobId(jobId))
   },
 
   getByEmployeeId: async (employeeId: EntityId) => {
     await initializeCommunications()
     return asyncify(() =>
       mockStore.getCommunications().filter((comm) => comm.employeeId === employeeId)
-    )()
+    )
   },
 
   create: (communication) =>

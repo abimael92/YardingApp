@@ -6,13 +6,14 @@
  */
 
 import { getAllUsers } from "./userService"
+import type { User } from "@/src/domain/models"
 import { getAllClients } from "./clientService"
 import { getAllEmployees } from "./employeeService"
 import { getTasks } from "./taskService"
 import { getJobs } from "./jobService"
 import { getPayments } from "./paymentService"
 import { mockStore } from "@/src/data/mockStore"
-import { PaymentStatus, JobStatus, EmployeeStatus } from "@/src/domain/entities"
+import { PaymentStatus, JobStatus, EmployeeStatus, Priority } from "@/src/domain/entities"
 
 // ============================================================================
 // Service Interface (API-ready)
@@ -60,7 +61,7 @@ export interface AdminService {
   getRevenueHistory(months?: number): Promise<Array<{ month: string; revenue: number }>>
   getRecentActivity(limit?: number): Promise<ActivityLog[]>
   getPendingActions(): Promise<PendingAction[]>
-  getRecentUsers(limit?: number): Promise<ReturnType<typeof getAllUsers>>
+  getRecentUsers(limit?: number): Promise<User[]>
   getSystemHealth(): {
     status: "healthy" | "warning" | "critical"
     uptime: number
@@ -266,15 +267,17 @@ export const adminService: AdminService = {
         type: "unassigned_job",
         title: `Unassigned Job: ${job.title}`,
         description: `Job needs to be assigned to an employee`,
-        priority: job.priority === "URGENT" || job.priority === "HIGH" ? "high" : "medium",
+        priority: job.priority === Priority.URGENT || job.priority === Priority.HIGH ? "high" : "medium",
         link: `/admin/jobs`,
       })
     })
 
-    // Overdue payments
+    // Overdue payments - check pending payments that are older than 30 days
     const overduePayments = payments.filter((p) => {
-      if (p.status === PaymentStatus.PENDING && p.dueDate) {
-        return new Date(p.dueDate) < new Date()
+      if (p.status === PaymentStatus.PENDING) {
+        const paymentDate = new Date(p.createdAt)
+        const daysSinceCreated = (Date.now() - paymentDate.getTime()) / (1000 * 60 * 60 * 24)
+        return daysSinceCreated > 30
       }
       return false
     })

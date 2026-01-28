@@ -42,7 +42,7 @@ const mapEmployeeStatusToWorkerStatus = (
   }
 }
 
-export const getWorkers = (): Worker[] => {
-  const employees = getEmployees()
+export const getWorkers = async (): Promise<Worker[]> => {
+  const employees = await getEmployees()
   return employees.map(employeeToWorker)
 }

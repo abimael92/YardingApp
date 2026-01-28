@@ -73,27 +73,27 @@ export interface ScheduleService {
 export const scheduleService: ScheduleService = {
   getAll: async () => {
     await initializeSchedules()
-    return asyncify(() => mockStore.getSchedules())()
+    return asyncify(() => mockStore.getSchedules())
   },
 
   getById: async (id: EntityId) => {
     await initializeSchedules()
-    return asyncify(() => mockStore.getScheduleById(id))()
+    return asyncify(() => mockStore.getScheduleById(id))
   },
 
   getByJobId: async (jobId: EntityId) => {
     await initializeSchedules()
-    return asyncify(() => mockStore.getSchedulesByJobId(jobId))()
+    return asyncify(() => mockStore.getSchedulesByJobId(jobId))
   },
 
   getByEmployeeId: async (employeeId: EntityId) => {
     await initializeSchedules()
-    return asyncify(() => mockStore.getSchedulesByEmployeeId(employeeId))()
+    return asyncify(() => mockStore.getSchedulesByEmployeeId(employeeId))
   },
 
   getByStatus: async (status: ScheduleStatus) => {
     await initializeSchedules()
-    return asyncify(() => mockStore.getSchedules().filter((schedule) => schedule.status === status))()
+    return asyncify(() => mockStore.getSchedules().filter((schedule) => schedule.status === status))
   },
 
   create: (schedule) =>
