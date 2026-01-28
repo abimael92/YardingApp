@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter, usePathname } from "next/navigation"
+import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { playfair } from "@/src/shared/styles/fonts"
 import {
@@ -9,7 +11,9 @@ import {
   EyeIcon,
   UserIcon,
   Cog6ToothIcon,
+  ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline"
+import { getMockRole, clearMockRole, type MockRole } from "@/src/features/auth/services/mockAuth"
 
 interface NavbarProps {
   darkMode: boolean
@@ -17,7 +21,32 @@ interface NavbarProps {
 }
 
 const Navbar = ({ darkMode, setDarkMode }: NavbarProps) => {
+  const router = useRouter()
+  const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+  const [currentRole, setCurrentRole] = useState<MockRole | null>(null)
+
+  // Update role when pathname changes (user navigates)
+  useEffect(() => {
+    const updateRole = () => {
+      setCurrentRole(getMockRole())
+    }
+    updateRole()
+    
+    // Also check periodically in case cookie changes
+    const interval = setInterval(updateRole, 1000)
+    return () => clearInterval(interval)
+  }, [pathname])
+
+  const handleLogout = () => {
+    clearMockRole()
+    setCurrentRole(null) // Immediately update UI
+    router.push("/")
+    // Force a refresh after a short delay to ensure cookie is cleared
+    setTimeout(() => {
+      router.refresh()
+    }, 100)
+  }
 
   const navigation = [
     { name: "Home", href: "#home", icon: HomeIcon },
@@ -70,8 +99,32 @@ const Navbar = ({ darkMode, setDarkMode }: NavbarProps) => {
             })}
           </div>
 
-          {/* Dark Mode Toggle & Mobile Menu Button */}
-          <div className="flex items-center space-x-4"></div>
+          {/* Login Button & Actions */}
+          <div className="flex items-center space-x-4">
+            {currentRole ? (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogout}
+                className="px-4 py-2 text-sm font-medium text-white rounded-lg bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 hover:from-emerald-600 hover:via-green-600 hover:to-emerald-700 shadow-lg transition-all duration-200 flex items-center space-x-2"
+                type="button"
+              >
+                <span className="capitalize">{currentRole}</span>
+                <ArrowRightOnRectangleIcon className="w-4 h-4" />
+              </motion.button>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => router.push("/login")}
+                className="px-6 py-2.5 text-sm font-semibold text-white rounded-lg bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 hover:from-emerald-600 hover:via-green-600 hover:to-emerald-700 shadow-lg transition-all duration-200 flex items-center space-x-2"
+                type="button"
+              >
+                <ArrowRightOnRectangleIcon className="w-5 h-5" />
+                <span>Login</span>
+              </motion.button>
+            )}
+          </div>
           {/* <div className="flex items-center space-x-4">
             <motion.button
               whileHover={{ scale: 1.05 }}

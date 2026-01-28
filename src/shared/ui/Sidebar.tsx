@@ -14,7 +14,16 @@ import {
   CalendarIcon,
   MapIcon,
   BellIcon,
+  UsersIcon,
+  BriefcaseIcon,
+  DocumentTextIcon,
+  DocumentChartBarIcon,
+  ClockIcon,
+  BanknotesIcon,
+  ReceiptRefundIcon,
 } from "@heroicons/react/24/outline"
+import { getJobs } from "@/src/services/jobService"
+import { JobStatus } from "@/src/domain/entities"
 
 interface SidebarProps {
   isOpen: boolean
@@ -22,10 +31,21 @@ interface SidebarProps {
   userRole: "worker" | "supervisor" | "client" | "admin"
 }
 
+interface NavigationSection {
+  title?: string
+  items: Array<{
+    name: string
+    href: string
+    icon: React.ComponentType<{ className?: string }>
+    badge?: number | string
+  }>
+}
+
 const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
   const pathname = usePathname()
   const router = useRouter()
   const [isDesktop, setIsDesktop] = useState(false)
+  const [activeJobsCount, setActiveJobsCount] = useState<number>(0)
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1024px)")
@@ -35,48 +55,112 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
     return () => mediaQuery.removeEventListener("change", update)
   }, [])
 
-  const getNavigationItems = () => {
+  // Fetch active jobs count for admin
+  useEffect(() => {
+    if (userRole === "admin") {
+      const loadActiveJobsCount = async () => {
+        try {
+          const jobs = await getJobs()
+          const activeCount = jobs.filter(
+            (job) =>
+              job.status === JobStatus.SCHEDULED ||
+              job.status === JobStatus.IN_PROGRESS ||
+              job.status === JobStatus.QUOTED
+          ).length
+          setActiveJobsCount(activeCount)
+        } catch (error) {
+          console.error("Failed to load active jobs count:", error)
+        }
+      }
+      loadActiveJobsCount()
+    }
+  }, [userRole])
+
+  const getNavigationSections = (): NavigationSection[] => {
     const baseItems = [{ name: "Dashboard", href: `/${userRole}`, icon: HomeIcon }]
 
     switch (userRole) {
       case "worker":
         return [
-          ...baseItems,
-          { name: "My Tasks", href: `/${userRole}/tasks`, icon: ClipboardDocumentListIcon },
-          { name: "Schedule", href: `/${userRole}/schedule`, icon: CalendarIcon },
-          { name: "Map View", href: `/${userRole}/map`, icon: MapIcon },
+          {
+            items: [
+              ...baseItems,
+              { name: "My Tasks", href: `/${userRole}/tasks`, icon: ClipboardDocumentListIcon },
+              { name: "Schedule", href: `/${userRole}/schedule`, icon: CalendarIcon },
+              { name: "Map View", href: `/${userRole}/map`, icon: MapIcon },
+            ],
+          },
         ]
       case "supervisor":
         return [
-          ...baseItems,
-          { name: "Team Overview", href: `/${userRole}/team`, icon: UserGroupIcon },
-          { name: "Task Management", href: `/${userRole}/tasks`, icon: ClipboardDocumentListIcon },
-          { name: "Analytics", href: `/${userRole}/analytics`, icon: ChartBarIcon },
-          { name: "Schedule", href: `/${userRole}/schedule`, icon: CalendarIcon },
+          {
+            items: [
+              ...baseItems,
+              { name: "Team Overview", href: `/${userRole}/team`, icon: UserGroupIcon },
+              { name: "Task Management", href: `/${userRole}/tasks`, icon: ClipboardDocumentListIcon },
+              { name: "Analytics", href: `/${userRole}/analytics`, icon: ChartBarIcon },
+              { name: "Schedule", href: `/${userRole}/schedule`, icon: CalendarIcon },
+            ],
+          },
         ]
       case "client":
         return [
-          ...baseItems,
-          { name: "My Services", href: `/${userRole}/services`, icon: ClipboardDocumentListIcon },
-          { name: "Schedule", href: `/${userRole}/schedule`, icon: CalendarIcon },
-          { name: "Billing", href: `/${userRole}/billing`, icon: ChartBarIcon },
+          {
+            items: [
+              ...baseItems,
+              { name: "My Services", href: `/${userRole}/services`, icon: ClipboardDocumentListIcon },
+              { name: "Schedule", href: `/${userRole}/schedule`, icon: CalendarIcon },
+              { name: "Billing", href: `/${userRole}/billing`, icon: ChartBarIcon },
+            ],
+          },
         ]
       case "admin":
         return [
-          ...baseItems,
-          { name: "Analytics", href: `/${userRole}/analytics`, icon: ChartBarIcon },
-          { name: "User Management", href: `/${userRole}/users`, icon: UserGroupIcon },
-          { name: "Clients", href: `/${userRole}/clients`, icon: UserGroupIcon },
-          { name: "Employees", href: `/${userRole}/employees`, icon: UserGroupIcon },
-          { name: "Task Overview", href: `/${userRole}/tasks`, icon: ClipboardDocumentListIcon },
-          { name: "Settings", href: `/${userRole}/settings`, icon: Cog6ToothIcon },
+          {
+            title: "ADMINISTRATION",
+            items: [
+              { name: "Dashboard", href: `/${userRole}`, icon: HomeIcon },
+              { name: "Analytics", href: `/${userRole}/analytics`, icon: ChartBarIcon },
+              { name: "Settings", href: `/${userRole}/settings`, icon: Cog6ToothIcon },
+            ],
+          },
+          {
+            title: "USER MANAGEMENT",
+            items: [
+              { name: "System Users", href: `/${userRole}/users`, icon: UsersIcon },
+              { name: "Clients", href: `/${userRole}/clients`, icon: UserGroupIcon },
+              { name: "Employees", href: `/${userRole}/employees`, icon: BriefcaseIcon },
+            ],
+          },
+          {
+            title: "OPERATIONS",
+            items: [
+              {
+                name: "Jobs",
+                href: `/${userRole}/jobs`,
+                icon: ClipboardDocumentListIcon,
+                badge: activeJobsCount > 0 ? activeJobsCount : undefined,
+              },
+              { name: "Tasks", href: `/${userRole}/tasks`, icon: ClockIcon },
+              { name: "Schedule", href: `/${userRole}/schedule`, icon: CalendarIcon },
+              { name: "Quotes", href: `/${userRole}/quotes`, icon: DocumentTextIcon },
+            ],
+          },
+          {
+            title: "FINANCIAL",
+            items: [
+              { name: "Payments", href: `/${userRole}/payments`, icon: BanknotesIcon },
+              { name: "Invoices", href: `/${userRole}/invoices`, icon: ReceiptRefundIcon },
+              { name: "Reports", href: `/${userRole}/reports`, icon: DocumentChartBarIcon },
+            ],
+          },
         ]
       default:
-        return baseItems
+        return [{ items: baseItems }]
     }
   }
 
-  const navigationItems = getNavigationItems()
+  const navigationSections = getNavigationSections()
   const isActive = (path: string) => pathname === path
 
   return (
@@ -112,25 +196,59 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
             </div>
           </div>
 
-          <nav className="space-y-2 flex-1">
-            {navigationItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                    isActive(item.href)
-                      ? "bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400"
-                      : "text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-700"
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span>{item.name}</span>
-                </Link>
-              )
-            })}
+          <nav className="space-y-6 flex-1 overflow-y-auto pb-4">
+            {navigationSections.map((section, sectionIndex) => (
+              <div key={sectionIndex} className="space-y-2">
+                {section.title && (
+                  <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700/50">
+                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      {section.title}
+                    </h3>
+                  </div>
+                )}
+                <div className="space-y-1">
+                  {section.items.map((item) => {
+                    const Icon = item.icon
+                    const active = isActive(item.href)
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={() => setIsOpen(false)}
+                        title={item.name}
+                        className={`group relative flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          active
+                            ? "bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 shadow-sm border-l-2 border-primary-600 dark:border-primary-400"
+                            : "text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3 flex-1 min-w-0">
+                          <Icon
+                            className={`w-5 h-5 flex-shrink-0 transition-colors ${
+                              active
+                                ? "text-primary-600 dark:text-primary-400"
+                                : "text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400"
+                            }`}
+                          />
+                          <span className="truncate">{item.name}</span>
+                        </div>
+                        {item.badge !== undefined && (
+                          <span
+                            className={`ml-2 px-2 py-0.5 text-xs font-semibold rounded-full flex-shrink-0 min-w-[1.5rem] text-center ${
+                              active
+                                ? "bg-primary-600 text-white"
+                                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                            }`}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
           </nav>
           <button
             type="button"
