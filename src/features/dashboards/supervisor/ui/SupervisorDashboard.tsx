@@ -39,7 +39,7 @@ const SupervisorDashboard = () => {
       try {
         const [tasksData, workersData] = await Promise.all([
           getTasks(),
-          Promise.resolve(getWorkers()),
+          getWorkers(),
         ])
         setTasks(tasksData)
         setWorkers(workersData)
@@ -279,11 +279,11 @@ const SupervisorDashboard = () => {
                   Team Members
                 </h2>
                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {getWorkers().length} workers
+                  {workers.length} workers
                 </span>
               </div>
               <div className="space-y-4">
-                {getWorkers().map((worker, index) => (
+                {workers.map((worker, index) => (
                   <motion.div
                     key={worker.id}
                     initial={{ opacity: 0, x: -20 }}
