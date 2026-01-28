@@ -2,11 +2,243 @@
  * Mock Data Store
  *
  * Centralized in-memory data store for development and testing.
- * Phase 1: Read-only access only. No mutations.
+ * J&J Desert Landscaping Invoice System: Invoice types, demo data, invoice settings.
  */
 
 import type { User } from "@/src/domain/models"
-import type { Employee, Client, Job, Payment, Schedule, Quote, Communication } from "@/src/domain/entities"
+import type {
+  Employee,
+  Client,
+  Job,
+  Payment,
+  Schedule,
+  Quote,
+  Communication,
+} from "@/src/domain/entities"
+import { ClientStatus, ClientSegment } from "@/src/domain/entities"
+
+// -----------------------------------------------------------------------------
+// Invoice types (J&J Desert Landscaping Invoice System)
+// -----------------------------------------------------------------------------
+
+export type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled"
+
+export interface InvoiceItem {
+  id: string
+  description: string
+  quantity: number
+  unitPrice: number
+  total: number
+}
+
+export interface Invoice {
+  id: string
+  invoiceNumber: string
+  clientId: string
+  clientName: string
+  jobId?: string
+  status: InvoiceStatus
+  amount: number
+  tax: number
+  total: number
+  dueDate: string
+  sentDate?: string
+  paidDate?: string
+  createdAt: string
+  lineItems: InvoiceItem[]
+  notes?: string
+}
+
+export interface InvoiceSettings {
+  taxRate: number
+  companyName: string
+  companyAddress?: string
+  companyEmail: string
+  companyPhone: string
+}
+
+// Demo clients (match demo invoices: client-1 … client-4)
+const DEMO_CLIENTS: Client[] = [
+  {
+    id: "client-1",
+    name: "John Smith",
+    contactInfo: {
+      email: "john.smith@email.com",
+      phone: "+1-602-555-0101",
+      preferredContactMethod: "email",
+    },
+    primaryAddress: {
+      street: "1234 Desert View Dr",
+      city: "Phoenix",
+      state: "AZ",
+      zipCode: "85001",
+      country: "USA",
+    },
+    status: ClientStatus.ACTIVE,
+    segment: ClientSegment.REGULAR,
+    totalSpent: { amount: 918, currency: "USD" },
+    lifetimeValue: { amount: 918, currency: "USD" },
+    serviceRequestIds: [],
+    quoteIds: [],
+    jobIds: ["job-1"],
+    paymentIds: [],
+    communicationIds: [],
+    createdAt: "2025-01-01T00:00:00Z",
+    updatedAt: "2025-01-10T00:00:00Z",
+  },
+  {
+    id: "client-2",
+    name: "Sarah Johnson",
+    contactInfo: {
+      email: "sarah.johnson@email.com",
+      phone: "+1-602-555-0102",
+      preferredContactMethod: "email",
+    },
+    primaryAddress: {
+      street: "5678 Cactus Rd",
+      city: "Phoenix",
+      state: "AZ",
+      zipCode: "85002",
+      country: "USA",
+    },
+    status: ClientStatus.ACTIVE,
+    segment: ClientSegment.VIP,
+    totalSpent: { amount: 1296, currency: "USD" },
+    lifetimeValue: { amount: 1296, currency: "USD" },
+    serviceRequestIds: [],
+    quoteIds: [],
+    jobIds: ["job-2"],
+    paymentIds: [],
+    communicationIds: [],
+    createdAt: "2025-01-15T00:00:00Z",
+    updatedAt: "2025-01-20T00:00:00Z",
+  },
+  {
+    id: "client-3",
+    name: "Mike Davis",
+    contactInfo: {
+      email: "mike.davis@email.com",
+      phone: "+1-602-555-0103",
+      preferredContactMethod: "phone",
+    },
+    primaryAddress: {
+      street: "9012 Business Blvd",
+      city: "Phoenix",
+      state: "AZ",
+      zipCode: "85003",
+      country: "USA",
+    },
+    status: ClientStatus.ACTIVE,
+    segment: ClientSegment.REGULAR,
+    totalSpent: { amount: 702, currency: "USD" },
+    lifetimeValue: { amount: 702, currency: "USD" },
+    serviceRequestIds: [],
+    quoteIds: [],
+    jobIds: [],
+    paymentIds: [],
+    communicationIds: [],
+    createdAt: "2025-12-20T00:00:00Z",
+    updatedAt: "2025-12-28T00:00:00Z",
+  },
+  {
+    id: "client-4",
+    name: "Emily Wilson",
+    contactInfo: {
+      email: "emily.wilson@email.com",
+      phone: "+1-602-555-0104",
+      preferredContactMethod: "email",
+    },
+    primaryAddress: {
+      street: "3456 Palm St",
+      city: "Phoenix",
+      state: "AZ",
+      zipCode: "85004",
+      country: "USA",
+    },
+    status: ClientStatus.ACTIVE,
+    segment: ClientSegment.NEW,
+    totalSpent: { amount: 0, currency: "USD" },
+    lifetimeValue: { amount: 1026, currency: "USD" },
+    serviceRequestIds: [],
+    quoteIds: [],
+    jobIds: ["job-4"],
+    paymentIds: [],
+    communicationIds: [],
+    createdAt: "2025-01-25T00:00:00Z",
+    updatedAt: "2025-01-25T00:00:00Z",
+  },
+]
+
+// Demo invoice data array (seeded into store)
+const DEMO_INVOICES: Invoice[] = [
+  {
+    id: "inv-1",
+    invoiceNumber: "INV-2025-001",
+    clientId: "client-1",
+    clientName: "John Smith",
+    jobId: "job-1",
+    status: "paid",
+    amount: 850.0,
+    tax: 68.0,
+    total: 918.0,
+    dueDate: "2025-01-15T00:00:00Z",
+    sentDate: "2025-01-01T10:00:00Z",
+    paidDate: "2025-01-10T14:30:00Z",
+    createdAt: "2025-01-01T10:00:00Z",
+    lineItems: [
+      { id: "li-1", description: "Weekly lawn maintenance (4 weeks)", quantity: 4, unitPrice: 75, total: 300 },
+      { id: "li-2", description: "Fertilizer application", quantity: 1, unitPrice: 150, total: 150 },
+      { id: "li-3", description: "Tree trimming", quantity: 1, unitPrice: 400, total: 400 },
+    ],
+  },
+  {
+    id: "inv-2",
+    invoiceNumber: "INV-2025-002",
+    clientId: "client-2",
+    clientName: "Sarah Johnson",
+    jobId: "job-2",
+    status: "sent",
+    amount: 1200.0,
+    tax: 96.0,
+    total: 1296.0,
+    dueDate: "2025-02-05T00:00:00Z",
+    sentDate: "2025-01-20T09:00:00Z",
+    createdAt: "2025-01-20T09:00:00Z",
+    lineItems: [
+      { id: "li-4", description: "Landscaping design", quantity: 1, unitPrice: 500, total: 500 },
+      { id: "li-5", description: "Plant installation", quantity: 1, unitPrice: 700, total: 700 },
+    ],
+  },
+  {
+    id: "inv-3",
+    invoiceNumber: "INV-2025-003",
+    clientId: "client-3",
+    clientName: "Mike Davis",
+    status: "overdue",
+    amount: 650.0,
+    tax: 52.0,
+    total: 702.0,
+    dueDate: "2025-01-10T00:00:00Z",
+    sentDate: "2025-12-28T11:00:00Z",
+    createdAt: "2025-12-28T11:00:00Z",
+    lineItems: [{ id: "li-6", description: "Irrigation repair", quantity: 1, unitPrice: 650, total: 650 }],
+    notes: "Payment reminder sent",
+  },
+  {
+    id: "inv-4",
+    invoiceNumber: "INV-2025-004",
+    clientId: "client-4",
+    clientName: "Emily Wilson",
+    jobId: "job-4",
+    status: "draft",
+    amount: 950.0,
+    tax: 76.0,
+    total: 1026.0,
+    dueDate: "2025-02-15T00:00:00Z",
+    createdAt: "2025-01-25T15:00:00Z",
+    lineItems: [{ id: "li-7", description: "Hardscaping - Patio", quantity: 1, unitPrice: 950, total: 950 }],
+  },
+]
 
 // ============================================================================
 // Mock Data Store (Read-Only for Phase 1)
@@ -23,6 +255,8 @@ class MockStore {
   private quotes: Quote[] = []
   private communications: Communication[] = []
   private settings: Record<string, any> = {}
+  private invoices: Invoice[] = []
+  private invoiceSettings!: InvoiceSettings
 
   constructor() {
     this.initializeSeedData()
@@ -146,6 +380,23 @@ class MockStore {
 
   getCommunicationsByJobId(jobId: string): Communication[] {
     return this.communications.filter((c) => c.jobId === jobId)
+  }
+
+  // Invoices (J&J Desert Landscaping Invoice System)
+  getInvoices(): Invoice[] {
+    return [...this.invoices]
+  }
+
+  getInvoiceById(id: string): Invoice | undefined {
+    return this.invoices.find((inv) => inv.id === id)
+  }
+
+  getInvoicesByClientId(clientId: string): Invoice[] {
+    return this.invoices.filter((inv) => inv.clientId === clientId)
+  }
+
+  getInvoiceSettings(): InvoiceSettings {
+    return { ...this.invoiceSettings }
   }
 
   // Settings
@@ -416,6 +667,37 @@ class MockStore {
     return false
   }
 
+  // Invoices CRUD
+  createInvoice(inv: Omit<Invoice, "id" | "invoiceNumber" | "createdAt">): Invoice {
+    const nextNum = String(this.invoices.length + 1).padStart(3, "0")
+    const newInv: Invoice = {
+      ...inv,
+      id: `inv-${Date.now()}`,
+      invoiceNumber: `INV-2025-${nextNum}`,
+      createdAt: new Date().toISOString(),
+    }
+    this.invoices.push(newInv)
+    return newInv
+  }
+
+  updateInvoice(id: string, updates: Partial<Invoice>): Invoice | undefined {
+    const inv = this.getInvoiceById(id)
+    if (!inv) return undefined
+    const updated = { ...inv, ...updates }
+    const idx = this.invoices.findIndex((i) => i.id === id)
+    if (idx >= 0) this.invoices[idx] = updated
+    return updated
+  }
+
+  deleteInvoice(id: string): boolean {
+    const idx = this.invoices.findIndex((i) => i.id === id)
+    if (idx >= 0) {
+      this.invoices.splice(idx, 1)
+      return true
+    }
+    return false
+  }
+
   // ============================================================================
   // Seed Data Initialization
   // ============================================================================
@@ -580,6 +862,22 @@ class MockStore {
       enableEmailAlerts: true,
       maintenanceMode: false,
     }
+
+    // Demo clients (match demo invoices: client-1 … client-4)
+    console.log("[mockStore] Adding demo clients:", DEMO_CLIENTS.map((c) => ({ id: c.id, name: c.name })))
+    this.clients.push(...DEMO_CLIENTS)
+
+    // Invoice settings (tax rate, company info)
+    this.invoiceSettings = {
+      taxRate: 0.08,
+      companyName: "J&J Desert Landscaping LLC",
+      companyAddress: "Phoenix, AZ",
+      companyEmail: "info@jjdesertlandscaping.com",
+      companyPhone: "+1-555-0123",
+    }
+
+    // Demo invoice data array
+    this.invoices.push(...DEMO_INVOICES)
   }
 }
 

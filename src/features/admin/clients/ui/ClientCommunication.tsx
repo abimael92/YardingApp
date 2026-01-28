@@ -17,7 +17,7 @@ import {
 import FormModal from "@/src/shared/ui/FormModal"
 import type { Client } from "@/src/domain/entities"
 import { createCommunication } from "@/src/services/communicationService"
-import { CommunicationType, CommunicationDirection } from "@/src/domain/entities"
+import { CommunicationType, CommunicationDirection, Priority } from "@/src/domain/entities"
 
 interface ClientCommunicationProps {
   client: Client
@@ -66,7 +66,7 @@ const ClientCommunication = ({ client, isOpen, onClose }: ClientCommunicationPro
     const selected = templates[communicationType].find((t) => t.name === templateName)
     if (selected) {
       setTemplate(templateName)
-      if ("subject" in selected) {
+      if ("subject" in selected && typeof selected.subject === "string") {
         setSubject(selected.subject)
       }
       setMessage(selected.body)
@@ -88,6 +88,7 @@ const ClientCommunication = ({ client, isOpen, onClose }: ClientCommunicationPro
         subject: communicationType === "email" ? subject : undefined,
         content: message,
         status: "sent",
+        priority: Priority.MEDIUM,
       })
       alert("Message sent successfully!")
       setMessage("")
