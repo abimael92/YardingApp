@@ -17,7 +17,7 @@ import {
 import FormModal from "@/src/shared/ui/FormModal"
 import type { Client } from "@/src/domain/entities"
 import { createCommunication } from "@/src/services/communicationService"
-import { CommunicationType, CommunicationDirection } from "@/src/domain/entities"
+import { CommunicationType, CommunicationDirection, Priority } from "@/src/domain/entities"
 
 interface ClientCommunicationProps {
   client: Client
@@ -88,6 +88,7 @@ const ClientCommunication = ({ client, isOpen, onClose }: ClientCommunicationPro
         subject: communicationType === "email" ? subject : undefined,
         content: message,
         status: "sent",
+        priority: Priority.MEDIUM,
       })
       alert("Message sent successfully!")
       setMessage("")
