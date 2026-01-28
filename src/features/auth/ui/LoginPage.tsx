@@ -22,7 +22,7 @@ const mockUsers = [
   },
   {
     email: "josue.garcia@jjdesertlandscaping.com",
-    password: "Desert2024!",
+    password: "Desert2026!",
     role: "admin" as MockRole,
   },
 ]
@@ -43,7 +43,7 @@ export default function LoginPage() {
       (user) => user.email === email && user.password === password
     )
     if (matchedUser) {
-      setMockRole(matchedUser.role)
+      setMockRole(matchedUser.role, matchedUser.email)
       // Small delay to ensure cookie is set
       await new Promise(resolve => setTimeout(resolve, 100))
       router.push(`/${matchedUser.role}`)

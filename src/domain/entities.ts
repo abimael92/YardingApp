@@ -196,7 +196,7 @@ export interface QuoteLineItem {
 
 export interface Quote {
   id: EntityId
-  quoteNumber: string // Human-readable, e.g., "Q-2024-001"
+  quoteNumber: string // Human-readable, e.g., "Q-2025-001"
   
   // Relationships
   clientId: EntityId
@@ -257,7 +257,7 @@ export interface JobMaterial {
 
 export interface Job {
   id: EntityId
-  jobNumber: string // Human-readable, e.g., "J-2024-001"
+  jobNumber: string // Human-readable, e.g., "J-2025-001"
   
   // Relationships
   clientId: EntityId
@@ -415,7 +415,7 @@ export interface Schedule {
 
 export interface Payment {
   id: EntityId
-  paymentNumber: string // Human-readable, e.g., "PAY-2024-001"
+  paymentNumber: string // Human-readable, e.g., "PAY-2025-001"
   
   // Relationships
   clientId: EntityId

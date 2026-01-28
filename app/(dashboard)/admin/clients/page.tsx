@@ -1,6 +1,6 @@
 "use client"
 
-import ClientList from "@/src/features/admin/clients/ui/ClientList"
+import ClientDirectory from "@/src/features/admin/clients/ui/ClientDirectory"
 import Sidebar from "@/src/shared/ui/Sidebar"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import { useState } from "react"
@@ -13,7 +13,7 @@ export default function ClientsPage() {
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} userRole="admin" />
 
-      <div className="flex-1 lg:ml-64">
+      <div className="flex-1">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4">
           <div className="flex items-center justify-between">
@@ -39,7 +39,7 @@ export default function ClientsPage() {
         {/* Main Content */}
         <div className="p-6">
           <Breadcrumbs />
-          <ClientList />
+          <ClientDirectory />
         </div>
       </div>
     </div>

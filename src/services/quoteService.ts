@@ -1,132 +1,225 @@
 /**
  * Quote Service
  * 
- * Service layer for quote management operations.
+ * Service layer for quote/estimate management
  */
 
 import { mockStore } from "@/src/data/mockStore"
-import type { Quote, EntityId, QuoteStatus } from "@/src/domain/entities"
-import { QuoteStatus as QuoteStatusEnum } from "@/src/domain/entities"
-import { getAllClients } from "./clientService"
+import type { Quote, EntityId, QuoteLineItem } from "@/src/domain/entities"
+import { QuoteStatus } from "@/src/domain/entities"
 import { asyncify, asyncifyWithError } from "./utils"
 
-// Initialize with seed data if empty (lazy initialization)
-let quotesInitialized = false
-const initializeQuotes = async () => {
-  if (quotesInitialized || mockStore.getQuotes().length > 0) {
-    quotesInitialized = true
-    return
-  }
-  
-  try {
-    const clients = await getAllClients()
-    
-    if (clients.length > 0) {
-      const client = clients[0]
-      const now = new Date()
-      const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
-
-      mockStore.createQuote({
-        clientId: client.id,
-        status: QuoteStatusEnum.SENT,
-        lineItems: [
-          {
-            id: `line-${Date.now()}-1`,
-            serviceId: "service-1",
-            serviceName: "Lawn Care & Maintenance",
-            description: "Weekly lawn maintenance service",
-            quantity: 4,
-            unitPrice: { amount: 75.0, currency: "USD" },
-            totalPrice: { amount: 300.0, currency: "USD" },
-          },
-        ],
-        subtotal: { amount: 300.0, currency: "USD" },
-        tax: { amount: 24.0, currency: "USD" },
-        total: { amount: 324.0, currency: "USD" },
-        validUntil: expiresAt,
-        expiresAt,
-        revisionNumber: 1,
-      })
-    }
-    quotesInitialized = true
-  } catch (error) {
-    console.warn("Failed to initialize quotes:", error)
-  }
+export interface QuoteTemplate {
+  id: string
+  name: string
+  description: string
+  lineItems: QuoteLineItem[]
+  defaultMarkup: number
 }
 
-// ============================================================================
-// Service Interface
-// ============================================================================
+const mockQuotes: Quote[] = [
+  {
+    id: "quote-1",
+    clientId: "client-1",
+    quoteNumber: "QT-2025-001",
+    jobId: "job-1",
+    status: QuoteStatus.SENT,
+    lineItems: [
+      {
+        id: "li-1",
+        serviceId: "service-1",
+        serviceName: "Weekly Lawn Maintenance",
+        description: "Lawn mowing, edging, and trimming",
+        quantity: 12,
+        unitPrice: { amount: 75, currency: "USD" },
+        totalPrice: { amount: 900, currency: "USD" },
+      },
+      {
+        id: "li-2",
+        serviceId: "service-2",
+        serviceName: "Fertilizer Application",
+        description: "Seasonal fertilizer application",
+        quantity: 3,
+        unitPrice: { amount: 150, currency: "USD" },
+        totalPrice: { amount: 450, currency: "USD" },
+      },
+    ],
+    subtotal: { amount: 2700, currency: "USD" },
+    tax: { amount: 216, currency: "USD" },
+    discount: { amount: 66, currency: "USD" },
+    total: { amount: 2850, currency: "USD" },
+    validUntil: "2025-02-15T00:00:00Z",
+    expiresAt: "2025-02-15T00:00:00Z",
+    revisionNumber: 1,
+    createdAt: "2025-01-20T10:00:00Z",
+    updatedAt: "2025-01-20T10:00:00Z",
+    sentAt: "2025-01-20T10:00:00Z",
+    notes: "Includes weekly maintenance for 3 months",
+  },
+  {
+    id: "quote-2",
+    clientId: "client-2",
+    quoteNumber: "QT-2025-002",
+    jobId: "job-2",
+    status: QuoteStatus.VIEWED,
+    lineItems: [
+      {
+        id: "li-3",
+        serviceId: "service-3",
+        serviceName: "Tree Removal",
+        description: "Large tree removal and stump grinding",
+        quantity: 1,
+        unitPrice: { amount: 3500, currency: "USD" },
+        totalPrice: { amount: 3500, currency: "USD" },
+      },
+      {
+        id: "li-4",
+        serviceId: "service-4",
+        serviceName: "Debris Removal",
+        description: "Cleanup and debris removal",
+        quantity: 1,
+        unitPrice: { amount: 500, currency: "USD" },
+        totalPrice: { amount: 500, currency: "USD" },
+      },
+    ],
+    subtotal: { amount: 4000, currency: "USD" },
+    tax: { amount: 320, currency: "USD" },
+    discount: { amount: 120, currency: "USD" },
+    total: { amount: 4200, currency: "USD" },
+    validUntil: "2025-02-20T00:00:00Z",
+    expiresAt: "2025-02-20T00:00:00Z",
+    revisionNumber: 1,
+    createdAt: "2025-01-22T14:30:00Z",
+    updatedAt: "2025-01-23T09:15:00Z",
+    sentAt: "2025-01-22T14:30:00Z",
+    viewedAt: "2025-01-23T09:15:00Z",
+    notes: "Tree removal and stump grinding",
+  },
+  {
+    id: "quote-3",
+    clientId: "client-3",
+    quoteNumber: "QT-2025-003",
+    status: QuoteStatus.DRAFT,
+    lineItems: [
+      {
+        id: "li-5",
+        serviceId: "service-5",
+        serviceName: "Irrigation System Repair",
+        description: "Repair and maintenance of irrigation system",
+        quantity: 1,
+        unitPrice: { amount: 1500, currency: "USD" },
+        totalPrice: { amount: 1500, currency: "USD" },
+      },
+      {
+        id: "li-6",
+        serviceId: "service-6",
+        serviceName: "Parts and Materials",
+        description: "Replacement parts and materials",
+        quantity: 1,
+        unitPrice: { amount: 250, currency: "USD" },
+        totalPrice: { amount: 250, currency: "USD" },
+      },
+    ],
+    subtotal: { amount: 1750, currency: "USD" },
+    tax: { amount: 140, currency: "USD" },
+    total: { amount: 1890, currency: "USD" },
+    validUntil: "2025-02-25T00:00:00Z",
+    expiresAt: "2025-02-25T00:00:00Z",
+    revisionNumber: 1,
+    createdAt: "2025-01-24T11:00:00Z",
+    updatedAt: "2025-01-24T11:00:00Z",
+    notes: "Irrigation system repair",
+  },
+]
 
-export interface QuoteService {
-  getAll(): Promise<Quote[]>
-  getById(id: EntityId): Promise<Quote | undefined>
-  getByClientId(clientId: EntityId): Promise<Quote[]>
-  getByStatus(status: QuoteStatus): Promise<Quote[]>
-  create(quote: Omit<Quote, "id" | "quoteNumber" | "createdAt" | "updatedAt">): Promise<Quote>
-  update(id: EntityId, updates: Partial<Quote>): Promise<Quote | undefined>
-  delete(id: EntityId): Promise<boolean>
+const mockTemplates: QuoteTemplate[] = [
+  {
+    id: "template-1",
+    name: "Standard Lawn Care",
+    description: "Weekly lawn maintenance package",
+    lineItems: [
+      {
+        id: "li-1",
+        serviceId: "service-1",
+        serviceName: "Lawn Mowing",
+        description: "Weekly lawn mowing service",
+        quantity: 4,
+        unitPrice: { amount: 75, currency: "USD" },
+        totalPrice: { amount: 300, currency: "USD" },
+      },
+      {
+        id: "li-2",
+        serviceId: "service-2",
+        serviceName: "Edging & Trimming",
+        description: "Edging and trimming service",
+        quantity: 4,
+        unitPrice: { amount: 25, currency: "USD" },
+        totalPrice: { amount: 100, currency: "USD" },
+      },
+      {
+        id: "li-3",
+        serviceId: "service-3",
+        serviceName: "Fertilizer Application",
+        description: "Fertilizer application",
+        quantity: 1,
+        unitPrice: { amount: 150, currency: "USD" },
+        totalPrice: { amount: 150, currency: "USD" },
+      },
+    ],
+    defaultMarkup: 20,
+  },
+  {
+    id: "template-2",
+    name: "Tree Service Package",
+    description: "Tree trimming and removal",
+    lineItems: [
+      {
+        id: "li-4",
+        serviceId: "service-4",
+        serviceName: "Tree Trimming",
+        description: "Professional tree trimming",
+        quantity: 1,
+        unitPrice: { amount: 350, currency: "USD" },
+        totalPrice: { amount: 350, currency: "USD" },
+      },
+      {
+        id: "li-5",
+        serviceId: "service-5",
+        serviceName: "Debris Removal",
+        description: "Debris cleanup and removal",
+        quantity: 1,
+        unitPrice: { amount: 150, currency: "USD" },
+        totalPrice: { amount: 150, currency: "USD" },
+      },
+      {
+        id: "li-6",
+        serviceId: "service-6",
+        serviceName: "Equipment Rental",
+        description: "Specialized equipment rental",
+        quantity: 1,
+        unitPrice: { amount: 200, currency: "USD" },
+        totalPrice: { amount: 200, currency: "USD" },
+      },
+    ],
+    defaultMarkup: 25,
+  },
+]
+
+export const quoteService = {
+  getAll: (): Promise<Quote[]> => asyncify(() => mockQuotes),
+
+  getById: (id: EntityId): Promise<Quote | undefined> =>
+    asyncify(() => mockQuotes.find((q) => q.id === id)),
+
+  getByClientId: (clientId: EntityId): Promise<Quote[]> =>
+    asyncify(() => mockQuotes.filter((q) => q.clientId === clientId)),
+
+  getTemplates: (): Promise<QuoteTemplate[]> =>
+    asyncify(() => mockTemplates),
+
+  getPendingQuotes: (): Promise<Quote[]> =>
+    asyncify(() => mockQuotes.filter((q) => q.status === QuoteStatus.SENT || q.status === QuoteStatus.VIEWED)),
+
+  getConversionRate: (): Promise<number> =>
+    asyncify(() => 68.5), // 68.5% conversion rate
 }
-
-// ============================================================================
-// Service Implementation
-// ============================================================================
-
-export const quoteService: QuoteService = {
-  getAll: async () => {
-    await initializeQuotes()
-    return asyncify(() => mockStore.getQuotes())()
-  },
-
-  getById: async (id: EntityId) => {
-    await initializeQuotes()
-    return asyncify(() => mockStore.getQuoteById(id))()
-  },
-
-  getByClientId: async (clientId: EntityId) => {
-    await initializeQuotes()
-    return asyncify(() => mockStore.getQuotesByClientId(clientId))()
-  },
-
-  getByStatus: async (status: QuoteStatus) => {
-    await initializeQuotes()
-    return asyncify(() => mockStore.getQuotes().filter((quote) => quote.status === status))()
-  },
-
-  create: (quote) =>
-    asyncifyWithError(() => {
-      const newQuote = mockStore.createQuote(quote)
-      return newQuote
-    }),
-
-  update: (id, updates) =>
-    asyncifyWithError(() => {
-      const updated = mockStore.updateQuote(id, updates)
-      if (!updated) {
-        throw new Error(`Quote with id ${id} not found`)
-      }
-      return updated
-    }),
-
-  delete: (id) =>
-    asyncifyWithError(() => {
-      const deleted = mockStore.deleteQuote(id)
-      if (!deleted) {
-        throw new Error(`Quote with id ${id} not found`)
-      }
-      return deleted
-    }),
-}
-
-// ============================================================================
-// Convenience Functions
-// ============================================================================
-
-export const getQuotes = () => quoteService.getAll()
-export const getQuoteById = (id: EntityId) => quoteService.getById(id)
-export const getQuotesByClientId = (clientId: EntityId) => quoteService.getByClientId(clientId)
-export const createQuote = (quote: Omit<Quote, "id" | "quoteNumber" | "createdAt" | "updatedAt">) =>
-  quoteService.create(quote)
-export const updateQuote = (id: EntityId, updates: Partial<Quote>) =>
-  quoteService.update(id, updates)
-export const deleteQuote = (id: EntityId) => quoteService.delete(id)

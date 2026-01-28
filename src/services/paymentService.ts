@@ -66,27 +66,27 @@ export interface PaymentService {
 export const paymentService: PaymentService = {
   getAll: async () => {
     await initializePayments()
-    return asyncify(() => mockStore.getPayments())()
+    return asyncify(() => mockStore.getPayments())
   },
 
   getById: async (id: EntityId) => {
     await initializePayments()
-    return asyncify(() => mockStore.getPaymentById(id))()
+    return asyncify(() => mockStore.getPaymentById(id))
   },
 
   getByClientId: async (clientId: EntityId) => {
     await initializePayments()
-    return asyncify(() => mockStore.getPaymentsByClientId(clientId))()
+    return asyncify(() => mockStore.getPaymentsByClientId(clientId))
   },
 
   getByJobId: async (jobId: EntityId) => {
     await initializePayments()
-    return asyncify(() => mockStore.getPaymentsByJobId(jobId))()
+    return asyncify(() => mockStore.getPaymentsByJobId(jobId))
   },
 
   getByStatus: async (status: PaymentStatus) => {
     await initializePayments()
-    return asyncify(() => mockStore.getPayments().filter((payment) => payment.status === status))()
+    return asyncify(() => mockStore.getPayments().filter((payment) => payment.status === status))
   },
 
   create: (payment) =>

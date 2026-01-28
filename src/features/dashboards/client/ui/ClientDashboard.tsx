@@ -66,7 +66,7 @@ const ClientDashboard = () => {
     {
       id: "1",
       service: "Weekly Lawn Maintenance",
-      date: "January 18, 2024",
+      date: "January 18, 2025",
       time: "9:00 AM - 11:00 AM",
       worker: "Mike Rodriguez",
       status: "confirmed",
@@ -74,7 +74,7 @@ const ClientDashboard = () => {
     {
       id: "2",
       service: "Irrigation System Check",
-      date: "January 22, 2024",
+      date: "January 22, 2025",
       time: "2:00 PM - 4:00 PM",
       worker: "Sarah Chen",
       status: "pending",
@@ -82,7 +82,7 @@ const ClientDashboard = () => {
     {
       id: "3",
       service: "Tree Trimming",
-      date: "January 25, 2024",
+      date: "January 25, 2025",
       time: "8:00 AM - 12:00 PM",
       worker: "David Wilson",
       status: "confirmed",
