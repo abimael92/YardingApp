@@ -10,7 +10,7 @@ import { useMemo } from "react"
 import { motion } from "framer-motion"
 import {
   ChartBarIcon,
-  TrendingUpIcon,
+  ArrowTrendingUpIcon,
   MapPinIcon,
   HeartIcon,
 } from "@heroicons/react/24/outline"
@@ -204,7 +204,7 @@ const ClientAnalytics = ({ clients, jobs, payments }: ClientAnalyticsProps) => {
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Top Clients by Revenue
           </h3>
-          <TrendingUpIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
+          <ArrowTrendingUpIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
