@@ -188,18 +188,18 @@ const JobList = () => {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Jobs</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Jobs</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">
               Manage all jobs and work orders
             </p>
           </div>
           <button
             onClick={handleCreate}
-            className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
+            className="inline-flex items-center justify-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors shrink-0 w-full sm:w-auto"
           >
             <PlusIcon className="w-5 h-5 mr-2" />
             Create Job

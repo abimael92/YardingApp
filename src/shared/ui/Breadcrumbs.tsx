@@ -32,7 +32,7 @@ const Breadcrumbs = () => {
   }
 
   return (
-    <nav className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
+    <nav className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500 dark:text-gray-400 mb-4 sm:mb-6 min-w-0 overflow-hidden">
       <Link
         href="/"
         className="flex items-center hover:text-primary-600 dark:hover:text-primary-400 transition-colors"

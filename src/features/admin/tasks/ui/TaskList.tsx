@@ -121,15 +121,13 @@ const TaskList = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tasks</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            View all tasks (legacy view - Jobs are the primary entity)
-          </p>
-        </div>
+      <div className="min-w-0">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Tasks</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">
+          View all tasks (legacy view - Jobs are the primary entity)
+        </p>
       </div>
 
       {/* Table */}

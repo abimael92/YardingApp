@@ -58,15 +58,15 @@ function DataTable<T>({
   }
 
   return (
-    <div className="card overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+    <div className="card overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+      <div className="overflow-x-auto overflow-y-visible min-w-0" style={{ WebkitOverflowScrolling: "touch" }}>
+        <table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
               {columns.map((column) => (
                 <th
                   key={String(column.key)}
-                  className={`text-left py-3 px-4 text-gray-600 dark:text-gray-400 font-medium ${
+                  className={`text-left py-3 px-2 sm:px-4 text-gray-600 dark:text-gray-400 font-medium ${
                     column.className || ""
                   }`}
                 >
@@ -74,7 +74,7 @@ function DataTable<T>({
                 </th>
               ))}
               {(onEdit || onDelete || onView) && (
-                <th className="text-left py-3 px-4 text-gray-600 dark:text-gray-400 font-medium">
+                <th className="text-left py-3 px-2 sm:px-4 text-gray-600 dark:text-gray-400 font-medium whitespace-nowrap">
                   Actions
                 </th>
               )}
@@ -90,15 +90,15 @@ function DataTable<T>({
                 className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
               >
                 {columns.map((column) => (
-                  <td key={String(column.key)} className="py-3 px-4">
+                  <td key={String(column.key)} className="py-3 px-2 sm:px-4 max-w-[200px] sm:max-w-none truncate sm:truncate-none">
                     {column.render
                       ? column.render(item)
                       : (item[column.key as keyof T] as React.ReactNode)}
                   </td>
                 ))}
                 {(onEdit || onDelete || onView) && (
-                  <td className="py-3 px-4">
-                    <div className="flex items-center space-x-2">
+                  <td className="py-3 px-2 sm:px-4 whitespace-nowrap">
+                    <div className="flex items-center gap-1 sm:gap-2">
                       {onView && (
                         <motion.button
                           whileHover={{ scale: 1.1 }}
