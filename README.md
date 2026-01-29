@@ -10,7 +10,7 @@
 
 ## Mock Login (no auth yet)
 Credentials are hardcoded for local demo only:
-- Email: `josue.garcia@jjdesertlandscaping.com`
+- Email: `josue.garcia@landscaping.com`
 - Password: `Desert2025!`
 
 The login page logs the mock user and submitted values to the console.
