@@ -74,7 +74,7 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
         className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
       >
         <ArrowDownTrayIcon className="h-5 w-5" />
-        Download PDF
+        Download PDF 2
       </button>
 
       {/* Hidden branded template for html2pdf */}

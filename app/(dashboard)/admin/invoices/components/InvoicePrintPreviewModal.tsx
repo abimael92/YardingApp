@@ -81,131 +81,170 @@ export default function InvoicePrintPreviewModal({
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[95vw] max-w-3xl max-h-[90vh] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 flex flex-col overflow-hidden min-w-0">
-          <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-3 shrink-0">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Print Preview — {invoice.invoiceNumber}
-            </h2>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handlePrint}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-              >
-                <PrinterIcon className="h-5 w-5" />
-                Print
-              </button>
-              <button
-                type="button"
-                onClick={handleDownloadPDF}
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-              >
-                <ArrowDownTrayIcon className="h-5 w-5" />
-                Download PDF
-              </button>
-              <Dialog.Close asChild>
+        <Dialog.Content className="fixed left-0 right-0 top-0 bottom-0 z-50 sm:left-1/2 sm:top-1/2 sm:w-[95vw] sm:max-w-3xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-h-[90vh] sm:rounded-xl border-0 sm:border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 flex flex-col overflow-hidden">
+          {/* Header - Fixed at top for mobile */}
+          <div className="shrink-0 border-b border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/80 px-4 py-3 sm:px-4 sm:py-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              {/* Title and close button - better spacing on mobile */}
+              <div className="flex items-center justify-between gap-2 min-w-0">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white truncate pr-2">
+                  Print Preview — {invoice.invoiceNumber}
+                </h2>
+                <Dialog.Close asChild>
+                  <button
+                    type="button"
+                    className="shrink-0 rounded-lg p-2 -mr-2 text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:hover:text-gray-400 dark:hover:bg-gray-700 touch-manipulation"
+                    aria-label="Close"
+                  >
+                    <XMarkIcon className="h-5 w-5" />
+                  </button>
+                </Dialog.Close>
+              </div>
+
+              {/* Action buttons - stacked on mobile, side-by-side on desktop */}
+              <div className="flex items-center gap-2 sm:gap-2 w-full sm:w-auto">
                 <button
                   type="button"
-                  className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:text-gray-400 dark:hover:bg-gray-700"
-                  aria-label="Close"
+                  onClick={handlePrint}
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-3 py-2.5 sm:px-4 sm:py-2 text-sm font-medium text-white hover:bg-primary-700 active:bg-primary-800 touch-manipulation min-h-[44px]"
                 >
-                  <XMarkIcon className="h-5 w-5" />
+                  <PrinterIcon className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
+                  <span className="sm:inline">Print</span>
                 </button>
-              </Dialog.Close>
+                <button
+                  type="button"
+                  onClick={handleDownloadPDF}
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2.5 sm:px-4 sm:py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 touch-manipulation min-h-[44px]"
+                >
+                  <ArrowDownTrayIcon className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
+                  <span className="sm:inline">PDF</span>
+                </button>
+              </div>
             </div>
           </div>
-          <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-6 bg-gray-100 dark:bg-gray-900">
-            <div
-              ref={containerRef}
-              className="mx-auto w-full min-w-0 max-w-full bg-white p-6 sm:p-8 shadow-lg print:shadow-none"
-              style={{ fontFamily: "system-ui, sans-serif", fontSize: "14px", color: "#1f2937" }}
-            >
-              <div style={{ borderBottom: "2px solid #059669", paddingBottom: "16px", marginBottom: "24px" }}>
-                <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#065f46", margin: 0 }}>
-                  J&J Desert Landscaping LLC
-                </h1>
-                <p style={{ margin: "4px 0 0", color: "#6b7280" }}>
-                  {settings.companyAddress ?? "Phoenix, AZ"}
-                  {settings.companyEmail && ` • ${settings.companyEmail}`}
-                  {settings.companyPhone && ` • ${settings.companyPhone}`}
-                </p>
-              </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "24px", flexWrap: "wrap" }}>
-                <div>
-                  <h2 style={{ fontSize: "18px", fontWeight: 600, margin: "0 0 8px" }}>INVOICE</h2>
-                  <p style={{ margin: 0, color: "#6b7280" }}>#{invoice.invoiceNumber}</p>
+          {/* Scrollable invoice content - optimized for mobile */}
+          <div className="flex-1 min-w-0 overflow-auto p-3 sm:p-6 bg-gray-100 dark:bg-gray-900" style={{ WebkitOverflowScrolling: "touch" }}>
+            <div className="mx-auto w-full min-w-0 max-w-full rounded-lg shadow-lg overflow-hidden bg-white">
+              <div
+                ref={containerRef}
+                className="invoice-print-body bg-white p-7 sm:p-6"
+                style={{
+                  fontFamily: "system-ui, -apple-system, sans-serif",
+                  fontSize: "14px",
+                  color: "#1f2937",
+                  boxSizing: "border-box",
+                  maxWidth: "100%",
+                  minWidth: "0",
+                }}
+              >
+                {/* Company header */}
+                <div style={{ borderBottom: "2px solid #059669", paddingBottom: "12px", marginBottom: "16px" }}>
+                  <h1 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#065f46", margin: 0, lineHeight: 1.25 }}>
+                    J&J Desert Landscaping LLC
+                  </h1>
+                  <div style={{ margin: "4px 0 0", color: "#6b7280", fontSize: "0.75rem", lineHeight: 1.4 }}>
+                    {settings.companyAddress ?? "Phoenix, AZ"}
+                    {settings.companyEmail && <><br />{settings.companyEmail}</>}
+                    {settings.companyPhone && <><br />{settings.companyPhone}</>}
+                  </div>
                 </div>
-                <div style={{ textAlign: "right" }}>
-                  <p style={{ margin: "0 0 4px" }}>Date: {formatDate(invoice.createdAt)}</p>
-                  <p style={{ margin: 0 }}>Due: {formatDate(invoice.dueDate)}</p>
-                </div>
-              </div>
 
-              <div style={{ marginBottom: "24px" }}>
-                <p style={{ fontWeight: 600, margin: "0 0 4px" }}>Bill to</p>
-                <p style={{ margin: 0, color: "#374151" }}>{invoice.clientName}</p>
-              </div>
-
-              <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "24px" }}>
-                <thead>
-                  <tr style={{ borderBottom: "2px solid #e5e7eb", backgroundColor: "#f9fafb" }}>
-                    <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 600 }}>Description</th>
-                    <th style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600 }}>Qty</th>
-                    <th style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600 }}>Unit price</th>
-                    <th style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600 }}>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {invoice.lineItems.map((item) => (
-                    <tr key={item.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
-                      <td style={{ padding: "10px 12px" }}>{item.description}</td>
-                      <td style={{ textAlign: "right", padding: "10px 12px" }}>{item.quantity}</td>
-                      <td style={{ textAlign: "right", padding: "10px 12px" }}>{formatCurrency(item.unitPrice)}</td>
-                      <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 500 }}>
-                        {formatCurrency(item.total)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <div style={{ marginLeft: "auto", width: "240px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
-                  <span style={{ color: "#6b7280" }}>Subtotal</span>
-                  <span>{formatCurrency(subtotal)}</span>
+                {/* Invoice title + dates - better stacking on mobile */}
+                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: "8px", marginBottom: "16px" }}>
+                  <div style={{ flex: "1 1 200px" }}>
+                    <div style={{ fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.05em", margin: "0 0 4px", color: "#6b7280", textTransform: "uppercase" }}>Invoice</div>
+                    <div style={{ margin: 0, fontWeight: 600, fontSize: "1.125rem" }}>#{invoice.invoiceNumber}</div>
+                  </div>
+                  <div style={{ flex: "1 1 150px", textAlign: "right" }}>
+                    <div style={{ margin: "0 0 2px", fontSize: "0.875rem" }}>
+                      <strong>Date:</strong> {formatDate(invoice.createdAt)}
+                    </div>
+                    <div style={{ margin: 0, fontSize: "0.875rem" }}>
+                      <strong>Due:</strong> {formatDate(invoice.dueDate)}
+                    </div>
+                  </div>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
-                  <span style={{ color: "#6b7280" }}>Tax (8.6% Phoenix)</span>
-                  <span>{formatCurrency(tax)}</span>
+
+                {/* Bill to */}
+                <div style={{ marginBottom: "20px", padding: "12px", backgroundColor: "#f9fafb", borderRadius: "6px" }}>
+                  <div style={{ fontWeight: 600, margin: "0 0 6px", fontSize: "0.75rem", color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Bill to</div>
+                  <div style={{ margin: 0, color: "#374151", fontSize: "0.875rem", fontWeight: 500 }}>{invoice.clientName}</div>
                 </div>
-                <div
-                  style={{
+
+                {/* Line items - responsive table for mobile */}
+                <div style={{ overflowX: "auto", marginBottom: "16px", WebkitOverflowScrolling: "touch" }}>
+                  <table
+                    style={{
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      minWidth: "500px", // Ensures table doesn't get too narrow
+                    }}
+                  >
+                    <colgroup>
+                      <col style={{ width: "40%" }} />
+                      <col style={{ width: "15%" }} />
+                      <col style={{ width: "20%" }} />
+                      <col style={{ width: "25%" }} />
+                    </colgroup>
+                    <thead>
+                      <tr style={{ borderBottom: "2px solid #e5e7eb", backgroundColor: "#f9fafb" }}>
+                        <th style={{ textAlign: "left", padding: "8px", fontWeight: 600, fontSize: "0.75rem", whiteSpace: "nowrap" }}>Description</th>
+                        <th style={{ textAlign: "right", padding: "8px", fontWeight: 600, fontSize: "0.75rem", whiteSpace: "nowrap" }}>Qty</th>
+                        <th style={{ textAlign: "right", padding: "8px", fontWeight: 600, fontSize: "0.75rem", whiteSpace: "nowrap" }}>Unit Price</th>
+                        <th style={{ textAlign: "right", padding: "8px", fontWeight: 600, fontSize: "0.75rem", whiteSpace: "nowrap" }}>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {invoice.lineItems.map((item) => (
+                        <tr key={item.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
+                          <td style={{ padding: "8px", wordBreak: "break-word", fontSize: "0.875rem" }}>{item.description}</td>
+                          <td style={{ textAlign: "right", padding: "8px", fontSize: "0.875rem" }}>{item.quantity}</td>
+                          <td style={{ textAlign: "right", padding: "8px", fontSize: "0.875rem" }}>{formatCurrency(item.unitPrice)}</td>
+                          <td style={{ textAlign: "right", padding: "8px", fontSize: "0.875rem", fontWeight: 500 }}>{formatCurrency(item.total)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Totals - responsive width */}
+                <div style={{ marginLeft: "auto", width: "100%", maxWidth: "280px", marginTop: "20px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: "0.875rem" }}>
+                    <span style={{ color: "#6b7280" }}>Subtotal</span>
+                    <span style={{ fontWeight: 500 }}>{formatCurrency(subtotal)}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: "0.875rem" }}>
+                    <span style={{ color: "#6b7280" }}>Tax (8.6% Phoenix)</span>
+                    <span style={{ fontWeight: 500 }}>{formatCurrency(tax)}</span>
+                  </div>
+                  <div style={{
                     display: "flex",
                     justifyContent: "space-between",
                     padding: "10px 0",
                     borderTop: "2px solid #059669",
-                    marginTop: "4px",
+                    marginTop: "8px",
                     fontWeight: 700,
-                    fontSize: "16px",
-                  }}
-                >
-                  <span>Total</span>
-                  <span>{formatCurrency(total)}</span>
+                    fontSize: "1.125rem"
+                  }}>
+                    <span>Total</span>
+                    <span>{formatCurrency(total)}</span>
+                  </div>
                 </div>
-              </div>
 
-              <div
-                style={{
+                {/* Footer */}
+                <div style={{
                   marginTop: "32px",
-                  paddingTop: "16px",
+                  paddingTop: "12px",
                   borderTop: "1px solid #e5e7eb",
                   color: "#9ca3af",
-                  fontSize: "12px",
+                  fontSize: "0.75rem",
                   textAlign: "center",
-                }}
-              >
-                Thank you for your business. • J&J Desert Landscaping LLC • Phoenix, AZ
+                  lineHeight: 1.5
+                }}>
+                  Thank you for your business.<br />
+                  J&J Desert Landscaping LLC · Phoenix, AZ
+                </div>
               </div>
             </div>
           </div>

@@ -133,23 +133,23 @@ export default function InvoicesPage() {
   ]
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 min-w-0">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} userRole="admin" />
 
-      <div className="flex-1">
+      <div className="flex-1 min-w-0 w-full overflow-x-hidden">
         {/* Header — same layout as jobs page */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-3 sm:px-4 sm:py-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:space-x-4">
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="lg:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
               >
                 <Bars3Icon className="w-6 h-6" />
               </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Invoices</h1>
-                <p className="text-gray-600 dark:text-gray-400">
+              <div className="min-w-0">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Invoices</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400 truncate sm:truncate-none">
                   Manage professional invoices and billing
                 </p>
               </div>
@@ -158,15 +158,15 @@ export default function InvoicesPage() {
         </div>
 
         {/* Main content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <Breadcrumbs />
 
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* List header + New Invoice button — jobs-style */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Invoices</h2>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Invoices</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">
                   Manage professional invoices and billing
                 </p>
               </div>
@@ -182,16 +182,16 @@ export default function InvoicesPage() {
 
             {/* Status filter dropdown */}
             {!isLoading && invoices.length > 0 && (
-              <div className="flex items-center gap-2">
-                <FunnelIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                <label htmlFor="invoice-status-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <div className="flex flex-wrap items-center gap-2">
+                <FunnelIcon className="w-5 h-5 shrink-0 text-gray-500 dark:text-gray-400" />
+                <label htmlFor="invoice-status-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300 shrink-0">
                   Status
                 </label>
                 <select
                   id="invoice-status-filter"
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as "" | InvoiceStatus)}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  className="w-full min-w-0 max-w-xs rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 >
                   {STATUS_FILTER_OPTIONS.map((opt) => (
                     <option key={opt.value || "all"} value={opt.value}>
