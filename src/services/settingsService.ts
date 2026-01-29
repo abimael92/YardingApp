@@ -12,8 +12,8 @@ import { mockStore } from "@/src/data/mockStore"
 // ============================================================================
 
 export interface SettingsService {
-  getAll(): Record<string, any>
-  get(key: string): any
+  getAll(): Record<string, unknown>
+  get(key: string): unknown
 }
 
 // ============================================================================
