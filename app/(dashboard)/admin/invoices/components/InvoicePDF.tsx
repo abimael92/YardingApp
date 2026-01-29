@@ -48,7 +48,7 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
     })
 
     try {
-      const html2pdf = (await import("html2pdf.js" as any)).default as any
+      const { default: html2pdf } = await import("html2pdf.js")
       await html2pdf()
         .set({
           filename: `invoice-${invoice.invoiceNumber}.pdf`,

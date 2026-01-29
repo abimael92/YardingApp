@@ -44,16 +44,18 @@ import {
   getSystemHealth,
   type ActivityLog,
   type PendingAction,
+  type AdminStats,
+  type SystemHealth,
 } from "@/src/services/adminService"
 
 const AdminDashboard = () => {
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [stats, setStats] = useState<any>(null)
+  const [stats, setStats] = useState<AdminStats | null>(null)
   const [revenueHistory, setRevenueHistory] = useState<Array<{ month: string; revenue: number }>>([])
   const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([])
   const [pendingActions, setPendingActions] = useState<PendingAction[]>([])
-  const [systemHealth, setSystemHealth] = useState<any>(null)
+  const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [dateRange, setDateRange] = useState<"6m" | "12m" | "ytd">("6m")
 
@@ -439,7 +441,7 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-3">
-                  {systemHealth?.services?.map((service: any, index: number) => (
+                  {systemHealth?.services?.map((service, index) => (
                     <div key={index} className="flex items-center justify-between">
                       <span className="text-sm text-gray-700 dark:text-gray-300">{service.name}</span>
                       <div className="flex items-center space-x-2">

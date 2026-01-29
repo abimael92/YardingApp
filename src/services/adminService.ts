@@ -25,7 +25,7 @@ export interface ActivityLog {
   description: string
   user?: string
   timestamp: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export interface PendingAction {
@@ -37,37 +37,49 @@ export interface PendingAction {
   link?: string
 }
 
+export type HealthStatus = "healthy" | "warning" | "critical"
+
+export interface SystemHealthService {
+  name: string
+  status: HealthStatus
+  lastCheck: string
+}
+
+export interface SystemHealth {
+  status: HealthStatus
+  uptime: number
+  activeConnections: number
+  services: SystemHealthService[]
+}
+
+export interface AdminStats {
+  totalUsers: number
+  activeUsers: number
+  totalClients: number
+  activeClients: number
+  newClientsThisMonth: number
+  totalEmployees: number
+  activeEmployees: number
+  availableEmployees: number
+  totalTasks: number
+  pendingTasks: number
+  inProgressTasks: number
+  completedTasks: number
+  totalRevenue: number
+  revenueChangePercent: number
+  pendingRevenue: number
+  activeJobs: number
+  pendingJobs: number
+  completedJobs: number
+}
+
 export interface AdminService {
-  getStats(): Promise<{
-    totalUsers: number
-    activeUsers: number
-    totalClients: number
-    activeClients: number
-    newClientsThisMonth: number
-    totalEmployees: number
-    activeEmployees: number
-    availableEmployees: number
-    totalTasks: number
-    pendingTasks: number
-    inProgressTasks: number
-    completedTasks: number
-    totalRevenue: number
-    revenueChangePercent: number
-    pendingRevenue: number
-    activeJobs: number
-    pendingJobs: number
-    completedJobs: number
-  }>
+  getStats(): Promise<AdminStats>
   getRevenueHistory(months?: number): Promise<Array<{ month: string; revenue: number }>>
   getRecentActivity(limit?: number): Promise<ActivityLog[]>
   getPendingActions(): Promise<PendingAction[]>
   getRecentUsers(limit?: number): Promise<User[]>
-  getSystemHealth(): {
-    status: "healthy" | "warning" | "critical"
-    uptime: number
-    activeConnections: number
-    services: Array<{ name: string; status: "healthy" | "warning" | "critical"; lastCheck: string }>
-  }
+  getSystemHealth(): SystemHealth
 }
 
 // ============================================================================

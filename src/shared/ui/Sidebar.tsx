@@ -186,10 +186,17 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
   }
 
   // Dropdown Section with desert theme
-  const DropdownSection = ({ title, icon: Icon, children, isOpen, onToggle }: any) => {
-    const hasActiveChild = React.Children.toArray(children).some((child: any) => {
-      if (!child.props.href) return false
-      const href = child.props.href
+  interface DropdownSectionProps {
+    title: string
+    icon: React.ComponentType<{ className?: string }>
+    children: React.ReactNode
+    isOpen: boolean
+    onToggle: (title: string) => void
+  }
+  const DropdownSection = ({ title, icon: Icon, children, isOpen, onToggle }: DropdownSectionProps) => {
+    const hasActiveChild = React.Children.toArray(children).some((child) => {
+      if (!React.isValidElement(child) || typeof (child.props as { href?: string }).href !== "string") return false
+      const href = (child.props as { href: string }).href
       return pathname === href || (href !== "/admin" && pathname.startsWith(href + "/"))
     })
 

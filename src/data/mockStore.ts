@@ -15,7 +15,7 @@ import type {
   Quote,
   Communication,
 } from "@/src/domain/entities"
-import { ClientStatus, ClientSegment } from "@/src/domain/entities"
+import { ClientStatus, ClientSegment, EmployeeRole, EmployeeStatus } from "@/src/domain/entities"
 
 // -----------------------------------------------------------------------------
 // Invoice types (J&J Desert Landscaping Invoice System)
@@ -55,6 +55,31 @@ export interface InvoiceSettings {
   companyAddress?: string
   companyEmail: string
   companyPhone: string
+}
+
+/** Calculation history entry for job cost calculator (formula: labor + materials + visits × zone × 1.086) */
+export interface CalculationHistoryEntry {
+  id: string
+  timestamp: string
+  jobId: string
+  jobNumber: string
+  clientId: string
+  clientName: string
+  inputs: {
+    hours: number
+    sqft: number
+    visits: number
+    zone: "residential" | "commercial"
+    projectType: "maintenance" | "installation" | "repair"
+  }
+  breakdown: {
+    labor: number
+    materials: number
+    visitFees: number
+    subtotal: number
+    tax: number
+    total: number
+  }
 }
 
 // Demo clients (match demo invoices: client-1 … client-4)
@@ -254,9 +279,10 @@ class MockStore {
   private schedules: Schedule[] = []
   private quotes: Quote[] = []
   private communications: Communication[] = []
-  private settings: Record<string, any> = {}
+  private settings: Record<string, unknown> = {}
   private invoices: Invoice[] = []
   private invoiceSettings!: InvoiceSettings
+  private calculationHistory: CalculationHistoryEntry[] = []
 
   constructor() {
     this.initializeSeedData()
@@ -400,11 +426,11 @@ class MockStore {
   }
 
   // Settings
-  getSettings(): Record<string, any> {
+  getSettings(): Record<string, unknown> {
     return { ...this.settings } // Return copy
   }
 
-  getSetting(key: string): any {
+  getSetting(key: string): unknown {
     return this.settings[key]
   }
 
@@ -698,6 +724,24 @@ class MockStore {
     return false
   }
 
+  // Calculation history (job cost calculator)
+  getCalculationHistory(): CalculationHistoryEntry[] {
+    return [...this.calculationHistory]
+  }
+
+  addCalculationEntry(
+    entry: Omit<CalculationHistoryEntry, "id" | "timestamp">
+  ): CalculationHistoryEntry {
+    const full: CalculationHistoryEntry = {
+      ...entry,
+      id: `calc-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+    }
+    this.calculationHistory.push(full)
+    console.log("[mockStore] Calculation history entry added", { id: full.id, jobId: entry.jobId, total: entry.breakdown.total })
+    return full
+  }
+
   // ============================================================================
   // Seed Data Initialization
   // ============================================================================
@@ -797,8 +841,8 @@ class MockStore {
         displayName: "Mike Rodriguez",
         email: "mike@email.com",
         phone: "+1-555-0101",
-        role: "worker" as any,
-        status: "active" as any,
+        role: EmployeeRole.WORKER,
+        status: EmployeeStatus.ACTIVE,
         hireDate: now,
         availability: {
           monday: [],
@@ -826,8 +870,8 @@ class MockStore {
         displayName: "Sarah Chen",
         email: "sarah@email.com",
         phone: "+1-555-0102",
-        role: "worker" as any,
-        status: "active" as any,
+        role: EmployeeRole.WORKER,
+        status: EmployeeStatus.ACTIVE,
         hireDate: now,
         availability: {
           monday: [],
