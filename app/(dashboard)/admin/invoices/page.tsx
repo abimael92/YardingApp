@@ -1,20 +1,36 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { PlusIcon, Bars3Icon } from "@heroicons/react/24/outline"
+import { useState, useEffect, useCallback, useMemo } from "react"
+import { PlusIcon, Bars3Icon, FunnelIcon } from "@heroicons/react/24/outline"
 import DataTable, { type Column } from "@/src/shared/ui/DataTable"
 import LoadingState from "@/src/shared/ui/LoadingState"
 import EmptyState from "@/src/shared/ui/EmptyState"
 import Sidebar from "@/src/shared/ui/Sidebar"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import CreateInvoiceModal from "./components/CreateInvoiceModal"
+import ViewInvoiceModal from "./components/ViewInvoiceModal"
+import EditInvoiceModal from "./components/EditInvoiceModal"
+import InvoicePrintPreviewModal from "./components/InvoicePrintPreviewModal"
 import { mockStore, type Invoice, type InvoiceStatus } from "@/src/data/mockStore"
+
+const STATUS_FILTER_OPTIONS: { value: "" | InvoiceStatus; label: string }[] = [
+  { value: "", label: "All statuses" },
+  { value: "draft", label: "Draft" },
+  { value: "sent", label: "Sent" },
+  { value: "paid", label: "Paid" },
+  { value: "overdue", label: "Overdue" },
+  { value: "cancelled", label: "Cancelled" },
+]
 
 export default function InvoicesPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCreateModalOpen, setCreateModalOpen] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<"" | InvoiceStatus>("")
+  const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null)
+  const [editInvoice, setEditInvoice] = useState<Invoice | null>(null)
+  const [printPreviewInvoice, setPrintPreviewInvoice] = useState<Invoice | null>(null)
 
   const loadInvoices = useCallback(() => {
     console.log("[Invoices] loadInvoices: refetching from mockStore")
@@ -50,6 +66,15 @@ export default function InvoicesPage() {
     loadInvoices()
     setCreateModalOpen(false)
   }
+
+  const filteredInvoices = useMemo(() => {
+    if (!statusFilter) return invoices
+    return invoices.filter((inv) => inv.status === statusFilter)
+  }, [invoices, statusFilter])
+
+  const handleView = useCallback((inv: Invoice) => setViewInvoice(inv), [])
+  const handleEdit = useCallback((inv: Invoice) => setEditInvoice(inv), [])
+  const handlePrintPreview = useCallback((inv: Invoice) => setPrintPreviewInvoice(inv), [])
 
   const getStatusBadge = (status: InvoiceStatus) => {
     const colors: Record<InvoiceStatus, string> = {
@@ -155,6 +180,28 @@ export default function InvoicesPage() {
               </button>
             </div>
 
+            {/* Status filter dropdown */}
+            {!isLoading && invoices.length > 0 && (
+              <div className="flex items-center gap-2">
+                <FunnelIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                <label htmlFor="invoice-status-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Status
+                </label>
+                <select
+                  id="invoice-status-filter"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as "" | InvoiceStatus)}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                >
+                  {STATUS_FILTER_OPTIONS.map((opt) => (
+                    <option key={opt.value || "all"} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {isLoading ? (
               <LoadingState message="Loading invoices..." />
             ) : invoices.length === 0 ? (
@@ -166,10 +213,12 @@ export default function InvoicesPage() {
               />
             ) : (
               <DataTable
-                data={invoices}
+                data={filteredInvoices}
                 columns={columns}
                 keyExtractor={(inv) => inv.id}
-                emptyMessage="No invoices found."
+                emptyMessage={statusFilter ? "No invoices match this status." : "No invoices found."}
+                onView={handleView}
+                onEdit={handleEdit}
               />
             )}
           </div>
@@ -180,6 +229,29 @@ export default function InvoicesPage() {
         isOpen={isCreateModalOpen}
         onClose={handleCreateModalClose}
         onSuccess={handleCreateModalSuccess}
+      />
+
+      <ViewInvoiceModal
+        isOpen={!!viewInvoice}
+        onClose={() => setViewInvoice(null)}
+        invoice={viewInvoice}
+        onPrintPreview={handlePrintPreview}
+      />
+
+      <EditInvoiceModal
+        isOpen={!!editInvoice}
+        onClose={() => setEditInvoice(null)}
+        onSuccess={() => {
+          loadInvoices()
+          setEditInvoice(null)
+        }}
+        invoice={editInvoice}
+      />
+
+      <InvoicePrintPreviewModal
+        isOpen={!!printPreviewInvoice}
+        onClose={() => setPrintPreviewInvoice(null)}
+        invoice={printPreviewInvoice}
       />
     </div>
   )
