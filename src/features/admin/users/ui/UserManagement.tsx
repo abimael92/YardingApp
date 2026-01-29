@@ -430,18 +430,18 @@ const UserManagement = () => {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
               User Management
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">
               Manage all system users ({filteredUsers.length} total)
             </p>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
               onClick={handleExport}
               className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"

@@ -207,9 +207,9 @@ const AdminDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 min-w-0">
         <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} userRole="admin" />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 min-w-0 w-full flex items-center justify-center overflow-x-hidden">
           <LoadingState message="Loading dashboard..." fullScreen />
         </div>
       </div>
@@ -218,9 +218,9 @@ const AdminDashboard = () => {
 
   if (!stats) {
     return (
-      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 min-w-0">
         <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} userRole="admin" />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 min-w-0 w-full flex items-center justify-center overflow-x-hidden">
           <div className="text-center">
             <p className="text-red-600 dark:text-red-400">Failed to load dashboard data</p>
             <button
@@ -239,31 +239,31 @@ const AdminDashboard = () => {
   const revenueChangeIcon = stats.revenueChangePercent >= 0 ? "↑" : "↓"
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 min-w-0">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} userRole="admin" />
 
-      <div className="flex-1">
+      <div className="flex-1 min-w-0 w-full overflow-x-hidden">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-3 sm:px-4 sm:py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 sm:space-x-4">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                className="lg:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 shrink-0"
               >
                 <Bars3Icon className="w-6 h-6" />
               </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-                <p className="text-gray-600 dark:text-gray-400">System Overview & Management</p>
+              <div className="min-w-0">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Admin Dashboard</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">System Overview & Management</p>
               </div>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               {/* Date Range Selector */}
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value as "6m" | "12m" | "ytd")}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                className="w-full min-w-0 max-w-[180px] sm:max-w-none px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
               >
                 <option value="6m">Last 6 Months</option>
                 <option value="12m">Last 12 Months</option>
@@ -273,16 +273,16 @@ const AdminDashboard = () => {
               {/* Export Button */}
               <button
                 onClick={handleExportReport}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors shrink-0"
               >
                 <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
-                Export Report
+                <span className="hidden sm:inline">Export Report</span>
               </button>
 
               {/* Refresh Button */}
               <button
                 onClick={handleRefresh}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                className="inline-flex items-center justify-center p-2 sm:px-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors shrink-0"
                 title="Refresh Dashboard"
               >
                 <ArrowPathIcon className="w-4 h-4" />
@@ -292,11 +292,11 @@ const AdminDashboard = () => {
         </div>
 
         {/* Main Content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <Breadcrumbs />
 
           {/* Quick Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
