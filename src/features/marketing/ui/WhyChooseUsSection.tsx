@@ -56,7 +56,7 @@ export default function WhyChooseUsSection() {
             viewport={{ once: true }}
           >
             <h2 className="text-3xl lg:text-4xl font-display font-bold text-gray-900 dark:text-white mb-8">
-              Why Choose Chochue Landscaping?
+              Why Choose J&J Desert Landscaping?
             </h2>
             <div className="space-y-6">
               {features.map((feature, idx) => {

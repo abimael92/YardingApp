@@ -427,7 +427,7 @@ For testing purposes, the following mock credentials are available:
 
 | Role | Email | Password |
 |------|-------|----------|
-| Admin | josue.garcia@jjdesertlandscaping.com | Desert2025! |
+| Admin | "josue.garcia@landscaping.com" | Desert2025! |
 | Client | client@client.com | Arizona2025! |
 | Supervisor | supervisor@supervisor.com | Arizona2025! |
 | Worker | worker@worker.com | Arizona2025! |
