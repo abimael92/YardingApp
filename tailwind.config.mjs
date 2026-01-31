@@ -10,6 +10,7 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
     "./node_modules/@shadcn/ui/**/*.{js,ts,jsx,tsx}", // shadcn
   ],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
