@@ -165,7 +165,7 @@ export const testimonials: Testimonial[] = [
     name: "Jennifer Martinez",
     role: "Homeowner",
     content:
-      "Chochue Landscaping transformed our backyard into a desert oasis. Their attention to detail and professionalism is unmatched.",
+      "J&J Desert Landscaping transformed our backyard into a desert oasis. Their attention to detail and professionalism is unmatched.",
     rating: 5,
     avatar: "/happy-female-customer.jpg",
   },
@@ -174,7 +174,7 @@ export const testimonials: Testimonial[] = [
     name: "Robert Thompson",
     role: "Property Manager",
     content:
-      "We've been using Chochue Landscaping for our commercial properties for 3 years. Always reliable and high-quality work.",
+      "We've been using J&J Desert Landscaping for our commercial properties for 3 years. Always reliable and high-quality work.",
     rating: 5,
     avatar: "/professional-male-property-manager.jpg",
   },
@@ -183,7 +183,7 @@ export const testimonials: Testimonial[] = [
     name: "Lisa Park",
     role: "Business Owner",
     content:
-      "The team at Chochue Landscaping helped us create a welcoming entrance for our customers. Highly recommend their services!",
+      "The team at J&J Desert Landscaping helped us create a welcoming entrance for our customers. Highly recommend their services!",
     rating: 5,
     avatar: "/asian-business-woman.png",
   },
