@@ -2,8 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   BACKUP: Original styling preserved in app/globals.css.backup
+   ========================================================================== */
+
 @layer base {
   :root {
+    /* Existing Tailwind/shadcn tokens (unchanged for backward compatibility) */
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
@@ -22,10 +27,72 @@
     --input: 0 0% 89.8%;
     --ring: 0 0% 3.9%;
     --radius: 0.5rem;
+
+    /* ----------------------------------------------------------------------
+       DESIGN SYSTEM (Phase 1) - CSS custom properties
+       Add new classes incrementally; existing class names unchanged.
+       ---------------------------------------------------------------------- */
+    /* Primary Colors */
+    --primary-green: #2e8b57;
+    --primary-green-dark: #1f6b41;
+    --secondary-green: #3cb371;
+    --accent-brown: #8b4513;
+    --accent-tan: #f5f1e6;
+
+    /* Status Colors */
+    --success: #28a745;
+    --warning: #ffc107;
+    --error: #dc3545;
+    --info: #17a2b8;
+
+    /* Delivery/Job Status (for consistency across interfaces) */
+    --status-pending: #ffc107;
+    --status-accepted: #17a2b8;
+    --status-in-transit: #2e8b57;
+    --status-delivered: #28a745;
+    --status-cancelled: #dc3545;
+
+    /* Neutral Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --border-light: #e9ecef;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-disabled: #adb5bd;
+    --overlay: rgba(0, 0, 0, 0.5);
+
+    /* Spacing */
+    --space-xs: 4px;
+    --space-s: 8px;
+    --space-m: 16px;
+    --space-l: 24px;
+    --space-xl: 32px;
+    --space-xxl: 48px;
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-circle: 50%;
+
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.1);
   }
+
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
+
+    /* Design system dark mode overrides (non-breaking) */
+    --bg-primary: #1f2937;
+    --bg-secondary: #111827;
+    --border-light: #374151;
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+    --text-disabled: #6b7280;
+    --overlay: rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -35,6 +102,135 @@ html {
 
 body {
   @apply bg-background text-foreground;
+}
+
+/* Explicit light mode: when .dark is NOT on html, force light background so toggle is obvious */
+html:not(.dark) {
+  background-color: #ffffff;
+}
+html:not(.dark) body {
+  background-color: #f8fafc;
+}
+
+/* ==========================================================================
+   PHASE 2: Component utility classes (add only; do not replace existing)
+   Use these alongside existing Tailwind classes for incremental adoption.
+   ========================================================================== */
+
+@layer components {
+  /* Buttons */
+  .primary-btn {
+    background-color: var(--primary-green);
+    color: white;
+    border: none;
+    padding: var(--space-m) var(--space-l);
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  .primary-btn:hover {
+    background-color: var(--primary-green-dark);
+  }
+  .primary-btn:focus-visible {
+    outline: 2px solid var(--primary-green);
+    outline-offset: 2px;
+  }
+
+  /* Headers */
+  .page-header {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-bottom: var(--space-l);
+  }
+
+  /* Cards - design system definition (existing .card usage gains these when applied) */
+  .card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: var(--space-l);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Form elements */
+  .input-field {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: var(--space-m);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+  .input-field::placeholder {
+    color: var(--text-secondary);
+  }
+  .input-field:focus {
+    border-color: var(--primary-green);
+    outline: none;
+  }
+  .input-field:focus-visible {
+    outline: 2px solid var(--primary-green);
+    outline-offset: 0;
+  }
+
+  /* Navigation */
+  .nav-active {
+    color: var(--primary-green);
+    border-bottom: 2px solid var(--primary-green);
+  }
+
+  /* Status badges (delivery/job status across all interfaces) */
+  .status-pending {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: var(--warning);
+  }
+  .status-accepted {
+    background-color: rgba(23, 162, 184, 0.2);
+    color: var(--info);
+  }
+  .status-in-transit {
+    background-color: rgba(46, 139, 87, 0.2);
+    color: var(--primary-green);
+  }
+  .status-delivered {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: var(--success);
+  }
+  .status-cancelled {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: var(--error);
+  }
+
+  /* Phase 5: Client side - order/CTA prominence (optional class) */
+  .order-btn-prominent {
+    background-color: var(--primary-green);
+    color: white;
+  }
+  .order-btn-prominent:hover {
+    background-color: var(--primary-green-dark);
+  }
+
+  /* Phase 5: Order history / secondary content background (optional class) */
+  .order-history-bg {
+    background-color: var(--accent-tan);
+  }
+  .dark .order-history-bg {
+    background-color: rgba(139, 69, 19, 0.15);
+  }
+
+  /* Phase 5: Delivery/worker card - active border (optional class) */
+  .delivery-card-active {
+    border: 2px solid var(--primary-green);
+  }
+
+  /* Phase 5: Business/dashboard - financial accent (optional class) */
+  .financial-accent {
+    color: var(--accent-brown);
+  }
+  .dark .financial-accent {
+    color: #d4a574;
+  }
 }
 
 @layer utilities {
