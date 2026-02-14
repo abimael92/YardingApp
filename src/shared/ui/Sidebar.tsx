@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useState, useCallback, useMemo } from "react"
+import { useEffect, useState, useCallback, useMemo, useRef } from "react"
 import { clearMockRole } from "@/src/features/auth/services/mockAuth"
 import {
   HomeIcon,
@@ -37,6 +37,119 @@ interface SidebarProps {
   userRole: "worker" | "supervisor" | "client" | "admin"
 }
 
+// Move components outside to prevent recreation
+const NavLink = React.memo(({ href, icon: Icon, onClick, children, badge }: {
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  onClick?: () => void
+  children: React.ReactNode
+  badge?: number | null
+}) => {
+  const pathname = usePathname()
+  const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href + "/"))
+
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={`
+        group relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium
+        transition-all duration-200
+        ${isActive
+          ? "bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 text-green-700 dark:text-green-400 border-l-4 border-green-500 shadow-sm"
+          : "text-gray-700 dark:text-gray-300 hover:bg-green-50/50 dark:hover:bg-green-900/10 hover:text-green-700 dark:hover:text-green-400"
+        }
+      `}
+    >
+      <div className={`p-1.5 rounded-lg ${isActive
+        ? "bg-green-100 dark:bg-green-800/30"
+        : "bg-gray-100 dark:bg-gray-800 group-hover:bg-green-100 dark:group-hover:bg-green-900/20"
+        }`}>
+        <Icon className={`w-4 h-4 ${isActive
+          ? "text-green-700 dark:text-green-400"
+          : "text-gray-500 dark:text-gray-400 group-hover:text-green-700 dark:group-hover:text-green-400"
+          }`} />
+      </div>
+      <span className="flex-1">{children}</span>
+      {badge ? (
+        <span className={`px-2 py-1 text-xs font-bold rounded-full ${isActive
+          ? "bg-green-500 text-white"
+          : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 group-hover:bg-green-500 group-hover:text-white"
+          }`}>
+          {badge}
+        </span>
+      ) : null}
+      {isActive ? (
+        <div className="absolute right-3 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+      ) : null}
+    </Link>
+  )
+})
+
+NavLink.displayName = "NavLink"
+
+// Dropdown Section component
+const DropdownSection = React.memo(({ title, icon: Icon, children, isOpen, onToggle }: {
+  title: string
+  icon: React.ComponentType<{ className?: string }>
+  children: React.ReactNode
+  isOpen: boolean
+  onToggle: (title: string) => void
+}) => {
+  const pathname = usePathname()
+
+  // Calculate hasActiveChild inside the component
+  const hasActiveChild = React.useMemo(() => {
+    return React.Children.toArray(children).some((child) => {
+      if (!React.isValidElement(child) || typeof (child.props as { href?: string }).href !== "string") return false
+      const href = (child.props as { href: string }).href
+      return pathname === href || (href !== "/admin" && pathname.startsWith(href + "/"))
+    })
+  }, [children, pathname])
+
+  return (
+    <div className="mb-4">
+      <button
+        onClick={() => onToggle(title)}
+        className={`
+          w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-semibold
+          transition-all duration-200 group
+          ${hasActiveChild || isOpen
+            ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md"
+            : "bg-green-50/50 dark:bg-green-900/30 text-gray-700 dark:text-gray-300 hover:bg-green-100 dark:hover:bg-green-900/20"
+          }
+        `}
+      >
+        <div className="flex items-center gap-3">
+          <div className={`p-1.5 rounded-lg ${hasActiveChild || isOpen
+            ? "bg-white/20"
+            : "bg-white dark:bg-green-100 group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
+            }`}>
+            <Icon className={`w-4 h-4 ${hasActiveChild || isOpen
+              ? "text-white"
+              : "text-gray-500 dark:text-green-800 group-hover:text-green-700 dark:group-hover:text-green-400"
+              }`} />
+          </div>
+          <span>{title}</span>
+        </div>
+        <ChevronDownIcon className={`
+          w-4 h-4 transition-transform duration-300
+          ${isOpen ? "rotate-180" : ""}
+          ${hasActiveChild || isOpen ? "text-white" : "text-gray-400"}
+        `} />
+      </button>
+
+      {isOpen ? (
+        <div className="ml-4 mt-3 space-y-2 pl-4 border-l-2 border-green-200 dark:border-green-800">
+          {children}
+        </div>
+      ) : null}
+    </div>
+  )
+})
+
+DropdownSection.displayName = "DropdownSection"
+
 const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
   const pathname = usePathname()
   const router = useRouter()
@@ -44,6 +157,9 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
   const [activeJobsCount, setActiveJobsCount] = useState<number>(0)
   const [isDesktop, setIsDesktop] = useState(false)
   const [currentUserName, setCurrentUserName] = useState<string>("")
+
+  // Use refs to prevent unnecessary re-renders
+  const userNameLoaded = useRef(false)
 
   // Check if desktop
   useEffect(() => {
@@ -54,12 +170,14 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
     return () => mediaQuery.removeEventListener("change", update)
   }, [])
 
-  // Fetch current user name - with cache to prevent flicker
+  // Fetch current user name - only once
   useEffect(() => {
+    if (userNameLoaded.current) return
+
     let mounted = true
 
     const loadCurrentUserName = async () => {
-      // Set initial fallback immediately to prevent blank
+      // Set initial fallback immediately
       setCurrentUserName(userRole.charAt(0).toUpperCase() + userRole.slice(1))
 
       try {
@@ -69,10 +187,11 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
           const currentUser = users.find((u) => u.email.toLowerCase() === userEmail.toLowerCase())
           if (currentUser && mounted) {
             setCurrentUserName(currentUser.name)
+            userNameLoaded.current = true
           } else if (mounted) {
-            // Fallback: extract name from email
             const emailName = userEmail.split("@")[0].replace(/\./g, " ")
             setCurrentUserName(emailName.split(" ").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" "))
+            userNameLoaded.current = true
           }
         }
       } catch (error) {
@@ -108,7 +227,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
     }
   }, [userRole])
 
-  // Auto-open dropdown based on current page - optimized
+  // Auto-open dropdown based on current page
   useEffect(() => {
     if (userRole === "admin") {
       let newDropdown = null
@@ -139,241 +258,115 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
     }
   }, [isDesktop, setIsOpen])
 
-  // NavLink component
-  const NavLink = ({ href, icon: Icon, onClick, children, badge }: {
-    href: string
-    icon: React.ComponentType<{ className?: string }>
-    onClick?: () => void
-    children: React.ReactNode
-    badge?: number | null
-  }) => {
-    const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href + "/"))
-
-    return (
-      <Link
-        href={href}
-        onClick={onClick}
-        className={`
-          group relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium
-          transition-all duration-200
-          ${isActive
-            ? "bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 text-green-700 dark:text-green-400 border-l-4 border-green-500 shadow-sm"
-            : "text-gray-700 dark:text-gray-300 hover:bg-green-50/50 dark:hover:bg-green-900/10 hover:text-green-700 dark:hover:text-green-400"
-          }
-        `}
-      >
-        <div className={`p-1.5 rounded-lg ${isActive
-          ? "bg-green-100 dark:bg-green-800/30"
-          : "bg-gray-100 dark:bg-gray-800 group-hover:bg-green-100 dark:group-hover:bg-green-900/20"
-          }`}>
-          <Icon className={`w-4 h-4 ${isActive
-            ? "text-green-700 dark:text-green-400"
-            : "text-gray-500 dark:text-gray-400 group-hover:text-green-700 dark:group-hover:text-green-400"
-            }`} />
-        </div>
-        <span className="flex-1">{children}</span>
-        {badge ? (
-          <span className={`px-2 py-1 text-xs font-bold rounded-full ${isActive
-            ? "bg-green-500 text-white"
-            : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 group-hover:bg-green-500 group-hover:text-white"
-            }`}>
-            {badge}
-          </span>
-        ) : null}
-        {isActive ? (
-          <div className="absolute right-3 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-        ) : null}
-      </Link>
-    )
-  }
-
-  // Dropdown Section component
-  const DropdownSection = ({ title, icon: Icon, children, isOpen, onToggle }: {
-    title: string
-    icon: React.ComponentType<{ className?: string }>
-    children: React.ReactNode
-    isOpen: boolean
-    onToggle: (title: string) => void
-  }) => {
-    const hasActiveChild = React.Children.toArray(children).some((child) => {
-      if (!React.isValidElement(child) || typeof (child.props as { href?: string }).href !== "string") return false
-      const href = (child.props as { href: string }).href
-      return pathname === href || (href !== "/admin" && pathname.startsWith(href + "/"))
-    })
-
-    return (
-      <div className="mb-4">
-        <button
-          onClick={() => onToggle(title)}
-          className={`
-            w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-semibold
-            transition-all duration-200 group
-            ${hasActiveChild || isOpen
-              ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md"
-              : "bg-green-50/50 dark:bg-green-900/30 text-gray-700 dark:text-gray-300 hover:bg-green-100 dark:hover:bg-green-900/20"
-            }
-          `}
-        >
-          <div className="flex items-center gap-3">
-            <div className={`p-1.5 rounded-lg ${hasActiveChild || isOpen
-              ? "bg-white/20"
-              : "bg-white dark:bg-green-100 group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
-              }`}>
-              <Icon className={`w-4 h-4 ${hasActiveChild || isOpen
-                ? "text-white"
-                : "text-gray-500 dark:text-green-800 group-hover:text-green-700 dark:group-hover:text-green-400"
-                }`} />
-            </div>
-            <span>{title}</span>
-          </div>
-          <ChevronDownIcon className={`
-            w-4 h-4 transition-transform duration-300
-            ${isOpen ? "rotate-180" : ""}
-            ${hasActiveChild || isOpen ? "text-white" : "text-gray-400"}
-          `} />
-        </button>
-
-        {isOpen ? (
-          <div className="ml-4 mt-3 space-y-2 pl-4 border-l-2 border-green-200 dark:border-green-800">
-            {children}
-          </div>
-        ) : null}
-      </div>
-    )
-  }
-
-  // Admin navigation - memoized
-  const adminNav = useMemo(() => {
+  // Build navigation items - now without pathname dependencies
+  const adminNavItems = useMemo(() => {
     if (userRole !== "admin") return null
 
-    return (
-      <div className="space-y-1">
-        <DropdownSection
-          title="ADMINISTRATION"
-          icon={BuildingOffice2Icon}
-          isOpen={openDropdown === "ADMINISTRATION"}
-          onToggle={toggleDropdown}
-        >
-          <NavLink href="/admin" icon={HomeIcon} onClick={handleItemClick}>
-            Dashboard
-          </NavLink>
-          <NavLink href="/admin/analytics" icon={ChartBarIcon} onClick={handleItemClick}>
-            Analytics
-          </NavLink>
-          <NavLink href="/admin/settings" icon={Cog6ToothIcon} onClick={handleItemClick}>
-            Settings
-          </NavLink>
-        </DropdownSection>
-
-        <DropdownSection
-          title="USER MANAGEMENT"
-          icon={UserGroupIcon}
-          isOpen={openDropdown === "USER MANAGEMENT"}
-          onToggle={toggleDropdown}
-        >
-          <NavLink href="/admin/users" icon={UsersIcon} onClick={handleItemClick}>
-            System Users
-          </NavLink>
-          <NavLink href="/admin/clients" icon={UserGroupIcon} onClick={handleItemClick}>
-            Clients
-          </NavLink>
-          <NavLink href="/admin/employees" icon={BriefcaseIcon} onClick={handleItemClick}>
-            Employees
-          </NavLink>
-        </DropdownSection>
-
-        <DropdownSection
-          title="OPERATIONS"
-          icon={ClipboardDocumentListIcon}
-          isOpen={openDropdown === "OPERATIONS"}
-          onToggle={toggleDropdown}
-        >
-          <NavLink
-            href="/admin/jobs"
-            icon={ClipboardDocumentListIcon}
-            onClick={handleItemClick}
-            badge={activeJobsCount > 0 ? activeJobsCount : undefined}
-          >
-            Jobs
-          </NavLink>
-          <NavLink href="/admin/tasks" icon={ClockIcon} onClick={handleItemClick}>
-            Tasks
-          </NavLink>
-          <NavLink href="/admin/schedule" icon={CalendarIcon} onClick={handleItemClick}>
-            Schedule
-          </NavLink>
-          <NavLink href="/admin/quotes" icon={DocumentTextIcon} onClick={handleItemClick}>
-            Quotes
-          </NavLink>
-        </DropdownSection>
-
-        <DropdownSection
-          title="FINANCIAL"
-          icon={CurrencyDollarIcon}
-          isOpen={openDropdown === "FINANCIAL"}
-          onToggle={toggleDropdown}
-        >
-          <NavLink href="/admin/payments" icon={BanknotesIcon} onClick={handleItemClick}>
-            Payments
-          </NavLink>
-          <NavLink href="/admin/invoices" icon={DocumentDuplicateIcon} onClick={handleItemClick}>
-            Invoices
-          </NavLink>
-          <NavLink href="/admin/reports" icon={DocumentChartBarIcon} onClick={handleItemClick}>
-            Reports
-          </NavLink>
-        </DropdownSection>
-      </div>
-    )
-  }, [userRole, openDropdown, toggleDropdown, handleItemClick, activeJobsCount, pathname])
-
-  // Non-admin navigation - memoized
-  const nonAdminNav = useMemo(() => {
-    if (userRole === "admin") return null
-
-    const baseItems = [
-      { name: "Dashboard", href: `/${userRole}`, icon: HomeIcon, badge: null },
+    const sections = [
+      {
+        title: "ADMINISTRATION",
+        icon: BuildingOffice2Icon,
+        items: [
+          { href: "/admin", label: "Dashboard", icon: HomeIcon },
+          { href: "/admin/analytics", label: "Analytics", icon: ChartBarIcon },
+          { href: "/admin/settings", label: "Settings", icon: Cog6ToothIcon }
+        ]
+      },
+      {
+        title: "USER MANAGEMENT",
+        icon: UserGroupIcon,
+        items: [
+          { href: "/admin/users", label: "System Users", icon: UsersIcon },
+          { href: "/admin/clients", label: "Clients", icon: UserGroupIcon },
+          { href: "/admin/employees", label: "Employees", icon: BriefcaseIcon }
+        ]
+      },
+      {
+        title: "OPERATIONS",
+        icon: ClipboardDocumentListIcon,
+        items: [
+          { href: "/admin/jobs", label: "Jobs", icon: ClipboardDocumentListIcon, badge: activeJobsCount },
+          { href: "/admin/tasks", label: "Tasks", icon: ClockIcon },
+          { href: "/admin/schedule", label: "Schedule", icon: CalendarIcon },
+          { href: "/admin/quotes", label: "Quotes", icon: DocumentTextIcon }
+        ]
+      },
+      {
+        title: "FINANCIAL",
+        icon: CurrencyDollarIcon,
+        items: [
+          { href: "/admin/payments", label: "Payments", icon: BanknotesIcon },
+          { href: "/admin/invoices", label: "Invoices", icon: DocumentDuplicateIcon },
+          { href: "/admin/reports", label: "Reports", icon: DocumentChartBarIcon }
+        ]
+      }
     ]
 
-    let roleItems: Array<{ name: string; href: string; icon: React.ComponentType<{ className?: string }>; badge: null }> = []
-
-    if (userRole === "worker") {
-      roleItems = [
-        { name: "My Tasks", href: `/${userRole}/tasks`, icon: ClipboardDocumentListIcon, badge: null },
-        { name: "Schedule", href: `/${userRole}/schedule`, icon: CalendarIcon, badge: null },
-        { name: "Map View", href: `/${userRole}/map`, icon: MapIcon, badge: null },
-      ]
-    } else if (userRole === "supervisor") {
-      roleItems = [
-        { name: "Team Overview", href: `/${userRole}/team`, icon: UserGroupIcon, badge: null },
-        { name: "Task Management", href: `/${userRole}/tasks`, icon: ClipboardDocumentListIcon, badge: null },
-        { name: "Analytics", href: `/${userRole}/analytics`, icon: ChartBarIcon, badge: null },
-        { name: "Schedule", href: `/${userRole}/schedule`, icon: CalendarIcon, badge: null },
-      ]
-    } else if (userRole === "client") {
-      roleItems = [
-        { name: "My Services", href: `/${userRole}/services`, icon: ClipboardDocumentListIcon, badge: null },
-        { name: "Schedule", href: `/${userRole}/schedule`, icon: CalendarIcon, badge: null },
-        { name: "Billing", href: `/${userRole}/billing`, icon: ChartBarIcon, badge: null },
-      ]
-    }
-
-    return (
-      <div className="space-y-2">
-        {[...baseItems, ...roleItems].map((item) => (
+    return sections.map((section) => (
+      <DropdownSection
+        key={section.title}
+        title={section.title}
+        icon={section.icon}
+        isOpen={openDropdown === section.title}
+        onToggle={toggleDropdown}
+      >
+        {section.items.map((item) => (
           <NavLink
-            key={item.name}
+            key={item.href}
             href={item.href}
             icon={item.icon}
             onClick={handleItemClick}
-            badge={item.badge}
+            badge={item.badge && item.badge > 0 ? item.badge : undefined}
           >
-            {item.name}
+            {item.label}
           </NavLink>
         ))}
-      </div>
-    )
-  }, [userRole, handleItemClick, pathname])
+      </DropdownSection>
+    ))
+  }, [userRole, openDropdown, toggleDropdown, handleItemClick, activeJobsCount])
+
+  // Non-admin navigation items
+  const nonAdminNavItems = useMemo(() => {
+    if (userRole === "admin") return null
+
+    const baseItems = [
+      { name: "Dashboard", href: `/${userRole}`, icon: HomeIcon },
+    ]
+
+    let roleItems: Array<{ name: string; href: string; icon: React.ComponentType<{ className?: string }> }> = []
+
+    if (userRole === "worker") {
+      roleItems = [
+        { name: "My Tasks", href: `/${userRole}/tasks`, icon: ClipboardDocumentListIcon },
+        { name: "Schedule", href: `/${userRole}/schedule`, icon: CalendarIcon },
+        { name: "Map View", href: `/${userRole}/map`, icon: MapIcon },
+      ]
+    } else if (userRole === "supervisor") {
+      roleItems = [
+        { name: "Team Overview", href: `/${userRole}/team`, icon: UserGroupIcon },
+        { name: "Task Management", href: `/${userRole}/tasks`, icon: ClipboardDocumentListIcon },
+        { name: "Analytics", href: `/${userRole}/analytics`, icon: ChartBarIcon },
+        { name: "Schedule", href: `/${userRole}/schedule`, icon: CalendarIcon },
+      ]
+    } else if (userRole === "client") {
+      roleItems = [
+        { name: "My Services", href: `/${userRole}/services`, icon: ClipboardDocumentListIcon },
+        { name: "Schedule", href: `/${userRole}/schedule`, icon: CalendarIcon },
+        { name: "Billing", href: `/${userRole}/billing`, icon: ChartBarIcon },
+      ]
+    }
+
+    return [...baseItems, ...roleItems].map((item) => (
+      <NavLink
+        key={item.href}
+        href={item.href}
+        icon={item.icon}
+        onClick={handleItemClick}
+      >
+        {item.name}
+      </NavLink>
+    ))
+  }, [userRole, handleItemClick])
 
   return (
     <>
@@ -391,7 +384,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
         animate={{
           x: isDesktop ? 0 : isOpen ? 0 : -300,
         }}
-        transition={{ duration: 0.2, ease: "easeInOut" }}
+        transition={{ duration: 0.15, ease: "easeInOut" }}
         className="fixed left-0 top-0 h-screen w-72 bg-gradient-to-b from-green-50/30 via-white to-emerald-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border-r border-green-200/50 dark:border-gray-700 shadow-xl z-50 lg:static lg:z-auto"
       >
         <div className="p-5 flex flex-col h-full">
@@ -421,11 +414,13 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
                   Navigation
                 </p>
               </div>
-              {userRole === "admin" ? adminNav : nonAdminNav}
+              <div className="space-y-1">
+                {userRole === "admin" ? adminNavItems : nonAdminNavItems}
+              </div>
             </div>
           </nav>
 
-          {/* Footer / Logout */}
+          {/* Footer */}
           <div className="pt-6 border-t border-green-200/50 dark:border-gray-700">
             <button
               onClick={() => {

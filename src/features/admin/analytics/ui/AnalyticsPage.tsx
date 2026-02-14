@@ -66,8 +66,17 @@ const AnalyticsPage = () => {
   const avgMonthlyRevenue = totalRevenue / revenueTrends.length
 
   return (
-    <div >
+    <div className="gap-4 sm:gap-6 lg:gap-8">
 
+      <div className="min-w-0 my-4">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
+          Analytics
+        </h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Business insights and performance metrics
+        </p>
+      </div>
+      
       {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatsCard
