@@ -8,7 +8,15 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Cog6ToothIcon, BuildingOfficeIcon, CreditCardIcon, BellIcon, KeyIcon, EnvelopeIcon } from "@heroicons/react/24/outline"
+import {
+  Cog6ToothIcon,
+  BuildingOfficeIcon,
+  CreditCardIcon,
+  BellIcon,
+  KeyIcon,
+  EnvelopeIcon
+} from "@heroicons/react/24/outline"
+import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState("company")
@@ -23,20 +31,25 @@ const SettingsPage = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mt-2">Settings</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400">Manage company settings and preferences</p>
+      </div>
+
       {/* Tabs */}
       <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex space-x-8">
+        <nav className="flex space-x-8 overflow-x-auto pb-1">
           {tabs.map((tab) => {
             const Icon = tab.icon
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === tab.id
+                className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === tab.id
                     ? "border-primary-500 text-primary-600 dark:text-primary-400"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
-                }`}
+                  }`}
               >
                 <Icon className="w-5 h-5" />
                 <span>{tab.label}</span>
@@ -106,16 +119,16 @@ const SettingsPage = () => {
           <div className="space-y-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Billing Preferences</h2>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">Payment Gateway</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Stripe (Connected)</p>
                 </div>
-                <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
+                <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
                   Configure
                 </button>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">QuickBooks Integration</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Not connected</p>
@@ -138,12 +151,12 @@ const SettingsPage = () => {
                 { label: "Payment reminders", checked: true },
                 { label: "Job completion alerts", checked: true },
               ].map((setting) => (
-                <div key={setting.label} className="flex items-center justify-between">
+                <div key={setting.label} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                   <label className="text-gray-900 dark:text-white">{setting.label}</label>
                   <input
                     type="checkbox"
                     defaultChecked={setting.checked}
-                    className="w-4 h-4 text-primary-600 rounded"
+                    className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
                   />
                 </div>
               ))}
@@ -165,7 +178,7 @@ const SettingsPage = () => {
                     <p className="font-medium text-gray-900 dark:text-white">{integration.name}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{integration.status}</p>
                   </div>
-                  <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
+                  <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
                     {integration.action}
                   </button>
                 </div>
@@ -187,7 +200,7 @@ const SettingsPage = () => {
               ].map((template) => (
                 <div key={template} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                   <span className="text-gray-900 dark:text-white">{template}</span>
-                  <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
+                  <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
                     Edit
                   </button>
                 </div>
