@@ -133,31 +133,8 @@ export default function InvoicesPage() {
   ]
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 min-w-0">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} userRole="admin" />
 
-      <div className="flex-1 min-w-0 w-full overflow-x-hidden">
-        {/* Header — same layout as jobs page */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-3 sm:px-4 sm:py-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2 sm:space-x-4">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-              >
-                <Bars3Icon className="w-6 h-6" />
-              </button>
-              <div className="min-w-0">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Invoices</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400 truncate sm:truncate-none">
-                  Manage professional invoices and billing
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Main content */}
         <div className="p-4 sm:p-6">
           <Breadcrumbs />
 
@@ -222,8 +199,6 @@ export default function InvoicesPage() {
               />
             )}
           </div>
-        </div>
-      </div>
 
       <CreateInvoiceModal
         isOpen={isCreateModalOpen}
@@ -254,5 +229,6 @@ export default function InvoicesPage() {
         invoice={printPreviewInvoice}
       />
     </div>
+
   )
 }
