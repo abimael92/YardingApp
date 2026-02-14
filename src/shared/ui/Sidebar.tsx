@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { clearMockRole } from "@/src/features/auth/services/mockAuth"
 import {
   HomeIcon,
@@ -24,7 +24,7 @@ import {
   BuildingOffice2Icon,
   CurrencyDollarIcon,
 } from "@heroicons/react/24/outline"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import React from "react"
 import { getJobs } from "@/src/services/jobService"
 import { JobStatus } from "@/src/domain/entities"
@@ -54,31 +54,37 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
     return () => mediaQuery.removeEventListener("change", update)
   }, [])
 
-  // Fetch current user name
+  // Fetch current user name - with cache to prevent flicker
   useEffect(() => {
+    let mounted = true
+
     const loadCurrentUserName = async () => {
+      // Set initial fallback immediately to prevent blank
+      setCurrentUserName(userRole.charAt(0).toUpperCase() + userRole.slice(1))
+
       try {
         const userEmail = getMockUserEmail()
-        if (userEmail) {
+        if (userEmail && mounted) {
           const users = await getAllUsers()
           const currentUser = users.find((u) => u.email.toLowerCase() === userEmail.toLowerCase())
-          if (currentUser) {
+          if (currentUser && mounted) {
             setCurrentUserName(currentUser.name)
-          } else {
+          } else if (mounted) {
             // Fallback: extract name from email
             const emailName = userEmail.split("@")[0].replace(/\./g, " ")
             setCurrentUserName(emailName.split(" ").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" "))
           }
-        } else {
-          // Fallback to role-based name
-          setCurrentUserName(userRole.charAt(0).toUpperCase() + userRole.slice(1))
         }
       } catch (error) {
         console.error("Failed to load user name:", error)
-        setCurrentUserName(userRole.charAt(0).toUpperCase() + userRole.slice(1))
       }
     }
+
     loadCurrentUserName()
+
+    return () => {
+      mounted = false
+    }
   }, [userRole])
 
   // Fetch active jobs count for admin
@@ -102,50 +108,46 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
     }
   }, [userRole])
 
-  // Auto-open dropdown based on current page - FIXED: Check specific paths first
+  // Auto-open dropdown based on current page - optimized
   useEffect(() => {
     if (userRole === "admin") {
-      // Check specific paths first (most specific to least specific)
-      // This ensures we don't always match /admin for all routes
+      let newDropdown = null
+
       if (pathname.startsWith("/admin/analytics") || pathname.startsWith("/admin/settings")) {
-        setOpenDropdown("ADMINISTRATION")
+        newDropdown = "ADMINISTRATION"
       } else if (pathname.startsWith("/admin/users") || pathname.startsWith("/admin/clients") || pathname.startsWith("/admin/employees")) {
-        setOpenDropdown("USER MANAGEMENT")
+        newDropdown = "USER MANAGEMENT"
       } else if (pathname.startsWith("/admin/jobs") || pathname.startsWith("/admin/tasks") || pathname.startsWith("/admin/schedule") || pathname.startsWith("/admin/quotes")) {
-        setOpenDropdown("OPERATIONS")
+        newDropdown = "OPERATIONS"
       } else if (pathname.startsWith("/admin/payments") || pathname.startsWith("/admin/invoices") || pathname.startsWith("/admin/reports")) {
-        setOpenDropdown("FINANCIAL")
+        newDropdown = "FINANCIAL"
       } else if (pathname === "/admin") {
-        // Only set ADMINISTRATION if it's exactly /admin (not a sub-path)
-        setOpenDropdown("ADMINISTRATION")
+        newDropdown = "ADMINISTRATION"
       }
+
+      setOpenDropdown(newDropdown)
     }
   }, [pathname, userRole])
-  
-  console.log({ currentUserName });
-  
 
-  const toggleDropdown = (name: string) => {
-    setOpenDropdown(openDropdown === name ? null : name)
-  }
+  const toggleDropdown = useCallback((name: string) => {
+    setOpenDropdown(prev => prev === name ? null : name)
+  }, [])
 
-  const handleItemClick = () => {
+  const handleItemClick = useCallback(() => {
     if (!isDesktop) {
       setIsOpen(false)
     }
-  }
+  }, [isDesktop, setIsOpen])
 
-  // NavLink component with desert theme colors
-  interface NavLinkProps {
+  // NavLink component
+  const NavLink = ({ href, icon: Icon, onClick, children, badge }: {
     href: string
     icon: React.ComponentType<{ className?: string }>
     onClick?: () => void
     children: React.ReactNode
     badge?: number | null
-  }
-  const NavLink = ({ href, icon: Icon, onClick, children, badge }: NavLinkProps) => {
-    // Fix active detection: exact match or path starts with href + "/" (to avoid /admin matching /admin/users)
-    const isActive = pathname === href || (pathname.startsWith(href + "/"))
+  }) => {
+    const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href + "/"))
 
     return (
       <Link
@@ -170,30 +172,29 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
             }`} />
         </div>
         <span className="flex-1">{children}</span>
-        {badge && (
+        {badge ? (
           <span className={`px-2 py-1 text-xs font-bold rounded-full ${isActive
-              ? "bg-green-500 text-white"
-              : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 group-hover:bg-green-500 group-hover:text-white"
+            ? "bg-green-500 text-white"
+            : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 group-hover:bg-green-500 group-hover:text-white"
             }`}>
             {badge}
           </span>
-        )}
-        {isActive && (
-          <div className="absolute right-3 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        )}
+        ) : null}
+        {isActive ? (
+          <div className="absolute right-3 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+        ) : null}
       </Link>
     )
   }
 
-  // Dropdown Section with desert theme
-  interface DropdownSectionProps {
+  // Dropdown Section component
+  const DropdownSection = ({ title, icon: Icon, children, isOpen, onToggle }: {
     title: string
     icon: React.ComponentType<{ className?: string }>
     children: React.ReactNode
     isOpen: boolean
     onToggle: (title: string) => void
-  }
-  const DropdownSection = ({ title, icon: Icon, children, isOpen, onToggle }: DropdownSectionProps) => {
+  }) => {
     const hasActiveChild = React.Children.toArray(children).some((child) => {
       if (!React.isValidElement(child) || typeof (child.props as { href?: string }).href !== "string") return false
       const href = (child.props as { href: string }).href
@@ -232,117 +233,109 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
           `} />
         </button>
 
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="ml-4 mt-3 space-y-2 pl-4 border-l-2 border-green-200 dark:border-green-800"
-            >
-              {children}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {isOpen ? (
+          <div className="ml-4 mt-3 space-y-2 pl-4 border-l-2 border-green-200 dark:border-green-800">
+            {children}
+          </div>
+        ) : null}
       </div>
     )
   }
 
-  // Admin navigation
-  const getAdminNav = () => (
-    <div className="space-y-1">
-      <DropdownSection
-        title="ADMINISTRATION"
-        icon={BuildingOffice2Icon}
-        isOpen={openDropdown === "ADMINISTRATION"}
-        onToggle={toggleDropdown}
-      >
-        <NavLink href="/admin" icon={HomeIcon} onClick={handleItemClick}>
-          Dashboard
-        </NavLink>
-        <NavLink href="/admin/analytics" icon={ChartBarIcon} onClick={handleItemClick}>
-          Analytics
-        </NavLink>
-        <NavLink href="/admin/settings" icon={Cog6ToothIcon} onClick={handleItemClick}>
-          Settings
-        </NavLink>
-      </DropdownSection>
+  // Admin navigation - memoized
+  const adminNav = useMemo(() => {
+    if (userRole !== "admin") return null
 
-      <DropdownSection
-        title="USER MANAGEMENT"
-        icon={UserGroupIcon}
-        isOpen={openDropdown === "USER MANAGEMENT"}
-        onToggle={toggleDropdown}
-      >
-        <NavLink href="/admin/users" icon={UsersIcon} onClick={handleItemClick}>
-          System Users
-        </NavLink>
-        <NavLink href="/admin/clients" icon={UserGroupIcon} onClick={handleItemClick}>
-          Clients
-        </NavLink>
-        <NavLink href="/admin/employees" icon={BriefcaseIcon} onClick={handleItemClick}>
-          Employees
-        </NavLink>
-      </DropdownSection>
-
-      <DropdownSection
-        title="OPERATIONS"
-        icon={ClipboardDocumentListIcon}
-        isOpen={openDropdown === "OPERATIONS"}
-        onToggle={toggleDropdown}
-      >
-        <NavLink 
-          href="/admin/jobs" 
-          icon={ClipboardDocumentListIcon} 
-          onClick={handleItemClick} 
-          badge={activeJobsCount > 0 ? activeJobsCount : undefined}
+    return (
+      <div className="space-y-1">
+        <DropdownSection
+          title="ADMINISTRATION"
+          icon={BuildingOffice2Icon}
+          isOpen={openDropdown === "ADMINISTRATION"}
+          onToggle={toggleDropdown}
         >
-          Jobs
-        </NavLink>
-        <NavLink href="/admin/tasks" icon={ClockIcon} onClick={handleItemClick}>
-          Tasks
-        </NavLink>
-        <NavLink href="/admin/schedule" icon={CalendarIcon} onClick={handleItemClick}>
-          Schedule
-        </NavLink>
-        <NavLink href="/admin/quotes" icon={DocumentTextIcon} onClick={handleItemClick}>
-          Quotes
-        </NavLink>
-      </DropdownSection>
+          <NavLink href="/admin" icon={HomeIcon} onClick={handleItemClick}>
+            Dashboard
+          </NavLink>
+          <NavLink href="/admin/analytics" icon={ChartBarIcon} onClick={handleItemClick}>
+            Analytics
+          </NavLink>
+          <NavLink href="/admin/settings" icon={Cog6ToothIcon} onClick={handleItemClick}>
+            Settings
+          </NavLink>
+        </DropdownSection>
 
-      <DropdownSection
-        title="FINANCIAL"
-        icon={CurrencyDollarIcon}
-        isOpen={openDropdown === "FINANCIAL"}
-        onToggle={toggleDropdown}
-      >
-        <NavLink href="/admin/payments" icon={BanknotesIcon} onClick={handleItemClick}>
-          Payments
-        </NavLink>
-        <NavLink href="/admin/invoices" icon={DocumentDuplicateIcon} onClick={handleItemClick}>
-          Invoices
-        </NavLink>
-        <NavLink href="/admin/reports" icon={DocumentChartBarIcon} onClick={handleItemClick}>
-          Reports
-        </NavLink>
-      </DropdownSection>
-    </div>
-  )
+        <DropdownSection
+          title="USER MANAGEMENT"
+          icon={UserGroupIcon}
+          isOpen={openDropdown === "USER MANAGEMENT"}
+          onToggle={toggleDropdown}
+        >
+          <NavLink href="/admin/users" icon={UsersIcon} onClick={handleItemClick}>
+            System Users
+          </NavLink>
+          <NavLink href="/admin/clients" icon={UserGroupIcon} onClick={handleItemClick}>
+            Clients
+          </NavLink>
+          <NavLink href="/admin/employees" icon={BriefcaseIcon} onClick={handleItemClick}>
+            Employees
+          </NavLink>
+        </DropdownSection>
 
-  // Get non-admin navigation
-  const getNonAdminNav = () => {
+        <DropdownSection
+          title="OPERATIONS"
+          icon={ClipboardDocumentListIcon}
+          isOpen={openDropdown === "OPERATIONS"}
+          onToggle={toggleDropdown}
+        >
+          <NavLink
+            href="/admin/jobs"
+            icon={ClipboardDocumentListIcon}
+            onClick={handleItemClick}
+            badge={activeJobsCount > 0 ? activeJobsCount : undefined}
+          >
+            Jobs
+          </NavLink>
+          <NavLink href="/admin/tasks" icon={ClockIcon} onClick={handleItemClick}>
+            Tasks
+          </NavLink>
+          <NavLink href="/admin/schedule" icon={CalendarIcon} onClick={handleItemClick}>
+            Schedule
+          </NavLink>
+          <NavLink href="/admin/quotes" icon={DocumentTextIcon} onClick={handleItemClick}>
+            Quotes
+          </NavLink>
+        </DropdownSection>
+
+        <DropdownSection
+          title="FINANCIAL"
+          icon={CurrencyDollarIcon}
+          isOpen={openDropdown === "FINANCIAL"}
+          onToggle={toggleDropdown}
+        >
+          <NavLink href="/admin/payments" icon={BanknotesIcon} onClick={handleItemClick}>
+            Payments
+          </NavLink>
+          <NavLink href="/admin/invoices" icon={DocumentDuplicateIcon} onClick={handleItemClick}>
+            Invoices
+          </NavLink>
+          <NavLink href="/admin/reports" icon={DocumentChartBarIcon} onClick={handleItemClick}>
+            Reports
+          </NavLink>
+        </DropdownSection>
+      </div>
+    )
+  }, [userRole, openDropdown, toggleDropdown, handleItemClick, activeJobsCount, pathname])
+
+  // Non-admin navigation - memoized
+  const nonAdminNav = useMemo(() => {
+    if (userRole === "admin") return null
+
     const baseItems = [
       { name: "Dashboard", href: `/${userRole}`, icon: HomeIcon, badge: null },
     ]
 
-    interface NavItem {
-      name: string
-      href: string
-      icon: React.ComponentType<{ className?: string }>
-      badge: number | null
-    }
-    let roleItems: NavItem[] = []
+    let roleItems: Array<{ name: string; href: string; icon: React.ComponentType<{ className?: string }>; badge: null }> = []
 
     if (userRole === "worker") {
       roleItems = [
@@ -380,17 +373,17 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
         ))}
       </div>
     )
-  }
+  }, [userRole, handleItemClick, pathname])
 
   return (
     <>
       {/* Mobile Overlay */}
-      {isOpen && (
+      {isOpen ? (
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
-      )}
+      ) : null}
 
       {/* Sidebar */}
       <motion.aside
@@ -398,7 +391,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
         animate={{
           x: isDesktop ? 0 : isOpen ? 0 : -300,
         }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
+        transition={{ duration: 0.2, ease: "easeInOut" }}
         className="fixed left-0 top-0 h-screen w-72 bg-gradient-to-b from-green-50/30 via-white to-emerald-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border-r border-green-200/50 dark:border-gray-700 shadow-xl z-50 lg:static lg:z-auto"
       >
         <div className="p-5 flex flex-col h-full">
@@ -406,7 +399,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent dark:from-green-400 dark:to-emerald-400">
-                {currentUserName || userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                {currentUserName}
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Desert Landscaping Co.
@@ -415,7 +408,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
             <div className="relative">
               <button className="p-2 rounded-full bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors">
                 <BellIcon className="w-5 h-5 text-green-700 dark:text-green-400" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-gray-800"></span>
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-gray-800" />
               </button>
             </div>
           </div>
@@ -428,7 +421,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
                   Navigation
                 </p>
               </div>
-              {userRole === "admin" ? getAdminNav() : getNonAdminNav()}
+              {userRole === "admin" ? adminNav : nonAdminNav}
             </div>
           </nav>
 
