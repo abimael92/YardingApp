@@ -138,7 +138,10 @@ export const adminService: AdminService = {
     const pendingJobs = jobs.filter((j) => j.status === JobStatus.DRAFT || j.status === JobStatus.QUOTED).length
     const completedJobs = jobs.filter((j) => j.status === JobStatus.COMPLETED).length
 
-    const availableEmployees = employees.filter((e) => e.status === EmployeeStatus.ACTIVE).length
+console.log('EMPLOYEES RAW DATA:', JSON.stringify(employees, null, 2));
+const availableEmployees = employees.filter(
+	(e) => e.status === EmployeeStatus.ACTIVE,
+).length;
 
     return {
       totalUsers: users.length,
