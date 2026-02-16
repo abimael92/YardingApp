@@ -33,12 +33,29 @@ export interface Worker {
 }
 
 export interface User {
-  id: string
-  name: string
-  email: string
-  role: "Admin" | "Client" | "Supervisor" | "Worker"
-  status: "Active" | "Pending" | "Inactive"
-  joinDate: string
+	id: string;
+	name: string;
+	email: string;
+	role: 'Admin' | 'Client' | 'Supervisor' | 'Worker';
+	status: 'Active' | 'Pending' | 'Inactive';
+	joinDate: string;
+	// New fields for boss management
+	employeeNumber?: string;
+	department?: string;
+	position?: string;
+	hourlyRate?: number;
+	phone?: string;
+	avatar?: string;
+	assignedJobs?: JobAssignment[];
+}
+
+export interface JobAssignment {
+	jobId: string;
+	jobNumber: string;
+	jobTitle: string;
+	status: 'assigned' | 'in_progress' | 'completed';
+	assignedAt: string;
+	roleInJob: 'lead' | 'helper' | 'specialist' | 'supervisor';
 }
 
 export interface Client {
