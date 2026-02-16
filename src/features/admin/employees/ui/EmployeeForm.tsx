@@ -44,7 +44,7 @@ const EmployeeForm = ({ isOpen, onClose, onSuccess, employee }: EmployeeFormProp
         role: employee.role,
         status: employee.status,
         department: employee.department || "",
-        hireDate: employee.hireDate.split("T")[0],
+        hireDate: employee.hireDate ? employee.hireDate.split("T")[0] : new Date().toISOString().split("T")[0],
       })
     } else {
       setFormData({
