@@ -158,7 +158,7 @@ html:not(.dark) body {
   .input-field {
     border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
-    padding: var(--space-m);
+    padding: var(--space-s);
     background: var(--bg-primary);
     color: var(--text-primary);
   }

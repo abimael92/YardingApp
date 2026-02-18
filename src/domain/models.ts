@@ -32,6 +32,13 @@ export interface Worker {
   completedTasks: number
 }
 
+export interface EmployeeStats {
+	total: number;
+	active: number;
+	pending: number;
+	inactive: number;
+}
+
 export interface User {
 	id: string;
 	name: string;

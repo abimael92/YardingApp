@@ -1,6 +1,6 @@
 "use client"
 
-import EmployeeList from "@/src/features/admin/employees/ui/EmployeeList"
+import { EmployeeList } from "@/src/features/admin/employees/ui/EmployeeList"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 
 
