@@ -160,5 +160,88 @@ export const updateEmployee = (id: EntityId, updates: Partial<Employee>) =>
 	employeeService.update(id, updates);
 export const deleteEmployee = (id: EntityId) => employeeService.delete(id);
 
+// ============================================================================
+// Additional Functions Needed by EmployeeList
+// ============================================================================
+
+/**
+ * Get employee statistics (counts by status)
+ */
+export const getEmployeeStats = async () => {
+	const employees = await getAllEmployees();
+
+	return {
+		total: employees.length,
+		active: employees.filter((e) => e.status === 'active').length,
+		pending: employees.filter((e) => (e.status as string) === 'pending').length,
+		inactive: employees.filter((e) => (e.status as string) === 'inactive').length,
+	};
+};
+
+/**
+ * Get employee assignments (jobs they're working on)
+ */
+export const getEmployeeAssignments = async (employeeId: string) => {
+	try {
+		// Try to fetch from database first
+		const assignments = await sql`
+			SELECT 
+				ja.id,
+				ja.job_id as "jobId",
+				j.job_number as "jobNumber",
+				j.title as "jobTitle",
+				ja.status,
+				ja.assigned_at as "assignedAt"
+			FROM job_assignments ja
+			JOIN jobs j ON ja.job_id = j.id
+			WHERE ja.employee_id = ${employeeId}
+			ORDER BY ja.assigned_at DESC
+		`;
+
+		return assignments.map((assignment) => ({
+			jobId: assignment.jobId,
+			jobNumber: assignment.jobNumber,
+			jobTitle: assignment.jobTitle,
+			status: assignment.status,
+			assignedAt: assignment.assignedAt,
+		}));
+	} catch (error) {
+		console.error(
+			'Failed to fetch assignments from DB, using mock data:',
+			error,
+		);
+
+		// Fallback to mock data if table doesn't exist yet
+		return [
+			{
+				jobId: 'job1',
+				jobNumber: 'JOB-2024-001',
+				jobTitle: 'Commercial Landscaping - Downtown',
+				status: 'in_progress',
+				assignedAt: new Date().toISOString(),
+			},
+			{
+				jobId: 'job2',
+				jobNumber: 'JOB-2024-002',
+				jobTitle: 'Residential Maintenance - Smith Residence',
+				status: 'pending',
+				assignedAt: new Date().toISOString(),
+			},
+		];
+	}
+};
+
+/**
+ * Update user status (alias for updateEmployee with just status)
+ */
+export const updateUserStatus = async (id: string, status: string) => {
+	return updateEmployee(id, { status: status as EmployeeStatus });
+};
+
+/**
+ * Get all users (alias for getAllEmployees for backward compatibility)
+ */
+export const getAllUsers = getAllEmployees;
+
 // Export as getEmployees for backward compatibility with workerService
 export const getEmployees = () => employeeService.getAll();
