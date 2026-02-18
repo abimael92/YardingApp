@@ -4,8 +4,34 @@
  * Service layer for employee management operations.
  */
 
-import { neon } from '@neondatabase/serverless';
 import type { Employee, EntityId, EmployeeStatus } from '@/src/domain/entities';
+
+// ============================================================================
+// Safe database connection - handles missing env var during build
+// ============================================================================
+
+let sql: any;
+
+// Check if we're in a build environment
+const isBuildTime =
+	process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL;
+
+if (!process.env.DATABASE_URL) {
+	console.warn(
+		'⚠️ DATABASE_URL environment variable is not set. Using mock data mode.',
+	);
+	// Create a mock SQL function that returns empty arrays
+	sql = async () => [];
+} else {
+	try {
+		// Dynamically import neon only when we have a database URL
+		const { neon } = require('@neondatabase/serverless');
+		sql = neon(process.env.DATABASE_URL);
+	} catch (error) {
+		console.error('Failed to initialize database:', error);
+		sql = async () => [];
+	}
+}
 
 // ============================================================================
 // Service Interface (API-ready)
@@ -29,105 +55,117 @@ export interface EmployeeService {
 // Service Implementation
 // ============================================================================
 
-const sql = neon(process.env.DATABASE_URL!);
-
 export const employeeService: EmployeeService = {
 	getAll: async () => {
-		const employees = await sql`
-			SELECT 
-				p.id,
-				p.full_name as name,
-				r.name as role,
-				'active' as status,
-				p.created_at as "hireDate",
-				p.updated_at as "updatedAt"
-			FROM profiles p
-			JOIN user_roles ur ON p.id = ur.profile_id
-			JOIN roles r ON ur.role_id = r.id
-			WHERE r.name IN ('employee', 'supervisor')
-			ORDER BY p.full_name
-		`;
+		try {
+			const employees = await sql`
+				SELECT 
+					p.id,
+					p.full_name as name,
+					r.name as role,
+					'active' as status,
+					p.created_at as "hireDate",
+					p.updated_at as "updatedAt"
+				FROM profiles p
+				JOIN user_roles ur ON p.id = ur.profile_id
+				JOIN roles r ON ur.role_id = r.id
+				WHERE r.name IN ('employee', 'supervisor')
+				ORDER BY p.full_name
+			`;
 
-		return employees.map((emp) => ({
-			id: emp.id,
-			firstName: emp.name.split(' ')[0] || '',
-			lastName: emp.name.split(' ').slice(1).join(' ') || '',
-			displayName: emp.name,
-			email: `${emp.name.toLowerCase().replace(' ', '.')}@jjlandscaping.com`,
-			phone: '+1-555-0101', // Default, should come from profiles table if available
-			role: emp.role,
-			status: emp.status,
-			hireDate: emp.hireDate,
-			availability: {
-				monday: [],
-				tuesday: [],
-				wednesday: [],
-				thursday: [],
-				friday: [],
-				saturday: [],
-				sunday: [],
-			},
-			completedJobsCount: 0,
-			totalHoursWorked: 0,
-			assignedJobIds: [],
-			supervisedJobIds: [],
-			rating: 4.5,
-			department: 'General',
-			createdAt: emp.hireDate,
-			updatedAt: emp.updatedAt || emp.hireDate,
-		}));
+			return employees.map((emp: any) => ({
+				id: emp.id,
+				firstName: emp.name?.split(' ')[0] || '',
+				lastName: emp.name?.split(' ').slice(1).join(' ') || '',
+				displayName: emp.name || '',
+				email:
+					emp.email ||
+					`${emp.name?.toLowerCase().replace(' ', '.') || 'employee'}@jjlandscaping.com`,
+				phone: '+1-555-0101',
+				role: emp.role || 'employee',
+				status: emp.status || 'active',
+				hireDate: emp.hireDate || new Date().toISOString(),
+				availability: {
+					monday: [],
+					tuesday: [],
+					wednesday: [],
+					thursday: [],
+					friday: [],
+					saturday: [],
+					sunday: [],
+				},
+				completedJobsCount: 0,
+				totalHoursWorked: 0,
+				assignedJobIds: [],
+				supervisedJobIds: [],
+				rating: 4.5,
+				department: 'General',
+				createdAt: emp.hireDate || new Date().toISOString(),
+				updatedAt: emp.updatedAt || emp.hireDate || new Date().toISOString(),
+			}));
+		} catch (error) {
+			console.error('Database error in getAll:', error);
+			// Return empty array during build/error
+			return [];
+		}
 	},
 
 	getById: async (id: EntityId) => {
-		const employees = await sql`
-			SELECT 
-				p.id,
-				p.full_name as name,
-				r.name as role,
-				'active' as status,
-				p.created_at as "hireDate",
-				p.updated_at as "updatedAt"
-			FROM profiles p
-			JOIN user_roles ur ON p.id = ur.profile_id
-			JOIN roles r ON ur.role_id = r.id
-			WHERE r.name IN ('employee', 'supervisor') AND p.id = ${id}
-		`;
+		try {
+			const employees = await sql`
+				SELECT 
+					p.id,
+					p.full_name as name,
+					r.name as role,
+					'active' as status,
+					p.created_at as "hireDate",
+					p.updated_at as "updatedAt"
+				FROM profiles p
+				JOIN user_roles ur ON p.id = ur.profile_id
+				JOIN roles r ON ur.role_id = r.id
+				WHERE r.name IN ('employee', 'supervisor') AND p.id = ${id}
+			`;
 
-		if (employees.length === 0) return undefined;
+			if (employees.length === 0) return undefined;
 
-		const emp = employees[0];
-		return {
-			id: emp.id,
-			firstName: emp.name.split(' ')[0] || '',
-			lastName: emp.name.split(' ').slice(1).join(' ') || '',
-			displayName: emp.name,
-			email: `${emp.name.toLowerCase().replace(' ', '.')}@jjlandscaping.com`,
-			phone: '+1-555-0101',
-			role: emp.role,
-			status: emp.status,
-			hireDate: emp.hireDate,
-			availability: {
-				monday: [],
-				tuesday: [],
-				wednesday: [],
-				thursday: [],
-				friday: [],
-				saturday: [],
-				sunday: [],
-			},
-			completedJobsCount: 0,
-			totalHoursWorked: 0,
-			assignedJobIds: [],
-			supervisedJobIds: [],
-			rating: 4.5,
-			department: 'General',
-			createdAt: emp.hireDate,
-			updatedAt: emp.updatedAt || emp.hireDate,
-		};
+			const emp = employees[0];
+			return {
+				id: emp.id,
+				firstName: emp.name?.split(' ')[0] || '',
+				lastName: emp.name?.split(' ').slice(1).join(' ') || '',
+				displayName: emp.name || '',
+				email:
+					emp.email ||
+					`${emp.name?.toLowerCase().replace(' ', '.') || 'employee'}@jjlandscaping.com`,
+				phone: '+1-555-0101',
+				role: emp.role || 'employee',
+				status: emp.status || 'active',
+				hireDate: emp.hireDate || new Date().toISOString(),
+				availability: {
+					monday: [],
+					tuesday: [],
+					wednesday: [],
+					thursday: [],
+					friday: [],
+					saturday: [],
+					sunday: [],
+				},
+				completedJobsCount: 0,
+				totalHoursWorked: 0,
+				assignedJobIds: [],
+				supervisedJobIds: [],
+				rating: 4.5,
+				department: 'General',
+				createdAt: emp.hireDate || new Date().toISOString(),
+				updatedAt: emp.updatedAt || emp.hireDate || new Date().toISOString(),
+			};
+		} catch (error) {
+			console.error('Database error in getById:', error);
+			return undefined;
+		}
 	},
 
 	getByStatus: async (status: EmployeeStatus) => {
-		// Since we're defaulting to 'active', just return all
 		const employees = await employeeService.getAll();
 		return employees;
 	},
@@ -174,7 +212,8 @@ export const getEmployeeStats = async () => {
 		total: employees.length,
 		active: employees.filter((e) => e.status === 'active').length,
 		pending: employees.filter((e) => (e.status as string) === 'pending').length,
-		inactive: employees.filter((e) => (e.status as string) === 'inactive').length,
+		inactive: employees.filter((e) => (e.status as string) === 'inactive')
+			.length,
 	};
 };
 
@@ -198,7 +237,7 @@ export const getEmployeeAssignments = async (employeeId: string) => {
 			ORDER BY ja.assigned_at DESC
 		`;
 
-		return assignments.map((assignment) => ({
+		return assignments.map((assignment: any) => ({
 			jobId: assignment.jobId,
 			jobNumber: assignment.jobNumber,
 			jobTitle: assignment.jobTitle,
