@@ -116,18 +116,18 @@ const DropdownSection = React.memo(({ title, icon: Icon, children, isOpen, onTog
           transition-all duration-200 group
           ${hasActiveChild || isOpen
             ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md"
-            : "bg-green-50/50 dark:bg-green-900/30 text-gray-700 dark:text-gray-300 hover:bg-green-100 dark:hover:bg-green-900/20"
+          : "bg-gradient-to-r from-[#e7f5e6] to-[#dff0c0] dark:from-[#384a33] dark:to-[#3d5a41] text-[#238b13] dark:text-[#f0e0c0] hover:from-[#86e82a] hover:to-[#9dd880] dark:hover:from-[#405a3d] dark:hover:to-[#486b4e]"
           }
         `}
       >
         <div className="flex items-center gap-3">
           <div className={`p-1.5 rounded-lg ${hasActiveChild || isOpen
             ? "bg-white/20"
-            : "bg-white dark:bg-green-100 group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
+            : "bg-[#d0ffbe] dark:bg-[#515a3d] group-hover:bg-[#cff895] dark:group-hover:bg-[#5b6b48]"
             }`}>
             <Icon className={`w-4 h-4 ${hasActiveChild || isOpen
               ? "text-white"
-              : "text-gray-500 dark:text-green-800 group-hover:text-green-700 dark:group-hover:text-green-400"
+              : "text-[#238b13] dark:text-[#f0e0c0] group-hover:text-[#238b13] dark:group-hover:text-[#ffd7a0]"
               }`} />
           </div>
           <span>{title}</span>
@@ -135,7 +135,7 @@ const DropdownSection = React.memo(({ title, icon: Icon, children, isOpen, onTog
         <ChevronDownIcon className={`
           w-4 h-4 transition-transform duration-300
           ${isOpen ? "rotate-180" : ""}
-          ${hasActiveChild || isOpen ? "text-white" : "text-gray-400"}
+          ${hasActiveChild || isOpen ? "text-white" : "text-[#238b13] dark:text-[#f0e0c0]"}
         `} />
       </button>
 
@@ -385,7 +385,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
           x: isDesktop ? 0 : isOpen ? 0 : -300,
         }}
         transition={{ duration: 0.15, ease: "easeInOut" }}
-        className="fixed left-0 top-0 h-screen w-72 bg-gradient-to-b from-green-50/30 via-white to-emerald-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border-r border-green-200/50 dark:border-gray-700 shadow-xl z-50 lg:static lg:z-auto"
+        className="fixed left-0 top-0 h-screen w-72 bg-gradient-to-b from-green-50/30 via-[#f5f1e6] to-emerald-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border-r border-green-200/50 dark:border-gray-700 shadow-xl z-50 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto"
       >
         <div className="p-5 flex flex-col h-full">
           {/* Header */}
@@ -401,7 +401,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
             <div className="relative">
               <button className="p-2 rounded-full bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors">
                 <BellIcon className="w-5 h-5 text-green-700 dark:text-green-400" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-gray-800" />
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#f5f1e6] dark:border-gray-800" />
               </button>
             </div>
           </div>
@@ -410,7 +410,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
           <nav className="flex-1 overflow-y-auto pb-6 pr-2">
             <div className="mb-8">
               <div className="px-4 mb-4">
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <p className="text-sm font-semibold text-[#8b4513]/70 dark:text-gray-400 uppercase tracking-wider">
                   Navigation
                 </p>
               </div>
@@ -427,7 +427,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
                 clearMockRole()
                 router.push("/login")
               }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-gray-800 dark:to-gray-700 hover:from-red-50 hover:to-red-100 dark:hover:from-red-900/20 dark:hover:to-red-800/20 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 rounded-xl font-medium transition-all duration-200 group"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-700 hover:from-red-100 hover:to-red-200 dark:hover:from-red-900/20 dark:hover:to-red-800/20 text-gray-700 dark:text-gray-300 border-2 hover:border-red-600 hover:text-red-600 dark:hover:text-red-400 rounded-xl font-medium transition-all duration-200 group"
             >
               <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
