@@ -57,33 +57,33 @@ export default function AdminLayout({
 
   return (
     <RoleGate role="admin">
-      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 min-w-0">
+      <div className="flex min-h-screen bg-gradient-to-br from-[#f5f1e6] to-[#f0e9d8] dark:bg-gray-900 min-w-0">
         <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} userRole="admin" />
 
-        <div className="flex-1 min-w-0 w-full overflow-x-hidden">
+        <div className="flex-1 min-w-0 w-full overflow-x-hidden lg:ml-0">
           {/* Header with section name and section description */}
-          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-3 sm:px-4 sm:py-4">
+          <div className="bg-gradient-to-r from-[#ffedc4] to-[#f9dcaf] dark:from-gray-800 dark:to-gray-800 border-b border-[#e6d7c0] dark:border-gray-700 px-3 py-3 sm:px-4 sm:py-4">
             <div className="flex items-center gap-2 sm:space-x-4">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 shrink-0"
+                className="lg:hidden p-2 rounded-lg bg-[#e6d7c0] dark:bg-gray-700 text-[#8b4513] dark:text-gray-300 shrink-0 hover:bg-[#d8b380] dark:hover:bg-gray-600 transition-colors"
               >
                 <Bars3Icon className="w-6 h-6" />
               </button>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                 </div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
+                <h1 className="text-xl font-bold text-[#8b4513] dark:text-white sm:text-2xl">
                   {pageInfo.section}
                 </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-[#b85e1a]/80 dark:text-gray-400">
                   {pageInfo.sectionDescription}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="p-4 sm:p-6">
+          <div className="p-4 sm:p-6 bg-[#faf7f0]/50 dark:bg-transparent">
             {children}
           </div>
         </div>
