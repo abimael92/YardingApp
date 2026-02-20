@@ -6,7 +6,7 @@
 
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -74,7 +74,7 @@ const UserManagement = () => {
       let data = await getAllUsers()
 
       // System Users: Only show Client or Worker roles, and only Active status
-      data = data.filter((u) => 
+      data = data.filter((u) =>
         (u.role === "Client" || u.role === "Worker") && u.status === "Active"
       )
 
@@ -352,26 +352,26 @@ const UserManagement = () => {
   const getStatusColor = (status: User["status"]) => {
     switch (status) {
       case "Active":
-        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+        return "bg-[#2e8b57]/20 text-[#2e8b57] dark:text-[#4a7c5c]"
       case "Pending":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+        return "bg-[#ffc107]/20 text-[#b85e1a] dark:text-[#d88c4a]"
       case "Inactive":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400"
+        return "bg-[#d4a574]/20 text-[#8b4513] dark:text-[#d4a574]"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400"
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400"
     }
   }
 
   const getRoleColor = (role: User["role"]) => {
     switch (role) {
       case "Admin":
-        return "text-purple-600 dark:text-purple-400"
+        return "text-[#8b4513] dark:text-[#d4a574] font-semibold"
       case "Supervisor":
-        return "text-blue-600 dark:text-blue-400"
+        return "text-[#2e8b57] dark:text-[#4a7c5c] font-semibold"
       case "Worker":
-        return "text-green-600 dark:text-green-400"
+        return "text-[#b85e1a] dark:text-[#d88c4a] font-semibold"
       case "Client":
-        return "text-gray-600 dark:text-gray-400"
+        return "text-[#87a6c7] dark:text-[#a6c7e0] font-semibold"
       default:
         return "text-gray-600 dark:text-gray-400"
     }
@@ -383,14 +383,12 @@ const UserManagement = () => {
       header: "User",
       render: (user) => (
         <div className="flex items-center space-x-3">
-          <img
-            src={user.avatar || "/placeholder-user.jpg"}
-            alt={user.name}
-            className="w-10 h-10 rounded-full object-cover"
-          />
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2e8b57] to-[#8b4513] flex items-center justify-center text-white font-bold text-sm">
+            {user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
+          </div>
           <div>
-            <div className="font-medium text-gray-900 dark:text-white">{user.name}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">{user.email}</div>
+            <div className="font-medium text-[#8b4513] dark:text-[#d4a574]">{user.name}</div>
+            <div className="text-xs text-[#b85e1a]/70 dark:text-gray-400">{user.email}</div>
           </div>
         </div>
       ),
@@ -415,7 +413,7 @@ const UserManagement = () => {
       key: "lastLogin",
       header: "Last Login",
       render: (user) => (
-        <div className="text-gray-600 dark:text-gray-300 text-sm">
+        <div className="text-[#8b4513] dark:text-[#d4a574] text-sm">
           {user.lastLogin
             ? new Date(user.lastLogin).toLocaleDateString()
             : "Never"}
@@ -434,31 +432,31 @@ const UserManagement = () => {
         {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
+            <h1 className="text-xl font-bold text-[#8b4513] dark:text-[#d4a574] sm:text-2xl">
               User Management
             </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">
+            <p className="text-sm text-[#b85e1a]/80 dark:text-gray-400 mt-0.5 sm:mt-1">
               Manage all system users ({filteredUsers.length} total)
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
               onClick={handleExport}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+              className="inline-flex items-center px-3 py-2 border border-[#d4a574] dark:border-[#8b4513] rounded-lg text-sm font-medium text-[#8b4513] dark:text-[#d4a574] bg-[#f5f1e6] dark:bg-gray-800 hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
             >
               <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
               Export
             </button>
             <button
               onClick={handleImport}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+              className="inline-flex items-center px-3 py-2 border border-[#d4a574] dark:border-[#8b4513] rounded-lg text-sm font-medium text-[#8b4513] dark:text-[#d4a574] bg-[#f5f1e6] dark:bg-gray-800 hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
             >
               <ArrowUpTrayIcon className="w-4 h-4 mr-2" />
               Import
             </button>
             <button
               onClick={handleCreate}
-              className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-[#2e8b57] hover:bg-[#1f6b41] text-white text-sm font-medium rounded-lg transition-all hover:shadow-lg hover:shadow-[#2e8b57]/20 transform hover:-translate-y-0.5"
             >
               <PlusIcon className="w-5 h-5 mr-2" />
               Add User
@@ -467,28 +465,27 @@ const UserManagement = () => {
         </div>
 
         {/* Search and Filters */}
-        <div className="card p-4">
+        <div className="card p-4 border-[#d4a574]/30 dark:border-[#8b4513]/50" style={{ background: "var(--bg-primary)" }}>
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
             <div className="flex-1 relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#b85e1a]/60 dark:text-[#d4a574]/60" />
               <input
                 type="text"
                 placeholder="Search by name, email, or role..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full pl-10 pr-4 py-2 border border-[#d4a574] dark:border-[#8b4513] rounded-lg bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] placeholder-[#b85e1a]/50 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent transition-all"
               />
             </div>
 
             {/* Filter Toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`inline-flex items-center px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
-                showFilters
-                  ? "bg-primary-100 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300"
-                  : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-              }`}
+              className={`inline-flex items-center px-4 py-2 border rounded-lg text-sm font-medium transition-all ${showFilters
+                  ? "bg-[#2e8b57]/20 border-[#2e8b57] text-[#2e8b57] dark:text-[#4a7c5c]"
+                  : "border-[#d4a574] dark:border-[#8b4513] text-[#8b4513] dark:text-[#d4a574] bg-[#f5f1e6] dark:bg-gray-800 hover:bg-[#d4a574]/20 dark:hover:bg-gray-700"
+                }`}
             >
               <FunnelIcon className="w-4 h-4 mr-2" />
               Filters
@@ -502,18 +499,18 @@ const UserManagement = () => {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 overflow-hidden"
+                className="mt-4 pt-4 border-t border-[#d4a574]/30 dark:border-[#8b4513]/50 overflow-hidden"
               >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Role Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
                       Role
                     </label>
                     <select
                       value={roleFilter}
                       onChange={(e) => setRoleFilter(e.target.value as User["role"] | "all")}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-3 py-2 border border-[#d4a574] dark:border-[#8b4513] rounded-lg bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent transition-all"
                     >
                       <option value="all">All Roles</option>
                       <option value="Admin">Admin</option>
@@ -525,13 +522,13 @@ const UserManagement = () => {
 
                   {/* Status Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
                       Status
                     </label>
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value as User["status"] | "all")}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-3 py-2 border border-[#d4a574] dark:border-[#8b4513] rounded-lg bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent transition-all"
                     >
                       <option value="all">All Statuses</option>
                       <option value="Active">Active</option>
@@ -542,7 +539,7 @@ const UserManagement = () => {
 
                   {/* Date Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
                       Join Date
                     </label>
                     <select
@@ -550,7 +547,7 @@ const UserManagement = () => {
                       onChange={(e) =>
                         setDateFilter(e.target.value as "all" | "today" | "week" | "month")
                       }
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-3 py-2 border border-[#d4a574] dark:border-[#8b4513] rounded-lg bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent transition-all"
                     >
                       <option value="all">All Time</option>
                       <option value="today">Today</option>
@@ -568,7 +565,7 @@ const UserManagement = () => {
                       setStatusFilter("all")
                       setDateFilter("all")
                     }}
-                    className="mt-4 text-sm text-primary-600 dark:text-primary-400 hover:underline"
+                    className="mt-4 text-sm text-[#2e8b57] dark:text-[#4a7c5c] hover:underline"
                   >
                     Clear all filters
                   </button>
@@ -580,33 +577,33 @@ const UserManagement = () => {
 
         {/* Bulk Actions */}
         {selectedUsers.size > 0 && (
-          <div className="card p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800">
+          <div className="card p-4 bg-[#2e8b57]/10 border border-[#2e8b57] dark:border-[#4a7c5c]">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-primary-900 dark:text-primary-100">
+              <span className="text-sm font-medium text-[#2e8b57] dark:text-[#4a7c5c]">
                 {selectedUsers.size} user(s) selected
               </span>
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => handleBulkAction("activate")}
-                  className="px-3 py-1.5 text-sm font-medium text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/30 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50"
+                  className="px-3 py-1.5 text-sm font-medium text-[#2e8b57] dark:text-[#4a7c5c] bg-[#2e8b57]/20 rounded-lg hover:bg-[#2e8b57]/30 transition-all"
                 >
                   Activate
                 </button>
                 <button
                   onClick={() => handleBulkAction("deactivate")}
-                  className="px-3 py-1.5 text-sm font-medium text-yellow-700 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg hover:bg-yellow-200 dark:hover:bg-yellow-900/50"
+                  className="px-3 py-1.5 text-sm font-medium text-[#b85e1a] dark:text-[#d88c4a] bg-[#b85e1a]/20 rounded-lg hover:bg-[#b85e1a]/30 transition-all"
                 >
                   Deactivate
                 </button>
                 <button
                   onClick={() => handleBulkAction("delete")}
-                  className="px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50"
+                  className="px-3 py-1.5 text-sm font-medium text-[#8b4513] dark:text-[#d4a574] bg-[#8b4513]/20 rounded-lg hover:bg-[#8b4513]/30 transition-all"
                 >
                   Delete
                 </button>
                 <button
                   onClick={() => setSelectedUsers(new Set())}
-                  className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300"
+                  className="px-3 py-1.5 text-sm font-medium text-[#b85e1a] dark:text-[#d4a574] hover:underline"
                 >
                   Clear
                 </button>
@@ -628,37 +625,37 @@ const UserManagement = () => {
             onAction={handleCreate}
           />
         ) : (
-          <div className="card overflow-hidden">
+          <div className="card overflow-hidden border-[#d4a574]/30 dark:border-[#8b4513]/50" style={{ background: "var(--bg-primary)" }}>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                  <tr className="border-b border-[#d4a574]/30 dark:border-[#8b4513]/50 bg-[#f5f1e6] dark:bg-gray-800">
                     <th className="w-12 py-3 px-4">
                       <input
                         type="checkbox"
                         checked={selectedUsers.size === paginatedUsers.length && paginatedUsers.length > 0}
                         onChange={toggleSelectAll}
-                        className="rounded border-gray-300 dark:border-gray-600"
+                        className="rounded border-[#d4a574] dark:border-[#8b4513] text-[#2e8b57] focus:ring-[#2e8b57]"
                       />
                     </th>
                     <th className="w-12 py-3 px-4"></th>
                     {columns.map((column) => (
                       <th
                         key={String(column.key)}
-                        className="text-left py-3 px-4 text-gray-600 dark:text-gray-400 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                        className="text-left py-3 px-4 text-[#8b4513] dark:text-[#d4a574] font-medium cursor-pointer hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                         onClick={() => handleSort(column.key as keyof ExtendedUser)}
                       >
                         <div className="flex items-center space-x-1">
                           <span>{column.header}</span>
                           {sortColumn === column.key && (
-                            <span className="text-primary-600 dark:text-primary-400">
+                            <span className="text-[#2e8b57] dark:text-[#4a7c5c]">
                               {sortDirection === "asc" ? "↑" : "↓"}
                             </span>
                           )}
                         </div>
                       </th>
                     ))}
-                    <th className="text-left py-3 px-4 text-gray-600 dark:text-gray-400 font-medium">
+                    <th className="text-left py-3 px-4 text-[#8b4513] dark:text-[#d4a574] font-medium">
                       Actions
                     </th>
                   </tr>
@@ -668,28 +665,26 @@ const UserManagement = () => {
                     const isExpanded = expandedRows.has(user.id)
                     const isSelected = selectedUsers.has(user.id)
                     return (
-                      <>
+                      <React.Fragment key={user.id}>
                         <motion.tr
-                          key={user.id}
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.3, delay: index * 0.05 }}
-                          className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
-                            isSelected ? "bg-primary-50 dark:bg-primary-900/20" : ""
-                          }`}
+                          className={`border-b border-[#d4a574]/20 dark:border-[#8b4513]/30 hover:bg-[#f5f1e6] dark:hover:bg-gray-800/50 transition-colors ${isSelected ? "bg-[#2e8b57]/10 dark:bg-[#2e8b57]/20" : ""
+                            }`}
                         >
                           <td className="py-3 px-4">
                             <input
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => toggleUserSelection(user.id)}
-                              className="rounded border-gray-300 dark:border-gray-600"
+                              className="rounded border-[#d4a574] dark:border-[#8b4513] text-[#2e8b57] focus:ring-[#2e8b57]"
                             />
                           </td>
                           <td className="py-3 px-4">
                             <button
                               onClick={() => toggleRowExpansion(user.id)}
-                              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                              className="text-[#b85e1a]/60 hover:text-[#2e8b57] dark:text-[#d4a574]/60 dark:hover:text-[#4a7c5c] transition-colors"
                             >
                               {isExpanded ? (
                                 <ChevronDownIcon className="w-4 h-4" />
@@ -709,18 +704,17 @@ const UserManagement = () => {
                             <div className="flex items-center space-x-2">
                               <button
                                 onClick={() => handleEdit(user)}
-                                className="p-1.5 text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400 rounded"
+                                className="p-1.5 text-[#b85e1a]/60 hover:text-[#2e8b57] dark:text-[#d4a574]/60 dark:hover:text-[#4a7c5c] rounded transition-colors"
                                 title="Edit"
                               >
                                 <PencilIcon className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => handleDeactivate(user)}
-                                className={`p-1.5 rounded ${
-                                  user.status === "Active"
-                                    ? "text-gray-400 hover:text-orange-600 dark:hover:text-orange-400"
-                                    : "text-gray-400 hover:text-green-600 dark:hover:text-green-400"
-                                }`}
+                                className={`p-1.5 rounded transition-colors ${user.status === "Active"
+                                    ? "text-[#b85e1a]/60 hover:text-[#b85e1a] dark:text-[#d88c4a]/60 dark:hover:text-[#d88c4a]"
+                                    : "text-[#2e8b57]/60 hover:text-[#2e8b57] dark:text-[#4a7c5c]/60 dark:hover:text-[#4a7c5c]"
+                                  }`}
                                 title={user.status === "Active" ? "Deactivate" : "Activate"}
                               >
                                 {user.status === "Active" ? (
@@ -731,7 +725,7 @@ const UserManagement = () => {
                               </button>
                               <button
                                 onClick={() => handleDelete(user)}
-                                className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
+                                className="p-1.5 text-[#b85e1a]/60 hover:text-[#8b4513] dark:text-[#d4a574]/60 dark:hover:text-[#8b4513] rounded transition-colors"
                                 title="Delete"
                               >
                                 <TrashIcon className="w-4 h-4" />
@@ -745,32 +739,32 @@ const UserManagement = () => {
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
                             exit={{ opacity: 0, height: 0 }}
-                            className="bg-gray-50 dark:bg-gray-800/50"
+                            className="bg-[#f5f1e6] dark:bg-gray-800/50"
                           >
                             <td colSpan={columns.length + 3} className="px-4 py-4">
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                 <div>
-                                  <dt className="text-gray-500 dark:text-gray-400">User ID</dt>
-                                  <dd className="text-gray-900 dark:text-white font-mono text-xs">
+                                  <dt className="text-[#b85e1a]/70 dark:text-gray-400">User ID</dt>
+                                  <dd className="text-[#8b4513] dark:text-[#d4a574] font-mono text-xs">
                                     {user.id}
                                   </dd>
                                 </div>
                                 <div>
-                                  <dt className="text-gray-500 dark:text-gray-400">Join Date</dt>
-                                  <dd className="text-gray-900 dark:text-white">
+                                  <dt className="text-[#b85e1a]/70 dark:text-gray-400">Join Date</dt>
+                                  <dd className="text-[#8b4513] dark:text-[#d4a574]">
                                     {new Date(user.joinDate).toLocaleDateString()}
                                   </dd>
                                 </div>
                                 <div>
-                                  <dt className="text-gray-500 dark:text-gray-400">Last Login</dt>
-                                  <dd className="text-gray-900 dark:text-white">
+                                  <dt className="text-[#b85e1a]/70 dark:text-gray-400">Last Login</dt>
+                                  <dd className="text-[#8b4513] dark:text-[#d4a574]">
                                     {user.lastLogin
                                       ? new Date(user.lastLogin).toLocaleString()
                                       : "Never"}
                                   </dd>
                                 </div>
                                 <div>
-                                  <dt className="text-gray-500 dark:text-gray-400">Status</dt>
+                                  <dt className="text-[#b85e1a]/70 dark:text-gray-400">Status</dt>
                                   <dd>
                                     <span
                                       className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}
@@ -783,7 +777,7 @@ const UserManagement = () => {
                             </td>
                           </motion.tr>
                         )}
-                      </>
+                      </React.Fragment>
                     )
                   })}
                 </tbody>
@@ -792,39 +786,39 @@ const UserManagement = () => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <div className="px-4 py-3 border-t border-[#d4a574]/30 dark:border-[#8b4513]/50 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Show</span>
+                  <span className="text-sm text-[#8b4513] dark:text-[#d4a574]">Show</span>
                   <select
                     value={itemsPerPage}
                     onChange={(e) => {
                       setItemsPerPage(Number(e.target.value))
                       setCurrentPage(1)
                     }}
-                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                    className="px-2 py-1 border border-[#d4a574] dark:border-[#8b4513] rounded bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] text-sm focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent"
                   >
                     <option value={10}>10</option>
                     <option value={25}>25</option>
                     <option value={50}>50</option>
                     <option value={100}>100</option>
                   </select>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">per page</span>
+                  <span className="text-sm text-[#8b4513] dark:text-[#d4a574]">per page</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
-                    className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    className="px-3 py-1 border border-[#d4a574] dark:border-[#8b4513] rounded bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] disabled:opacity-50 disabled:cursor-not-allowed text-sm hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                   >
                     Previous
                   </button>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-sm text-[#8b4513] dark:text-[#d4a574]">
                     Page {currentPage} of {totalPages}
                   </span>
                   <button
                     onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    className="px-3 py-1 border border-[#d4a574] dark:border-[#8b4513] rounded bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] disabled:opacity-50 disabled:cursor-not-allowed text-sm hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                   >
                     Next
                   </button>
