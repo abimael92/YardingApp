@@ -54,16 +54,41 @@ export const AdminDashboard = () => {
     refresh,
   } = useDashboardData(dateRange)
 
-  // Console logs to verify real data
+  // Update your useEffect to show more details
   useEffect(() => {
-    console.log('📊 Dashboard Data Loaded:', {
-      stats,
-      revenueHistory: revenueHistory.length,
-      recentActivity: recentActivity.length,
-      pendingActions: pendingActions.length,
-      dateRange
-    })
-  }, [stats, revenueHistory, recentActivity, pendingActions, dateRange])
+    console.group('🔍 Dashboard Data Debug');
+    console.log('Date Range:', dateRange);
+    console.log('Loading State:', isLoading);
+    console.log('Error:', error);
+
+    console.log('📊 Stats:', {
+      totalRevenue: stats?.totalRevenue,
+      activeClients: stats?.activeClients,
+      revenueChangePercent: stats?.revenueChangePercent,
+      source: stats ? 'Loaded from API' : 'Not loaded'
+    });
+
+    console.log('📈 Revenue History:', {
+      count: revenueHistory?.length,
+      data: revenueHistory,
+      hasData: revenueHistory?.length > 0
+    });
+
+    console.log('🔄 Recent Activity:', {
+      count: recentActivity?.length,
+      items: recentActivity,
+      sample: recentActivity?.[0]
+    });
+
+    console.log('⏳ Pending Actions:', {
+      count: pendingActions?.length,
+      items: pendingActions,
+      sample: pendingActions?.[0]
+    });
+
+    console.log('💚 System Health:', systemHealth);
+    console.groupEnd();
+  }, [stats, revenueHistory, recentActivity, pendingActions, systemHealth, dateRange, isLoading, error]);
 
   const handleExportReport = useCallback(() => {
     if (!stats || !revenueHistory || !recentActivity || !pendingActions || !systemHealth) return
