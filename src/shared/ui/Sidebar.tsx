@@ -56,31 +56,31 @@ const NavLink = React.memo(({ href, icon: Icon, onClick, children, badge }: {
         group relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium
         transition-all duration-200
         ${isActive
-          ? "bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 text-green-700 dark:text-green-400 border-l-4 border-green-500 shadow-sm"
-          : "text-gray-700 dark:text-gray-300 hover:bg-green-50/50 dark:hover:bg-green-900/10 hover:text-green-700 dark:hover:text-green-400"
+          ? "bg-gradient-to-r from-green-600/85 to-emerald-500/85 text-white shadow-md border-l-4 border-green-700"
+        : "text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-700 dark:hover:text-green-400 hover:shadow-sm hover:border-l-4 hover:border-green-700/50"
         }
       `}
     >
       <div className={`p-1.5 rounded-lg ${isActive
-        ? "bg-green-100 dark:bg-green-800/30"
-        : "bg-gray-100 dark:bg-gray-800 group-hover:bg-green-100 dark:group-hover:bg-green-900/20"
+        ? "bg-white/20"
+        : "bg-gray-100 dark:bg-gray-800 group-hover:bg-green-100 dark:group-hover:bg-green-900/30"
         }`}>
         <Icon className={`w-4 h-4 ${isActive
-          ? "text-green-700 dark:text-green-400"
-          : "text-gray-500 dark:text-gray-400 group-hover:text-green-700 dark:group-hover:text-green-400"
+          ? "text-white"
+          : "text-gray-500 dark:text-gray-400 group-hover:text-green-600 dark:group-hover:text-green-400"
           }`} />
       </div>
       <span className="flex-1">{children}</span>
       {badge ? (
         <span className={`px-2 py-1 text-xs font-bold rounded-full ${isActive
-          ? "bg-green-500 text-white"
+          ? "bg-white text-green-700"
           : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 group-hover:bg-green-500 group-hover:text-white"
           }`}>
           {badge}
         </span>
       ) : null}
       {isActive ? (
-        <div className="absolute right-3 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+        <div className="absolute right-3 w-2 h-2 bg-white rounded-full animate-pulse" />
       ) : null}
     </Link>
   )
@@ -98,7 +98,6 @@ const DropdownSection = React.memo(({ title, icon: Icon, children, isOpen, onTog
 }) => {
   const pathname = usePathname()
 
-  // Calculate hasActiveChild inside the component
   const hasActiveChild = React.useMemo(() => {
     return React.Children.toArray(children).some((child) => {
       if (!React.isValidElement(child) || typeof (child.props as { href?: string }).href !== "string") return false
@@ -115,19 +114,19 @@ const DropdownSection = React.memo(({ title, icon: Icon, children, isOpen, onTog
           w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-semibold
           transition-all duration-200 group
           ${hasActiveChild || isOpen
-            ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md"
-          : "bg-gradient-to-r from-[#e7f5e6] to-[#dff0c0] dark:from-[#384a33] dark:to-[#3d5a41] text-[#238b13] dark:text-[#f0e0c0] hover:from-[#86e82a] hover:to-[#9dd880] dark:hover:from-[#405a3d] dark:hover:to-[#486b4e]"
+            ? "bg-gradient-to-r from-green-600 to-emerald-700 text-white shadow-md"
+            : "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30"
           }
         `}
       >
         <div className="flex items-center gap-3">
           <div className={`p-1.5 rounded-lg ${hasActiveChild || isOpen
             ? "bg-white/20"
-            : "bg-[#d0ffbe] dark:bg-[#515a3d] group-hover:bg-[#cff895] dark:group-hover:bg-[#5b6b48]"
+            : "bg-green-100 dark:bg-green-800/30 group-hover:bg-green-200 dark:group-hover:bg-green-700/30"
             }`}>
             <Icon className={`w-4 h-4 ${hasActiveChild || isOpen
               ? "text-white"
-              : "text-[#238b13] dark:text-[#f0e0c0] group-hover:text-[#238b13] dark:group-hover:text-[#ffd7a0]"
+              : "text-green-700 dark:text-green-400"
               }`} />
           </div>
           <span>{title}</span>
@@ -135,7 +134,7 @@ const DropdownSection = React.memo(({ title, icon: Icon, children, isOpen, onTog
         <ChevronDownIcon className={`
           w-4 h-4 transition-transform duration-300
           ${isOpen ? "rotate-180" : ""}
-          ${hasActiveChild || isOpen ? "text-white" : "text-[#238b13] dark:text-[#f0e0c0]"}
+          ${hasActiveChild || isOpen ? "text-white" : "text-green-700 dark:text-green-400"}
         `} />
       </button>
 
