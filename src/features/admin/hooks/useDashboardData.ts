@@ -41,50 +41,50 @@ export const useDashboardData = (
 		setError(null);
 
 		try {
+			console.group('🔵 useDashboardData - Loading data');
+			console.log('Date range:', dateRange);
+
 			const months =
 				dateRange === '6m' ? 6 : dateRange === '12m' ? 12 : undefined;
 
-			const [statsData, revenueData, activityData, actionsData, healthData] =
-				await Promise.all([
-					getAdminStats(),
-					getRevenueHistory(months),
-					getRecentActivity(10),
-					getPendingActions(),
-					getSystemHealth(),
-				]);
+			console.log('Months calculated:', months);
+
+			// Log each service call individually to see which fails
+			console.log('Calling getAdminStats...');
+			const statsData = await getAdminStats();
+			console.log('✅ getAdminStats response:', statsData);
+
+			console.log('Calling getRevenueHistory...');
+			const revenueData = await getRevenueHistory(months);
+			console.log('✅ getRevenueHistory response:', revenueData);
+
+			console.log('Calling getRecentActivity...');
+			const activityData = await getRecentActivity(10);
+			console.log('✅ getRecentActivity response:', activityData);
+
+			console.log('Calling getPendingActions...');
+			const actionsData = await getPendingActions();
+			console.log('✅ getPendingActions response:', actionsData);
+
+			console.log('Calling getSystemHealth...');
+			const healthData = await getSystemHealth();
+			console.log('✅ getSystemHealth response:', healthData);
 
 			setStats(statsData);
 			setRevenueHistory(revenueData);
 			setRecentActivity(activityData);
 			setPendingActions(actionsData);
 			setSystemHealth(healthData);
+
+			console.groupEnd();
 		} catch (err) {
-			console.error('Failed to load dashboard data:', err);
+			console.error('🔴 Failed to load dashboard data:', err);
 			setError(
 				err instanceof Error ? err.message : 'Failed to load dashboard data',
 			);
 
-			// Set fallback data
-			setStats({
-				totalUsers: 0,
-				activeUsers: 0,
-				totalClients: 0,
-				activeClients: 0,
-				newClientsThisMonth: 0,
-				totalEmployees: 0,
-				activeEmployees: 0,
-				availableEmployees: 0,
-				totalTasks: 0,
-				pendingTasks: 0,
-				inProgressTasks: 0,
-				completedTasks: 0,
-				totalRevenue: 0,
-				revenueChangePercent: 0,
-				pendingRevenue: 0,
-				activeJobs: 0,
-				pendingJobs: 0,
-				completedJobs: 0,
-			});
+			// DON'T set fallback data - this masks the error!
+			// Let the error state show instead
 		} finally {
 			setIsLoading(false);
 		}
@@ -101,7 +101,7 @@ export const useDashboardData = (
 		pendingActions,
 		systemHealth,
 		isLoading,
-		error,
+		error, // This will now show real errors
 		refresh: loadData,
 	};
 };

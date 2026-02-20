@@ -1,7 +1,7 @@
 // components/employees/EmployeeList.tsx
 "use client"
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import React , { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { Grid } from "@/src/components/layout/Grid"
 import { Button } from "@/src/components/layout/Button"
 import { Card } from "@/src/components/layout/Card"
@@ -14,7 +14,7 @@ import { StatusBadge } from "@/src/components/layout/StatusBadge"
 import { useMediaQuery } from "@/src/hooks/useMediaQuery"
 import { useFormPersistence } from "@/src/hooks/useFormPersistence"
 import EmployeeForm from "./EmployeeForm"
-import  EmployeeDetail  from "./EmployeeDetail"
+import EmployeeDetail from "./EmployeeDetail"
 import AssignJobModal from "./AssignJobModal"
 import TimeTrackingModal from "./TimeTrackingModal"
 import {
@@ -23,7 +23,7 @@ import {
   getEmployeeStats,
   deleteEmployee,
   updateEmployee
-} from "@/src/services/employeeService"  // Removed /src from path
+} from "@/src/services/employeeService"
 import type { User, JobAssignment, EmployeeStats } from "@/src/domain/models"
 
 interface EmployeeFilters {
@@ -39,6 +39,47 @@ interface ColumnConfig {
   hideOnMobile?: boolean
   hideOnTablet?: boolean
 }
+
+// Memoized FilterSelect component to prevent flickering
+const FilterSelect = React.memo(({
+  value,
+  onChange,
+  options,
+  label
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+  label: string;
+}) => {
+  const selectRef = useRef<HTMLSelectElement>(null)
+
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    onChange(e.target.value)
+  }, [onChange])
+
+  return (
+    <select
+      ref={selectRef}
+      value={value}
+      onChange={handleChange}
+      className="w-full px-3 py-2 border border-[#d4a574] dark:border-[#8b4513] rounded-lg bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] focus:outline-none focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent transition-colors duration-150 appearance-none cursor-pointer"
+      aria-label={label}
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23b85e1a'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'right 0.75rem center',
+        backgroundSize: '1.25rem',
+      }}
+    >
+      {options.map(option => (
+        <option key={option.value} value={option.value}>{option.label}</option>
+      ))}
+    </select>
+  )
+})
+
+FilterSelect.displayName = 'FilterSelect'
 
 export const EmployeeList = () => {
   // State management
@@ -62,6 +103,20 @@ export const EmployeeList = () => {
   const isMobile = useMediaQuery('(max-width: 767px)')
   const isTablet = useMediaQuery('(min-width: 768px) and (max-width: 1024px)')
 
+  // Memoized filter options to prevent unnecessary re-renders
+  const statusOptions = useMemo(() => [
+    { value: 'all', label: 'All Status' },
+    { value: 'Active', label: 'Active' },
+    { value: 'Pending', label: 'Pending' },
+    { value: 'Inactive', label: 'Inactive' },
+  ], [])
+
+  const roleOptions = useMemo(() => [
+    { value: 'all', label: 'All Roles' },
+    { value: 'Worker', label: 'Worker' },
+    { value: 'Supervisor', label: 'Supervisor' },
+  ], [])
+
   // Persist filters in localStorage
   const { value: persistedFilters, setValue: setPersistedFilters } = useFormPersistence('employee-filters', {
     search: '',
@@ -80,7 +135,6 @@ export const EmployeeList = () => {
 
       // Convert Employee[] to User[]
       const users: User[] = allUsers.map(emp => {
-        // Use String() to ensure we're comparing strings, not enums
         const roleStr = String(emp.role).toLowerCase();
         const statusStr = String(emp.status).toLowerCase();
 
@@ -140,8 +194,8 @@ export const EmployeeList = () => {
       role: filterRole
     })
   }, [searchQuery, filterStatus, filterRole, setPersistedFilters])
-  
-  // Add this with your other useEffects
+
+  // Handle click outside for dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (openDropdownId && !(event.target as Element).closest('.dropdown-container')) {
@@ -233,6 +287,31 @@ export const EmployeeList = () => {
     loadData()
   }
 
+  // Get status badge color
+  const getStatusColor = (status: User["status"]) => {
+    switch (status) {
+      case "Active":
+        return "bg-[#2e8b57]/20 text-[#2e8b57] dark:text-[#4a7c5c]"
+      case "Pending":
+        return "bg-[#d88c4a]/20 text-[#b85e1a] dark:text-[#d88c4a]"
+      case "Inactive":
+        return "bg-[#8b4513]/20 text-[#8b4513] dark:text-[#d4a574]"
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400"
+    }
+  }
+
+  const getRoleColor = (role: User["role"]) => {
+    switch (role) {
+      case "Supervisor":
+        return "text-[#2e8b57] dark:text-[#4a7c5c] font-semibold"
+      case "Worker":
+        return "text-[#b85e1a] dark:text-[#d88c4a] font-semibold"
+      default:
+        return "text-gray-600 dark:text-gray-400"
+    }
+  }
+
   // Table columns
   const columns = [
     {
@@ -241,28 +320,25 @@ export const EmployeeList = () => {
       render: (user: User) => (
         <button
           onClick={() => handleViewDetail(user)}
-          className="flex items-center space-x-3 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg p-1 group"
+          className="flex items-center space-x-3 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#2e8b57] focus:ring-offset-2 rounded-lg p-1 group"
           aria-label={`View details for ${user.name}`}
         >
           <div className="relative dropdown-container">
-            <img
-              src={user.avatar || "/placeholder-user.jpg"}
-              alt=""
-              className="w-10 h-10 rounded-full object-cover ring-2 ring-transparent group-hover:ring-primary transition-all"
-              loading="lazy"
-            />
-            <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 ${user.status === "Active" ? "bg-green-500" :
-              user.status === "Pending" ? "bg-yellow-500" : "bg-gray-400"
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2e8b57] to-[#8b4513] flex items-center justify-center text-white font-bold text-sm ring-2 ring-transparent group-hover:ring-[#2e8b57] transition-all">
+              {user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
+            </div>
+            <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 ${user.status === "Active" ? "bg-[#2e8b57]" :
+              user.status === "Pending" ? "bg-[#d88c4a]" : "bg-[#8b4513]"
               }`} />
           </div>
           <div className="text-left">
-            <div className="font-medium text-gray-900 dark:text-white">{user.name}</div>
+            <div className="font-medium text-[#8b4513] dark:text-[#d4a574]">{user.name}</div>
             <div className="flex items-center gap-2 text-xs">
               {user.employeeNumber && (
-                <span className="text-gray-500 dark:text-gray-400">ID: {user.employeeNumber}</span>
+                <span className="text-[#b85e1a]/70 dark:text-gray-400">ID: {user.employeeNumber}</span>
               )}
-              <span className="text-gray-400">•</span>
-              <span className="text-gray-500 dark:text-gray-400">{user.email}</span>
+              <span className="text-[#b85e1a]/50 dark:text-gray-600">•</span>
+              <span className="text-[#b85e1a]/70 dark:text-gray-400">{user.email}</span>
             </div>
           </div>
         </button>
@@ -273,14 +349,20 @@ export const EmployeeList = () => {
     {
       key: "role",
       header: "Role",
-      render: (user: User) => <StatusBadge type="role" value={user.role} />,
+      render: (user: User) => (
+        <span className={`${getRoleColor(user.role)}`}>{user.role}</span>
+      ),
       hideOnMobile: false,
       hideOnTablet: false,
     },
     {
       key: "status",
       header: "Status",
-      render: (user: User) => <StatusBadge type="status" value={user.status} />,
+      render: (user: User) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
+          {user.status}
+        </span>
+      ),
       hideOnMobile: false,
       hideOnTablet: false,
     },
@@ -288,7 +370,7 @@ export const EmployeeList = () => {
       key: "department",
       header: "Department",
       render: (user: User) => (
-        <div className="text-gray-600 dark:text-gray-300">
+        <div className="text-[#8b4513] dark:text-[#d4a574]">
           {user.department || "—"}
         </div>
       ),
@@ -299,7 +381,7 @@ export const EmployeeList = () => {
       key: "hourlyRate",
       header: "Rate",
       render: (user: User) => (
-        <div className="text-gray-600 dark:text-gray-300 font-medium">
+        <div className="text-[#2e8b57] dark:text-[#4a7c5c] font-medium">
           {user.hourlyRate ? `$${user.hourlyRate}/hr` : "—"}
         </div>
       ),
@@ -310,7 +392,6 @@ export const EmployeeList = () => {
       key: "actions",
       header: "",
       render: (user: User) => {
-        // Use the global state instead of local hooks
         const isOpen = openDropdownId === user.id
 
         return (
@@ -319,7 +400,7 @@ export const EmployeeList = () => {
               size="sm"
               variant="ghost"
               onClick={() => setOpenDropdownId(isOpen ? null : user.id)}
-              className="!px-2"
+              className="!px-2 text-[#b85e1a] hover:text-[#2e8b57] dark:text-[#d4a574] dark:hover:text-[#4a7c5c]"
               aria-label="Actions menu"
               aria-expanded={isOpen}
             >
@@ -329,45 +410,45 @@ export const EmployeeList = () => {
             </Button>
 
             {isOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
-                <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Quick Actions</p>
+              <div className="absolute right-0 mt-2 w-56 bg-[#f5f1e6] dark:bg-gray-800 rounded-lg shadow-lg border border-[#d4a574] dark:border-[#8b4513] py-1 z-50">
+                <div className="px-3 py-2 border-b border-[#d4a574] dark:border-[#8b4513]">
+                  <p className="text-xs font-medium text-[#8b4513] dark:text-[#d4a574]">Quick Actions</p>
                 </div>
 
                 <button
                   onClick={() => { handleViewDetail(user); setOpenDropdownId(null); }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full px-4 py-2 text-left text-sm text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                 >
                   View Details
                 </button>
                 <button
                   onClick={() => { handleViewAssignments(user); setOpenDropdownId(null); }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full px-4 py-2 text-left text-sm text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                 >
                   View Jobs
                 </button>
                 <button
                   onClick={() => { handleAssignJob(user); setOpenDropdownId(null); }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full px-4 py-2 text-left text-sm text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                 >
                   Assign to Job
                 </button>
                 <button
                   onClick={() => { handleTimeTracking(user); setOpenDropdownId(null); }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full px-4 py-2 text-left text-sm text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                 >
                   Track Time
                 </button>
-                <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                <div className="border-t border-[#d4a574] dark:border-[#8b4513] my-1"></div>
                 <button
                   onClick={() => { handleEdit(user); setOpenDropdownId(null); }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full px-4 py-2 text-left text-sm text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => { handleStatusToggle(user); setOpenDropdownId(null); }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full px-4 py-2 text-left text-sm text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                 >
                   {user.status === "Active" ? "Disable" : "Enable"}
                 </button>
@@ -403,26 +484,23 @@ export const EmployeeList = () => {
     }, [])
 
     return (
-      <Card className="p-4 space-y-3">
+      <Card className="p-4 space-y-3 border-[#d4a574]/30 dark:border-[#8b4513]/50" style={{ background: "var(--bg-primary)" }}>
         <div className="flex items-start justify-between">
           <button
             onClick={() => handleViewDetail(user)}
             className="flex items-center space-x-3 flex-1 group"
           >
             <div className="relative">
-              <img
-                src={user.avatar || "/placeholder-user.jpg"}
-                alt=""
-                className="w-12 h-12 rounded-full object-cover ring-2 ring-transparent group-hover:ring-primary transition-all"
-                loading="lazy"
-              />
-              <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 ${user.status === "Active" ? "bg-green-500" :
-                  user.status === "Pending" ? "bg-yellow-500" : "bg-gray-400"
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#2e8b57] to-[#8b4513] flex items-center justify-center text-white font-bold text-lg ring-2 ring-transparent group-hover:ring-[#2e8b57] transition-all">
+                {user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
+              </div>
+              <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 ${user.status === "Active" ? "bg-[#2e8b57]" :
+                user.status === "Pending" ? "bg-[#d88c4a]" : "bg-[#8b4513]"
                 }`} />
             </div>
             <div className="text-left">
-              <div className="font-medium text-gray-900 dark:text-white">{user.name}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">{user.email}</div>
+              <div className="font-medium text-[#8b4513] dark:text-[#d4a574]">{user.name}</div>
+              <div className="text-xs text-[#b85e1a]/70 dark:text-gray-400">{user.email}</div>
             </div>
           </button>
 
@@ -431,7 +509,7 @@ export const EmployeeList = () => {
               size="sm"
               variant="ghost"
               onClick={() => setIsOpen(!isOpen)}
-              className="!px-2"
+              className="!px-2 text-[#b85e1a] hover:text-[#2e8b57] dark:text-[#d4a574] dark:hover:text-[#4a7c5c]"
               aria-label="Actions menu"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -440,41 +518,41 @@ export const EmployeeList = () => {
             </Button>
 
             {isOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+              <div className="absolute right-0 mt-2 w-48 bg-[#f5f1e6] dark:bg-gray-800 rounded-lg shadow-lg border border-[#d4a574] dark:border-[#8b4513] py-1 z-50">
                 <button
                   onClick={() => { handleViewDetail(user); setIsOpen(false); }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full px-4 py-2 text-left text-sm text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                 >
                   View Details
                 </button>
                 <button
                   onClick={() => { handleViewAssignments(user); setIsOpen(false); }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full px-4 py-2 text-left text-sm text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                 >
                   View Jobs
                 </button>
                 <button
                   onClick={() => { handleAssignJob(user); setIsOpen(false); }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full px-4 py-2 text-left text-sm text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                 >
                   Assign to Job
                 </button>
                 <button
                   onClick={() => { handleTimeTracking(user); setIsOpen(false); }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full px-4 py-2 text-left text-sm text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                 >
                   Track Time
                 </button>
-                <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                <div className="border-t border-[#d4a574] dark:border-[#8b4513] my-1"></div>
                 <button
                   onClick={() => { handleEdit(user); setIsOpen(false); }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full px-4 py-2 text-left text-sm text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => { handleStatusToggle(user); setIsOpen(false); }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full px-4 py-2 text-left text-sm text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                 >
                   {user.status === "Active" ? "Disable" : "Enable"}
                 </button>
@@ -491,20 +569,20 @@ export const EmployeeList = () => {
 
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div>
-            <span className="text-gray-500 dark:text-gray-400">Role:</span>
-            <span className="ml-1 text-gray-900 dark:text-white">{user.role}</span>
+            <span className="text-[#b85e1a]/70 dark:text-gray-400">Role:</span>
+            <span className={`ml-1 ${getRoleColor(user.role)}`}>{user.role}</span>
           </div>
           <div>
-            <span className="text-gray-500 dark:text-gray-400">Status:</span>
-            <span className="ml-1 text-gray-900 dark:text-white">{user.status}</span>
+            <span className="text-[#b85e1a]/70 dark:text-gray-400">Status:</span>
+            <span className={`ml-1 ${getStatusColor(user.status)}`}>{user.status}</span>
           </div>
           <div>
-            <span className="text-gray-500 dark:text-gray-400">Dept:</span>
-            <span className="ml-1 text-gray-900 dark:text-white">{user.department || "—"}</span>
+            <span className="text-[#b85e1a]/70 dark:text-gray-400">Dept:</span>
+            <span className="ml-1 text-[#8b4513] dark:text-[#d4a574]">{user.department || "—"}</span>
           </div>
           <div>
-            <span className="text-gray-500 dark:text-gray-400">Rate:</span>
-            <span className="ml-1 text-gray-900 dark:text-white">
+            <span className="text-[#b85e1a]/70 dark:text-gray-400">Rate:</span>
+            <span className="ml-1 text-[#2e8b57] dark:text-[#4a7c5c]">
               {user.hourlyRate ? `$${user.hourlyRate}` : "—"}
             </span>
           </div>
@@ -552,32 +630,32 @@ export const EmployeeList = () => {
       {/* Header with Stats and Hire Button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
+          <h1 className="text-2xl font-bold text-[#8b4513] dark:text-[#d4a574] sm:text-3xl">
             Employees
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Manage your workforce
+          <p className="text-sm text-[#b85e1a]/80 dark:text-gray-400 mt-1">
+            Manage your workforce and track employee performance
           </p>
         </div>
 
         <div className="mt-4 sm:mt-0 flex items-center gap-3">
           {/* Stats Cards */}
-          <Card className="p-3 bg-green-50 dark:bg-green-900/20">
-            <div className="text-xs text-green-600 dark:text-green-400">Active</div>
-            <div className="text-xl font-bold text-green-700 dark:text-green-300">{stats.active}</div>
+          <Card className="p-3 bg-[#2e8b57]/10 border border-[#2e8b57]/30 dark:border-[#4a7c5c]/50">
+            <div className="text-xs text-[#2e8b57] dark:text-[#4a7c5c]">Active</div>
+            <div className="text-xl font-bold text-[#2e8b57] dark:text-[#4a7c5c]">{stats.active}</div>
           </Card>
-          <Card className="p-3 bg-yellow-50 dark:bg-yellow-900/20">
-            <div className="text-xs text-yellow-600 dark:text-yellow-400">Pending</div>
-            <div className="text-xl font-bold text-yellow-700 dark:text-yellow-300">{stats.pending}</div>
+          <Card className="p-3 bg-[#d88c4a]/10 border border-[#d88c4a]/30 dark:border-[#d88c4a]/50">
+            <div className="text-xs text-[#b85e1a] dark:text-[#d88c4a]">Pending</div>
+            <div className="text-xl font-bold text-[#b85e1a] dark:text-[#d88c4a]">{stats.pending}</div>
           </Card>
-          <Card className="p-3 bg-gray-50 dark:bg-gray-800">
-            <div className="text-xs text-gray-600 dark:text-gray-400">Inactive</div>
-            <div className="text-xl font-bold text-gray-700 dark:text-gray-300">{stats.inactive}</div>
+          <Card className="p-3 bg-[#8b4513]/10 border border-[#8b4513]/30 dark:border-[#d4a574]/50">
+            <div className="text-xs text-[#8b4513] dark:text-[#d4a574]">Inactive</div>
+            <div className="text-xl font-bold text-[#8b4513] dark:text-[#d4a574]">{stats.inactive}</div>
           </Card>
           <Button
             variant="primary"
             onClick={() => setShowHireModal(true)}
-            className="ml-2"
+            className="ml-2 bg-[#2e8b57] hover:bg-[#1f6b41] text-white transition-all hover:shadow-lg hover:shadow-[#2e8b57]/20 transform hover:-translate-y-0.5"
             aria-label="Hire new employee"
           >
             + Hire
@@ -586,36 +664,39 @@ export const EmployeeList = () => {
       </div>
 
       {/* Filters */}
-      <Grid cols={{ default: 1, sm: 2, md: 3 }} gap="md">
-        <Input
-          type="search"
-          placeholder="Search by name, email, or ID..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          aria-label="Search employees"
-        />
-        <select
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="relative">
+          <Input
+            type="search"
+            placeholder="Search by name, email, or ID..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] placeholder-[#b85e1a]/50 dark:placeholder-gray-500 focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent"
+            aria-label="Search employees"
+          />
+          <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#b85e1a]/60 dark:text-[#d4a574]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+
+        {/* Status Filter - using memoized component */}
+        <FilterSelect
+          key="status-filter"
           value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="input-field"
-          aria-label="Filter by status"
-        >
-          <option value="all">All Status</option>
-          <option value="Active">Active</option>
-          <option value="Pending">Pending</option>
-          <option value="Inactive">Inactive</option>
-        </select>
-        <select
+          onChange={setFilterStatus}
+          options={statusOptions}
+          label="Filter by status"
+        />
+
+        {/* Role Filter - using memoized component */}
+        <FilterSelect
+          key="role-filter"
           value={filterRole}
-          onChange={(e) => setFilterRole(e.target.value)}
-          className="input-field"
-          aria-label="Filter by role"
-        >
-          <option value="all">All Roles</option>
-          <option value="Worker">Worker</option>
-          <option value="Supervisor">Supervisor</option>
-        </select>
-      </Grid>
+          onChange={setFilterRole}
+          options={roleOptions}
+          label="Filter by role"
+        />
+      </div>
 
       {/* Employee List */}
       {filteredEmployees.length === 0 ? (
@@ -626,7 +707,7 @@ export const EmployeeList = () => {
             : "Get started by hiring your first employee"
           }
           action={
-            <Button variant="primary" onClick={() => setShowHireModal(true)}>
+            <Button variant="primary" onClick={() => setShowHireModal(true)} className="bg-[#2e8b57] hover:bg-[#1f6b41] text-white">
               Hire Employee
             </Button>
           }
@@ -640,16 +721,18 @@ export const EmployeeList = () => {
         </div>
       ) : (
         // Tablet/Desktop: Data table
-        <DataTable
-          data={filteredEmployees}
-          columns={columns.filter(col => {
-            if (isTablet && col.hideOnTablet) return false
-            if (isMobile && col.hideOnMobile) return false
-            return true
-          })}
-          keyExtractor={(user: User) => user.id}
-          emptyMessage="No employees found."
-        />
+        <div className="card overflow-hidden border-[#d4a574]/30 dark:border-[#8b4513]/50" style={{ background: "var(--bg-primary)" }}>
+          <DataTable
+            data={filteredEmployees}
+            columns={columns.filter(col => {
+              if (isTablet && col.hideOnTablet) return false
+              if (isMobile && col.hideOnMobile) return false
+              return true
+            })}
+            keyExtractor={(user: User) => user.id}
+            emptyMessage="No employees found."
+          />
+        </div>
       )}
 
       {/* Modals */}
@@ -687,7 +770,7 @@ export const EmployeeList = () => {
       >
         {selectedEmployee && (
           <EmployeeDetail
-            isOpen={showDetailModal}  // Add this line
+            isOpen={showDetailModal}
             employee={selectedEmployee as any}
             onClose={() => setShowDetailModal(false)}
           />
@@ -740,17 +823,17 @@ export const EmployeeList = () => {
         ) : (
           <div className="space-y-3">
             {assignments.map((assignment) => (
-              <Card key={assignment.jobId} className="p-4">
+              <Card key={assignment.jobId} className="p-4 border-[#d4a574]/30 dark:border-[#8b4513]/50" style={{ background: "var(--bg-primary)" }}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-gray-900 dark:text-white">
+                  <span className="font-medium text-[#8b4513] dark:text-[#d4a574]">
                     {assignment.jobNumber}
                   </span>
                   <StatusBadge type="job" value={assignment.status} />
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                <p className="text-sm text-[#b85e1a]/80 dark:text-gray-400 mb-2">
                   {assignment.jobTitle}
                 </p>
-                <div className="text-xs text-gray-500 dark:text-gray-500">
+                <div className="text-xs text-[#b85e1a]/60 dark:text-gray-500">
                   Assigned: {new Date(assignment.assignedAt).toLocaleDateString()}
                 </div>
               </Card>
