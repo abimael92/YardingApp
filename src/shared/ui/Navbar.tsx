@@ -28,14 +28,7 @@ const Navbar = ({ darkMode, setDarkMode }: NavbarProps) => {
 
   // Update role when pathname changes (user navigates)
   useEffect(() => {
-    const updateRole = () => {
-      setCurrentRole(getMockRole())
-    }
-    updateRole()
-    
-    // Also check periodically in case cookie changes
-    const interval = setInterval(updateRole, 1000)
-    return () => clearInterval(interval)
+    setCurrentRole(getMockRole())
   }, [pathname])
 
   const handleLogout = () => {
