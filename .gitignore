@@ -37,3 +37,5 @@ Thumbs.db
 .idea/
 *.swp
 .pnpm-store/
+
+/src/generated/prisma
