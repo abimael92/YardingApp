@@ -1,17 +1,17 @@
-import type { Metadata } from "next"
-import { GeistSans } from "geist/font/sans"
-import { GeistMono } from "geist/font/mono"
-import { Analytics } from "@vercel/analytics/next"
-import ThemeToggle from "@/src/shared/ui/ThemeToggle"
-import "./globals.css"
+import type { Metadata } from "next";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
+import { Analytics } from "@vercel/analytics/next";
+import ThemeToggle from "@/src/shared/ui/ThemeToggle";
+import { NextAuthProvider } from "./providers";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
     default: "J&J Desert Landscaping LLC",
     template: "%s | J&J Desert Landscaping LLC",
   },
-  description:
-    "Professional landscaping services in Phoenix, Arizona. Lawn care, desert landscaping, irrigation, and hardscaping tailored for the Arizona climate.",
+  description: "Professional landscaping services in Phoenix, Arizona.",
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -20,42 +20,25 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-touch-icon.png",
   },
-  openGraph: {
-    title: "J&J Desert Landscaping LLC",
-    description:
-      "Professional landscaping services in Phoenix, Arizona. Lawn care, desert landscaping, irrigation, and hardscaping tailored for the Arizona climate.",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "J&J Desert Landscaping LLC",
-    description:
-      "Professional landscaping services in Phoenix, Arizona. Lawn care, desert landscaping, irrigation, and hardscaping tailored for the Arizona climate.",
-  },
-}
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <head>
         <link rel="manifest" href="/site.webmanifest" />
-        <style>{`
-html {
-  font-family: ${GeistSans.style.fontFamily};
-  --font-sans: ${GeistSans.variable};
-  --font-mono: ${GeistMono.variable};
-}
-        `}</style>
       </head>
-      <body className="min-h-screen">
-        <ThemeToggle />
-        {children}
-        <Analytics />
+      <body className="min-h-screen font-sans">
+        <NextAuthProvider>
+          <ThemeToggle />
+          {children}
+          <Analytics />
+        </NextAuthProvider>
       </body>
     </html>
-  )
+  );
 }
