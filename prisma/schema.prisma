@@ -5,55 +5,475 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
-model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String? @db.Text
-  access_token       String? @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String? @db.Text
-  session_state      String?
-  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  @@unique([provider, providerAccountId])
+model audit_logs {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entity_type String    @db.VarChar(64)
+  entity_id   String    @db.Uuid
+  action      String    @db.VarChar(32)
+  actor_id    String?   @db.Uuid
+  old_values  Json?
+  new_values  Json?
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  profiles    profiles? @relation(fields: [actor_id], references: [id], onUpdate: NoAction)
+
+  @@index([created_at], map: "idx_audit_logs_created_at")
+  @@index([entity_type, entity_id], map: "idx_audit_logs_entity")
 }
 
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model clients {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String            @db.VarChar(255)
+  email           String            @db.VarChar(255)
+  phone           String            @db.VarChar(64)
+  street          String            @db.VarChar(255)
+  city            String            @db.VarChar(128)
+  state           String            @db.VarChar(64)
+  zip_code        String            @db.VarChar(20)
+  country         String?           @default("US") @db.Char(2)
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime          @default(now()) @db.Timestamptz(6)
+  created_by      String?           @db.Uuid
+  deleted_at      DateTime?         @db.Timestamptz(6)
+  profiles        profiles?         @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  invoices        invoices[]
+  jobs            jobs[]
+  payment_intents payment_intents[]
+  payments        payments[]
+  transactions    transactions[]
+
+  @@index([created_at], map: "idx_clients_created_at")
+  @@index([email], map: "idx_clients_email_active")
+}
+
+model employee_details {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profile_id        String?   @unique @db.Uuid
+  employee_number   String?   @unique @db.VarChar(50)
+  hire_date         DateTime? @db.Date
+  status            String?   @default("active") @db.VarChar(20)
+  department        String?   @db.VarChar(100)
+  position          String?   @db.VarChar(100)
+  hourly_rate_cents Int?
+  created_at        DateTime? @default(now()) @db.Timestamp(6)
+  updated_at        DateTime? @default(now()) @db.Timestamp(6)
+  profiles          profiles? @relation(fields: [profile_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([profile_id], map: "idx_employee_details_profile")
+}
+
+model employee_jobs {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  employee_id String?   @db.Uuid
+  job_id      String?   @db.Uuid
+  assigned_at DateTime? @default(now()) @db.Timestamp(6)
+  status      String?   @default("assigned") @db.VarChar(20)
+  profiles    profiles? @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  jobs        jobs?     @relation(fields: [job_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([employee_id, job_id])
+}
+
+model invoices {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoice_number  String            @unique(map: "idx_invoices_invoice_number_active") @db.VarChar(64)
+  client_id       String            @db.Uuid
+  job_id          String?           @db.Uuid
+  status          invoice_status    @default(draft)
+  amount_cents    BigInt
+  tax_cents       BigInt
+  total_cents     BigInt
+  currency        String            @default("USD") @db.Char(3)
+  due_date        DateTime          @db.Date
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime          @default(now()) @db.Timestamptz(6)
+  created_by      String?           @db.Uuid
+  deleted_at      DateTime?         @db.Timestamptz(6)
+  clients         clients           @relation(fields: [client_id], references: [id], onUpdate: NoAction)
+  profiles        profiles?         @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  jobs            jobs?             @relation(fields: [job_id], references: [id], onUpdate: NoAction)
+  payment_intents payment_intents[]
+  payments        payments[]
+
+  @@index([client_id], map: "idx_invoices_client_id")
+  @@index([status], map: "idx_invoices_status")
+}
+
+model job_items {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  job_id           String    @db.Uuid
+  service_id       String?   @db.Uuid
+  description      String    @db.VarChar(512)
+  quantity         Int       @default(1)
+  unit_price_cents BigInt
+  total_cents      BigInt
+  sort_order       Int       @default(0)
+  created_at       DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime  @default(now()) @db.Timestamptz(6)
+  created_by       String?   @db.Uuid
+  deleted_at       DateTime? @db.Timestamptz(6)
+  profiles         profiles? @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  jobs             jobs      @relation(fields: [job_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  services         services? @relation(fields: [service_id], references: [id], onUpdate: NoAction)
+
+  @@index([job_id], map: "idx_job_items_job_id")
+}
+
+model jobs {
+  id                                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  job_number                           String          @unique(map: "idx_jobs_job_number_active") @db.VarChar(64)
+  client_id                            String          @db.Uuid
+  status                               job_status      @default(draft)
+  title                                String          @db.VarChar(255)
+  description                          String?
+  street                               String          @db.VarChar(255)
+  city                                 String          @db.VarChar(128)
+  state                                String          @db.VarChar(64)
+  zip_code                             String          @db.VarChar(20)
+  country                              String?         @default("US") @db.Char(2)
+  quoted_price_cents                   BigInt
+  currency                             String          @default("USD") @db.Char(3)
+  created_at                           DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at                           DateTime        @default(now()) @db.Timestamptz(6)
+  created_by                           String?         @db.Uuid
+  deleted_at                           DateTime?       @db.Timestamptz(6)
+  approved_by                          String?         @db.Uuid
+  approved_at                          DateTime?       @db.Timestamp(6)
+  completed_by                         String?         @db.Uuid
+  completed_at                         DateTime?       @db.Timestamp(6)
+  employee_jobs                        employee_jobs[]
+  invoices                             invoices[]
+  job_items                            job_items[]
+  profiles_jobs_approved_byToprofiles  profiles?       @relation("jobs_approved_byToprofiles", fields: [approved_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  clients                              clients         @relation(fields: [client_id], references: [id], onUpdate: NoAction)
+  profiles_jobs_completed_byToprofiles profiles?       @relation("jobs_completed_byToprofiles", fields: [completed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  profiles_jobs_created_byToprofiles   profiles?       @relation("jobs_created_byToprofiles", fields: [created_by], references: [id], onUpdate: NoAction)
+  payments                             payments[]
+  payouts                              payouts[]
+  time_entries                         time_entries[]
+
+  @@index([client_id], map: "idx_jobs_client_id")
+  @@index([status], map: "idx_jobs_status")
+}
+
+model metadata {
+  key        String   @id @db.VarChar(128)
+  value      Json     @default("{}")
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model payment_intents {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  client_id           String                @db.Uuid
+  invoice_id          String?               @db.Uuid
+  amount_cents        BigInt
+  currency            String                @default("USD") @db.Char(3)
+  status              payment_intent_status @default(requires_payment_method)
+  method              payment_method_type?
+  processor           String?               @db.VarChar(32)
+  processor_intent_id String?               @db.VarChar(255)
+  metadata            Json?
+  created_at          DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime              @default(now()) @db.Timestamptz(6)
+  created_by          String?               @db.Uuid
+  deleted_at          DateTime?             @db.Timestamptz(6)
+  clients             clients               @relation(fields: [client_id], references: [id], onUpdate: NoAction)
+  profiles            profiles?             @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  invoices            invoices?             @relation(fields: [invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  payments            payments?
+
+  @@index([client_id], map: "idx_payment_intents_client_id")
+  @@index([invoice_id], map: "idx_payment_intents_invoice_id")
+  @@index([status], map: "idx_payment_intents_status")
+}
+
+model payments {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payment_number     String              @unique(map: "idx_payments_payment_number_active") @db.VarChar(64)
+  payment_intent_id  String?             @unique @db.Uuid
+  client_id          String              @db.Uuid
+  invoice_id         String?             @db.Uuid
+  job_id             String?             @db.Uuid
+  status             payment_status      @default(pending)
+  method             payment_method_type
+  amount_cents       BigInt
+  currency           String              @default("USD") @db.Char(3)
+  transaction_id     String?             @db.VarChar(255)
+  processor          String?             @db.VarChar(32)
+  processor_response Json?
+  created_at         DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime            @default(now()) @db.Timestamptz(6)
+  created_by         String?             @db.Uuid
+  deleted_at         DateTime?           @db.Timestamptz(6)
+  clients            clients             @relation(fields: [client_id], references: [id], onUpdate: NoAction)
+  profiles           profiles?           @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  invoices           invoices?           @relation(fields: [invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  jobs               jobs?               @relation(fields: [job_id], references: [id], onUpdate: NoAction)
+  payment_intents    payment_intents?    @relation(fields: [payment_intent_id], references: [id], onUpdate: NoAction)
+  refunds            refunds[]
+  transactions       transactions[]
+
+  @@index([client_id], map: "idx_payments_client_id")
+  @@index([invoice_id], map: "idx_payments_invoice_id")
+  @@index([status], map: "idx_payments_status")
+}
+
+model payouts {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payee_id         String         @db.Uuid
+  amount_cents     BigInt
+  currency         String         @default("USD") @db.Char(3)
+  status           payout_status  @default(pending)
+  method           String?        @db.VarChar(32)
+  reference_job_id String?        @db.Uuid
+  metadata         Json?
+  created_at       DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime       @default(now()) @db.Timestamptz(6)
+  created_by       String?        @db.Uuid
+  deleted_at       DateTime?      @db.Timestamptz(6)
+  profiles         profiles?      @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  jobs             jobs?          @relation(fields: [reference_job_id], references: [id], onUpdate: NoAction)
+  transactions     transactions[]
+
+  @@index([payee_id], map: "idx_payouts_payee_id")
+}
+
+model permissions {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code            String            @unique(map: "idx_permissions_code_active") @db.VarChar(128)
+  description     String?
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime          @default(now()) @db.Timestamptz(6)
+  created_by      String?           @db.Uuid
+  deleted_at      DateTime?         @db.Timestamptz(6)
+  profiles        profiles?         @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  role_permission role_permission[]
+}
+
+model profiles {
+  id                               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                          String?           @unique @db.Uuid
+  user                             User?             @relation("UserProfile", fields: [user_id], references: [id])
+  full_name                        String?           @db.VarChar(255)
+  avatar_url                       String?           @db.VarChar(512)
+  created_at                       DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at                       DateTime          @default(now()) @db.Timestamptz(6)
+  created_by                       String?           @db.Uuid
+  deleted_at                       DateTime?         @db.Timestamptz(6)
+  status                           user_status?      @default(active)
+  audit_logs                       audit_logs[]
+  clients                          clients[]
+  employee_details                 employee_details?
+  employee_jobs                    employee_jobs[]
+  invoices                         invoices[]
+  job_items                        job_items[]
+  jobs_jobs_approved_byToprofiles  jobs[]            @relation("jobs_approved_byToprofiles")
+  jobs_jobs_completed_byToprofiles jobs[]            @relation("jobs_completed_byToprofiles")
+  jobs_jobs_created_byToprofiles   jobs[]            @relation("jobs_created_byToprofiles")
+  payment_intents                  payment_intents[]
+  payments                         payments[]
+  payouts                          payouts[]
+  permissions                      permissions[]
+  profiles                         profiles?         @relation("profilesToprofiles", fields: [created_by], references: [id], onUpdate: NoAction)
+  other_profiles                   profiles[]        @relation("profilesToprofiles")
+  refunds                          refunds[]
+  roles                            roles[]
+  services                         services[]
+  time_entries                     time_entries[]
+  user_roles                       user_roles[]
+
+  @@index([user_id], map: "idx_profiles_user_id")
+}
+
+model refunds {
+  id                  String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payment_id          String         @db.Uuid
+  amount_cents        BigInt
+  currency            String         @default("USD") @db.Char(3)
+  status              refund_status  @default(pending)
+  reason              String?
+  processor_refund_id String?        @db.VarChar(255)
+  metadata            Json?
+  created_at          DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime       @default(now()) @db.Timestamptz(6)
+  created_by          String?        @db.Uuid
+  deleted_at          DateTime?      @db.Timestamptz(6)
+  profiles            profiles?      @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  payments            payments       @relation(fields: [payment_id], references: [id], onUpdate: NoAction)
+  transactions        transactions[]
+
+  @@index([payment_id], map: "idx_refunds_payment_id")
+}
+
+model role_permission {
+  role_id       String      @db.Uuid
+  permission_id String      @db.Uuid
+  created_at    DateTime    @default(now()) @db.Timestamptz(6)
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([role_id, permission_id])
+  @@index([permission_id], map: "idx_role_permission_permission_id")
+}
+
+model roles {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String            @unique(map: "idx_roles_name_active") @db.VarChar(64)
+  description     String?
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime          @default(now()) @db.Timestamptz(6)
+  created_by      String?           @db.Uuid
+  deleted_at      DateTime?         @db.Timestamptz(6)
+  role_permission role_permission[]
+  profiles        profiles?         @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  user_roles      user_roles[]
+}
+
+model services {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String      @db.VarChar(255)
+  description   String?
+  category      String      @db.VarChar(128)
+  price_display String      @db.VarChar(128)
+  duration      String?     @db.VarChar(64)
+  features      Json?
+  created_at    DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime    @default(now()) @db.Timestamptz(6)
+  created_by    String?     @db.Uuid
+  deleted_at    DateTime?   @db.Timestamptz(6)
+  job_items     job_items[]
+  profiles      profiles?   @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+
+  @@index([category], map: "idx_services_category")
+  @@index([created_at], map: "idx_services_created_at")
+}
+
+model time_entries {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  employee_id      String?   @db.Uuid
+  job_id           String?   @db.Uuid
+  start_time       DateTime  @db.Timestamp(6)
+  end_time         DateTime? @db.Timestamp(6)
+  duration_minutes Int?
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
+  profiles         profiles? @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  jobs             jobs?     @relation(fields: [job_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([employee_id], map: "idx_time_entries_active")
+  @@index([employee_id], map: "idx_time_entries_employee")
+}
+
+model transactions {
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type         transaction_type
+  amount_cents BigInt
+  currency     String           @default("USD") @db.Char(3)
+  payment_id   String?          @db.Uuid
+  refund_id    String?          @db.Uuid
+  payout_id    String?          @db.Uuid
+  client_id    String?          @db.Uuid
+  created_at   DateTime         @default(now()) @db.Timestamptz(6)
+  clients      clients?         @relation(fields: [client_id], references: [id], onUpdate: NoAction)
+  payments     payments?        @relation(fields: [payment_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  payouts      payouts?         @relation(fields: [payout_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  refunds      refunds?         @relation(fields: [refund_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([client_id], map: "idx_transactions_client_id")
+  @@index([payment_id], map: "idx_transactions_payment_id")
+  @@index([payout_id], map: "idx_transactions_payout_id")
+  @@index([refund_id], map: "idx_transactions_refund_id")
+  @@index([type], map: "idx_transactions_type")
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String    @unique
   password      String?
-  role          Role      @default(WORKER)
-  accounts      Account[]
-  sessions      Session[]
+  role          String    @default("worker")
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  profile       profiles? @relation("UserProfile")
 }
 
-enum Role {
-  ADMIN
-  SUPERVISOR
-  WORKER
-  CLIENT
+model user_roles {
+  profile_id String   @db.Uuid
+  role_id    String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  profiles   profiles @relation(fields: [profile_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  roles      roles    @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([profile_id, role_id])
+  @@index([role_id], map: "idx_user_roles_role_id")
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-  @@unique([identifier, token])
+enum invoice_status {
+  draft
+  sent
+  paid
+  overdue
+  cancelled
+}
+
+enum job_status {
+  draft
+  quoted
+  scheduled
+  in_progress
+  completed
+  cancelled
+  on_hold
+}
+
+enum payment_intent_status {
+  requires_payment_method
+  requires_confirmation
+  requires_action
+  processing
+  succeeded
+  cancelled
+}
+
+enum payment_method_type {
+  credit_card
+  debit_card
+  ach
+  check
+  cash
+  other
+}
+
+enum payment_status {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum payout_status {
+  pending
+  processing
+  completed
+  failed
+  cancelled
+}
+
+enum refund_status {
+  pending
+  succeeded
+  failed
+  cancelled
+}
+
+enum transaction_type {
+  payment
+  refund
+  payout
+}
+
+enum user_status {
+  active
+  pending
+  inactive
 }
