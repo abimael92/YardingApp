@@ -392,6 +392,7 @@ model User {
   email         String    @unique
   password      String?
   role          String    @default("worker")
+  name          String? 
   emailVerified DateTime? @map("email_verified")
   image         String?
   profile       profiles? @relation("UserProfile")
