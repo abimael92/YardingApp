@@ -17,8 +17,8 @@ export const SERVICE_PROJECT_TYPES: Record<string, ProjectType[]> = {
   "2": ["repair", "maintenance"], // Tree Services & Pruning
   "3": ["installation"], // Desert Landscaping
   "4": ["installation", "repair", "maintenance"], // Irrigation Systems
-  "5": ["installation"], // Hardscaping & Patios
-}
+  // "5": ["installation"], // its not offered //Hardscaping & Patios 
+ }
 
 export function getAllowedProjectTypes(serviceId: string): ProjectType[] {
   return SERVICE_PROJECT_TYPES[serviceId] ?? ["maintenance", "installation", "repair"]
