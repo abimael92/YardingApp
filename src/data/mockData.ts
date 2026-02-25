@@ -73,24 +73,24 @@ export const services: Service[] = [
       "Water conservation",
     ],
   },
-  {
-    id: "5",
-    name: "Hardscaping & Patios",
-    description:
-      "Custom hardscaping solutions including patios, walkways, and retaining walls.",
-    image:
-      "https://readdy.ai/api/search-image?query=Beautiful%20Arizona%20hardscaping%20project%20with%20flagstone%20patio%2C%20decorative%20retaining%20wall%2C%20desert%20landscape%2C%20professional%20stonework%2C%20residential%20outdoor%20living%20space&width=600&height=400&seq=service5&orientation=landscape",
-    category: "Hardscaping",
-    categoryColor: "stone",
-    price: "Starting at $25/sq ft",
-    duration: "2-5 days",
-    features: [
-      "Custom patio design",
-      "Walkway installation",
-      "Retaining walls",
-      "Fire pit construction",
-    ],
-  },
+  // {
+  //   id: "5",
+  //   name: "Hardscaping & Patios",
+  //   description:
+  //     "Custom hardscaping solutions including patios, walkways, and retaining walls.",
+  //   image:
+  //     "https://readdy.ai/api/search-image?query=Beautiful%20Arizona%20hardscaping%20project%20with%20flagstone%20patio%2C%20decorative%20retaining%20wall%2C%20desert%20landscape%2C%20professional%20stonework%2C%20residential%20outdoor%20living%20space&width=600&height=400&seq=service5&orientation=landscape",
+  //   category: "Hardscaping",
+  //   categoryColor: "stone",
+  //   price: "Starting at $25/sq ft",
+  //   duration: "2-5 days",
+  //   features: [
+  //     "Custom patio design",
+  //     "Walkway installation",
+  //     "Retaining walls",
+  //     "Fire pit construction",
+  //   ],
+  // },
 ]
 
 export const tasks: Task[] = [

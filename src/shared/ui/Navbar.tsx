@@ -83,7 +83,7 @@ const Navbar = ({ darkMode, setDarkMode }: NavbarProps) => {
                 <a
                   key={item.name}
                   href={item.href}
-                  className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
+                  className="flex items-center space-x-1 px-3 py-2 rounded-lg text-md font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
                 >
                   <Icon className="w-4 h-4" />
                   <span>{item.name}</span>

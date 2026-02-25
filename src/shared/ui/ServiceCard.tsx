@@ -26,12 +26,12 @@ const categoryColors: Record<string, string> = {
 const ServiceCard = ({ service }: ServiceCardProps) => {
   const chipColor =
     categoryColors[service.category] ||
-    "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+    "bg-emerald-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
 
   return (
     <motion.div
       whileHover={{ y: -5 }}
-      className="card p-6 h-full bg-gray-100 dark:bg-gray-900 border rounded-lg cursor-pointer group shadow-lg"
+      className="card p-6 h-full bg-emerald-50 dark:bg-gray-800 border rounded-lg cursor-pointer group shadow-lg"
     >
       {/* Image */}
       <div className="relative mb-4 rounded-lg overflow-hidden">
@@ -66,18 +66,18 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
       </div>
 
       {/* Duration */}
-      <div className="text-sm font-light text-gray-300 dark:text-gray-500 mb-4">
+      <div className="text-sm font-light text-gray-500 dark:text-gray-300 mb-4">
         {service.duration}
       </div>
 
       {/* Features */}
       <ul className="space-y-2 mb-6">
-        {service.features.map((feature, idx) => (
+        {service.features.map((feature: string, idx: number) => (
           <li
             key={idx}
             className="flex items-center text-sm text-gray-600 dark:text-gray-300"
           >
-            <CheckIcon className="w-4 h-4 text-emerald-600 mr-2 flex-shrink-0" />
+            <CheckIcon className="w-6 h-6 text-emerald-600 mr-2 flex-shrink-0" />
             {feature}
           </li>
         ))}

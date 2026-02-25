@@ -63,7 +63,7 @@ const mockServiceRevenue: ServiceRevenue[] = [
 	{ serviceName: 'Tree Trimming', revenue: 89000, jobs: 45, percentage: 25 },
 	{ serviceName: 'Irrigation', revenue: 67000, jobs: 38, percentage: 19 },
 	{ serviceName: 'Landscaping', revenue: 52000, jobs: 28, percentage: 15 },
-	{ serviceName: 'Hardscaping', revenue: 28000, jobs: 12, percentage: 6 },
+	// { serviceName: 'Hardscaping', revenue: 28000, jobs: 12, percentage: 6 },
 ];
 
 const mockCrewPerformance: CrewPerformance[] = [
