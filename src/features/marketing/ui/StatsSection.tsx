@@ -18,13 +18,13 @@ const AnimatedStat = ({ value, label }: { value: number; label: string }) => {
   )
 
   useEffect(() => {
-    const controls = animate(motionValue, value, { duration: 2.5 })
+    const controls = animate(motionValue, value, { duration: 3.5 })
     return () => controls.stop()
   }, [value, motionValue])
 
   return (
     <motion.div className="text-center p-4 rounded-lg hover:bg-emerald-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
-      <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+      <div className="text-4xl font-bold mb-1 text-emerald-600 dark:text-emerald-400">
         <motion.span>{displayValue}</motion.span>
       </div>
       <div className="text-sm text-gray-600 dark:text-gray-400">{label}</div>
