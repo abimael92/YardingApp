@@ -65,7 +65,7 @@ export default function Footer() {
                 "Tree Services",
                 "Landscaping",
                 "Irrigation",
-                "Hardscaping",
+                // "Hardscaping",
               ].map((service) => (
                 <li key={service}>
                   <a
