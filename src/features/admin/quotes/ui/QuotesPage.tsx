@@ -1,196 +1,204 @@
 /**
- * Quotes Page Component
- * 
- * Estimate/Proposal management
+ * Admin Quotes Page — Quote requests (auto-generated estimates).
+ * Table: Client, Service, Estimated Range, Status, Created, Actions (View, Override, Send to Client).
  */
 
 "use client"
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { PlusIcon, DocumentTextIcon } from "@heroicons/react/24/outline"
-import DataTable, { Column } from "@/src/shared/ui/DataTable"
+import { useState, useEffect, useCallback, useMemo } from "react"
+import { useSearchParams } from "next/navigation"
+import DataTable, { type Column } from "@/src/shared/ui/DataTable"
 import LoadingState from "@/src/shared/ui/LoadingState"
 import EmptyState from "@/src/shared/ui/EmptyState"
-import { quoteService } from "@/src/services/quoteService"
-import type { Quote } from "@/src/domain/entities"
-import { QuoteStatus } from "@/src/domain/entities"
+import { getQuoteRequests } from "@/app/actions/quoteRequest"
+import QuoteRequestDetailModal, { type QuoteRequestRow } from "@/src/features/admin/quotes/components/QuoteRequestDetailModal"
+import { EyeIcon, PencilIcon, PaperAirplaneIcon } from "@heroicons/react/24/outline"
 
-const QuotesPage = () => {
-  const [quotes, setQuotes] = useState<Quote[]>([])
+const STATUS_OPTIONS = ["pending", "reviewed", "sent"] as const
+
+export default function QuotesPage() {
+  const searchParams = useSearchParams()
+  const openId = searchParams.get("open")
+
+  const [quotes, setQuotes] = useState<QuoteRequestRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [conversionRate, setConversionRate] = useState<number>(0)
+  const [detailQuote, setDetailQuote] = useState<QuoteRequestRow | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<string>("")
 
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true)
-      try {
-        const [quotesData, rate] = await Promise.all([
-          quoteService.getAll(),
-          quoteService.getConversionRate(),
-        ])
-        setQuotes(quotesData)
-        setConversionRate(rate)
-      } catch (error) {
-        console.error("Failed to load quotes:", error)
-      } finally {
-        setIsLoading(false)
-      }
+  const loadQuotes = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const data = await getQuoteRequests()
+      setQuotes(data)
+    } catch (e) {
+      console.error("Failed to load quote requests:", e)
+    } finally {
+      setIsLoading(false)
     }
-    loadData()
   }, [])
 
-  const getStatusBadge = (status: QuoteStatus) => {
-    const colors: Record<QuoteStatus, string> = {
-      [QuoteStatus.DRAFT]: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
-      [QuoteStatus.SENT]: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-      [QuoteStatus.VIEWED]: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-      [QuoteStatus.ACCEPTED]: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-      [QuoteStatus.REJECTED]: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-      [QuoteStatus.EXPIRED]: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
-      [QuoteStatus.REVISED]: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
+  useEffect(() => {
+    loadQuotes()
+  }, [loadQuotes])
+
+  useEffect(() => {
+    if (openId && quotes.length > 0 && !detailOpen) {
+      const q = quotes.find((r) => r.id === openId)
+      if (q) {
+        setDetailQuote(q)
+        setDetailOpen(true)
+      }
+    }
+  }, [openId, quotes, detailOpen])
+
+  const handleView = useCallback((row: QuoteRequestRow) => {
+    setDetailQuote(row)
+    setDetailOpen(true)
+  }, [])
+
+  const filteredQuotes = useMemo(() => {
+    if (!statusFilter) return quotes
+    return quotes.filter((q) => q.status === statusFilter)
+  }, [quotes, statusFilter])
+
+  const getStatusBadge = (status: string) => {
+    const colors: Record<string, string> = {
+      pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+      reviewed: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+      sent: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
     }
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[status]}`}>
+      <span className={`rounded-full px-2 py-1 text-xs font-medium ${colors[status] ?? "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400"}`}>
         {status}
       </span>
     )
   }
 
-  const formatCurrency = (money: { amount: number; currency: string }) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: money.currency,
-    }).format(money.amount)
+  const formatRange = (min: bigint, max: bigint) => {
+    const lo = Number(min) / 100
+    const hi = Number(max) / 100
+    return `$${lo.toFixed(0)} – $${hi.toFixed(0)}`
   }
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString()
-  }
+  const formatDate = (d: Date) => new Date(d).toLocaleDateString()
 
-  const columns: Column<Quote>[] = [
+  const columns: Column<QuoteRequestRow>[] = [
     {
-      key: "quoteNumber",
-      header: "Quote #",
-      render: (quote) => (
-        <div className="font-medium text-gray-900 dark:text-white">{quote.quoteNumber}</div>
+      key: "client_name",
+      header: "Client",
+      render: (row) => (
+        <div>
+          <div className="font-medium text-gray-900 dark:text-white">{row.client_name}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">{row.client_email}</div>
+        </div>
       ),
     },
     {
-      key: "totalAmount",
-      header: "Amount",
-      render: (quote) => (
+      key: "service_name",
+      header: "Service",
+      render: (row) => <div className="text-gray-700 dark:text-gray-300">{row.service_name}</div>,
+    },
+    {
+      key: "range",
+      header: "Estimated range",
+      render: (row) => (
         <span className="font-medium text-gray-900 dark:text-white">
-          {formatCurrency(quote.total)}
+          {formatRange(row.approved_min_cents ?? row.min_cents, row.approved_max_cents ?? row.max_cents)}
         </span>
       ),
     },
     {
       key: "status",
       header: "Status",
-      render: (quote) => getStatusBadge(quote.status),
+      render: (row) => getStatusBadge(row.status),
     },
     {
-      key: "validUntil",
-      header: "Valid Until",
-      render: (quote) => (
-        <div className="text-gray-600 dark:text-gray-300">{formatDate(quote.validUntil)}</div>
-      ),
-    },
-    {
-      key: "createdAt",
+      key: "created_at",
       header: "Created",
-      render: (quote) => (
-        <div className="text-gray-600 dark:text-gray-300">{formatDate(quote.createdAt)}</div>
+      render: (row) => <div className="text-sm text-gray-600 dark:text-gray-400">{formatDate(row.created_at)}</div>,
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      render: (row) => (
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => handleView(row)}
+            className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-blue-600 dark:hover:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-blue-400"
+            title="View"
+          >
+            <EyeIcon className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleView(row)}
+            className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-amber-600 dark:hover:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-amber-400"
+            title="Edit / Override"
+          >
+            <PencilIcon className="h-4 w-4" />
+          </button>
+          {row.status !== "sent" && (
+            <button
+              type="button"
+              onClick={() => handleView(row)}
+              className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-emerald-600 dark:hover:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-emerald-400"
+              title="Send to client"
+            >
+              <PaperAirplaneIcon className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       ),
     },
   ]
 
   if (isLoading) {
-    return <LoadingState message="Loading quotes..." />
+    return <LoadingState message="Loading quote requests..." />
   }
-
-  const pendingQuotes = quotes.filter((q) => q.status === QuoteStatus.SENT || q.status === QuoteStatus.VIEWED).length
-  const totalValue = quotes.reduce((sum, q) => sum + q.total.amount, 0)
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end">
-        <button className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors">
-          <PlusIcon className="w-5 h-5 mr-2" />
-          Create Quote
-        </button>
+      <div className="flex flex-wrap items-center gap-4">
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        >
+          <option value="">All</option>
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="card p-6"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Quotes</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {quotes.length}
-              </p>
-            </div>
-            <DocumentTextIcon className="w-10 h-10 text-primary-500" />
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="card p-6"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Pending</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {pendingQuotes}
-              </p>
-            </div>
-            <DocumentTextIcon className="w-10 h-10 text-yellow-500" />
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="card p-6"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Conversion Rate</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {conversionRate}%
-              </p>
-            </div>
-            <DocumentTextIcon className="w-10 h-10 text-green-500" />
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Quotes Table */}
       {quotes.length === 0 ? (
         <EmptyState
-          title="No quotes yet"
-          message="Create your first quote to get started."
+          title="No quote requests yet"
+          message="Quote requests appear here when clients use Request Job."
         />
       ) : (
         <DataTable
-          data={quotes}
+          data={filteredQuotes}
           columns={columns}
-          keyExtractor={(quote) => quote.id}
-          emptyMessage="No quotes found"
+          keyExtractor={(row) => row.id}
+          emptyMessage={statusFilter ? "No quote requests with this status." : "No quote requests."}
         />
       )}
+
+      <QuoteRequestDetailModal
+        quote={detailQuote}
+        isOpen={detailOpen}
+        onClose={() => {
+          setDetailOpen(false)
+          setDetailQuote(null)
+        }}
+        onSuccess={loadQuotes}
+      />
     </div>
   )
 }
-
-export default QuotesPage

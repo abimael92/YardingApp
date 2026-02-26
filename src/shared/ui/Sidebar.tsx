@@ -30,6 +30,7 @@ import { getJobs } from "@/src/services/jobService"
 import { JobStatus } from "@/src/domain/entities"
 import { getMockUserEmail } from "@/src/features/auth/services/mockAuth"
 import { getAllUsers } from "@/src/services/userService"
+import { getUnreadQuoteNotificationCount } from "@/app/actions/notifications"
 
 interface SidebarProps {
   isOpen: boolean
@@ -154,6 +155,9 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
   const router = useRouter()
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const [activeJobsCount, setActiveJobsCount] = useState<number>(0)
+  const [unreadQuoteCount, setUnreadQuoteCount] = useState<number>(0)
+  const [quoteNotifications, setQuoteNotifications] = useState<Array<{ id: string; entity_id: string; created_at: Date }>>([])
+  const [bellOpen, setBellOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
   const [currentUserName, setCurrentUserName] = useState<string>("")
 
@@ -226,6 +230,25 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
     }
   }, [userRole])
 
+  // Fetch unread quote notifications for admin (badge + bell dropdown)
+  useEffect(() => {
+    if (userRole === "admin") {
+      const load = async () => {
+        try {
+          const [count, list] = await Promise.all([
+            getUnreadQuoteNotificationCount(),
+            getUnreadQuoteNotifications(),
+          ])
+          setUnreadQuoteCount(count)
+          setQuoteNotifications(list)
+        } catch (error) {
+          console.error("Failed to load quote notifications:", error)
+        }
+      }
+      load()
+    }
+  }, [userRole])
+
   // Auto-open dropdown based on current page
   useEffect(() => {
     if (userRole === "admin") {
@@ -287,7 +310,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
           { href: "/admin/jobs", label: "Jobs", icon: ClipboardDocumentListIcon, badge: activeJobsCount },
           { href: "/admin/tasks", label: "Tasks", icon: ClockIcon },
           { href: "/admin/schedule", label: "Schedule", icon: CalendarIcon },
-          { href: "/admin/quotes", label: "Quotes", icon: DocumentTextIcon }
+          { href: "/admin/quotes", label: "Quotes", icon: DocumentTextIcon, badge: unreadQuoteCount }
         ]
       },
       {
@@ -322,7 +345,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
         ))}
       </DropdownSection>
     ))
-  }, [userRole, openDropdown, toggleDropdown, handleItemClick, activeJobsCount])
+  }, [userRole, openDropdown, toggleDropdown, handleItemClick, activeJobsCount, unreadQuoteCount])
 
   // Non-admin navigation items
   const nonAdminNavItems = useMemo(() => {
@@ -398,10 +421,52 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
               </p>
             </div>
             <div className="relative">
-              <button className="p-2 rounded-full bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors">
+              <button
+                type="button"
+                onClick={() => userRole === "admin" && setBellOpen((o) => !o)}
+                className="p-2 rounded-full bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+              >
                 <BellIcon className="w-5 h-5 text-green-700 dark:text-green-400" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#f5f1e6] dark:border-gray-800" />
+                {userRole === "admin" && unreadQuoteCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold bg-emerald-500 text-white rounded-full border-2 border-[#f5f1e6] dark:border-gray-800">
+                    {unreadQuoteCount > 99 ? "99+" : unreadQuoteCount}
+                  </span>
+                )}
+                {userRole !== "admin" && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#f5f1e6] dark:border-gray-800" />
+                )}
               </button>
+              {userRole === "admin" && bellOpen && (
+                <>
+                  <div className="absolute right-0 top-full mt-1 w-72 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 z-[60]" role="menu">
+                    <div className="p-2 border-b border-gray-100 dark:border-gray-700">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Notifications</p>
+                    </div>
+                    {quoteNotifications.length === 0 ? (
+                      <p className="p-3 text-sm text-gray-500 dark:text-gray-400">No unread quote requests.</p>
+                    ) : (
+                      <ul className="max-h-64 overflow-y-auto">
+                        {quoteNotifications.map((n) => (
+                          <li key={n.id}>
+                            <Link
+                              href={`/admin/quotes?open=${n.entity_id}`}
+                              onClick={() => { setBellOpen(false); handleItemClick(); }}
+                              className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            >
+                              New quote request
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <div
+                    className="fixed inset-0 z-[55]"
+                    aria-hidden
+                    onClick={() => setBellOpen(false)}
+                  />
+                </>
+              )}
             </div>
           </div>
 
