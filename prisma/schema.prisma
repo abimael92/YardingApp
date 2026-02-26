@@ -409,6 +409,53 @@ model user_roles {
   @@index([role_id], map: "idx_user_roles_role_id")
 }
 
+enum quote_request_status {
+  pending
+  reviewed
+  sent
+}
+
+model quote_requests {
+  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  client_name         String               @db.VarChar(255)
+  client_email        String               @db.VarChar(255)
+  client_phone        String?              @db.VarChar(64)
+  service_name        String               @db.VarChar(255)
+  project_type        String               @db.VarChar(32)
+  zone                String               @db.VarChar(32)
+  hours               Float
+  sqft                Int
+  visits              Int
+  extras              String?              @db.VarChar(512)
+  min_cents           BigInt
+  max_cents           BigInt
+  breakdown_metadata  Json?                @default("{}")
+  status              quote_request_status  @default(pending)
+  message_to_client   String?              @db.Text
+  approved_min_cents  BigInt?
+  approved_max_cents  BigInt?
+  created_at          DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime             @default(now()) @db.Timestamptz(6)
+  sent_at             DateTime?            @db.Timestamptz(6)
+  admin_notifications admin_notifications[]
+
+  @@index([status], map: "idx_quote_requests_status")
+  @@index([created_at], map: "idx_quote_requests_created_at")
+}
+
+model admin_notifications {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type            String         @db.VarChar(64)
+  entity_id       String         @db.Uuid
+  read            Boolean        @default(false)
+  created_at      DateTime       @default(now()) @db.Timestamptz(6)
+  quote_request_id String?      @db.Uuid
+  quote_requests  quote_requests? @relation(fields: [quote_request_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([read], map: "idx_admin_notifications_read")
+  @@index([quote_request_id], map: "idx_admin_notifications_quote_request")
+}
+
 enum invoice_status {
   draft
   sent
