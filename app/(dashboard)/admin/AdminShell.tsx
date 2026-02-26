@@ -54,7 +54,7 @@ export default function AdminShell({
     }, [pathname])
 
     return (
-        <div className="flex min-h-screen bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:bg-gray-900 min-w-0">
+        <div className="flex min-h-screen bg-gradient-to-br from-brown-200/50 to-amber-200/50 dark:bg-gray-900 min-w-0">
             <Sidebar
                 isOpen={sidebarOpen}
                 setIsOpen={setSidebarOpen}
