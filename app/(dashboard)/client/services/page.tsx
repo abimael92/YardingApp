@@ -4,7 +4,8 @@ import ServicesList from "@/src/features/client/services/ui/ServicesList"
 import Sidebar from "@/src/shared/ui/Sidebar"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import { useState } from "react"
-import { Bars3Icon } from "@heroicons/react/24/outline"
+import Link from "next/link"
+import { Bars3Icon, DocumentTextIcon } from "@heroicons/react/24/outline"
 
 export default function ServicesPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -31,6 +32,13 @@ export default function ServicesPage() {
                 </p>
               </div>
             </div>
+            <Link
+              href="/request-quote"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            >
+              <DocumentTextIcon className="h-5 w-5" />
+              Request Job
+            </Link>
           </div>
         </div>
 
