@@ -5,53 +5,27 @@ import type { Job } from "@/src/domain/entities"
 import type { InvoiceItem } from "@/src/data/mockStore"
 import { mockStore } from "@/src/data/mockStore"
 import { addDays } from "date-fns"
-
-const PHOENIX_TAX_RATE = 0.086
-const VISIT_FEE = 50
-
-type ProjectType = "maintenance" | "installation" | "repair"
-type Zone = "residential" | "commercial"
-
-// Maintenance $45/hr $2/sqft | Installation $60/hr $5/sqft | Repair $75/hr $8/sqft
-const RATES: Record<
-  ProjectType,
-  { baseRatePerHour: number; materialCostPerSqft: number }
-> = {
-  maintenance: { baseRatePerHour: 45, materialCostPerSqft: 2 },
-  installation: { baseRatePerHour: 60, materialCostPerSqft: 5 },
-  repair: { baseRatePerHour: 75, materialCostPerSqft: 8 },
-}
+import {
+  PHOENIX_TAX_RATE,
+  VISIT_FEE,
+  RATES,
+  computeBreakdown,
+  validatePricingInputs,
+  HOURS_MIN,
+  HOURS_MAX,
+  SQFT_MIN,
+  SQFT_MAX,
+  VISITS_MIN,
+  VISITS_MAX,
+  type ProjectType,
+  type Zone,
+} from "@/src/lib/pricingCore"
 
 function inferProjectType(title: string): ProjectType {
   const t = title.toLowerCase()
   if (t.includes("install")) return "installation"
   if (t.includes("repair") || t.includes("fix")) return "repair"
   return "maintenance"
-}
-
-const HOURS_MIN = 0
-const HOURS_MAX = 200
-const SQFT_MIN = 0
-const SQFT_MAX = 100_000
-const VISITS_MIN = 1
-const VISITS_MAX = 50
-
-function validateInputs(
-  hours: number,
-  sqft: number,
-  visits: number
-): { valid: boolean; errors: string[] } {
-  const errors: string[] = []
-  if (hours < HOURS_MIN || hours > HOURS_MAX) {
-    errors.push(`Hours must be between ${HOURS_MIN} and ${HOURS_MAX}`)
-  }
-  if (sqft < SQFT_MIN || sqft > SQFT_MAX) {
-    errors.push(`Square feet must be between ${SQFT_MIN} and ${SQFT_MAX}`)
-  }
-  if (visits < VISITS_MIN || visits > VISITS_MAX) {
-    errors.push(`Visits must be between ${VISITS_MIN} and ${VISITS_MAX}`)
-  }
-  return { valid: errors.length === 0, errors }
 }
 
 const PRESETS = [
@@ -157,7 +131,7 @@ export default function JobCostCalculator({
   }, [job, effectiveAllowed])
 
   const validation = useMemo(
-    () => validateInputs(hours, sqft, visits),
+    () => validatePricingInputs(hours, sqft, visits),
     [hours, sqft, visits]
   )
 
@@ -167,28 +141,33 @@ export default function JobCostCalculator({
   )
 
   const { labor, materials, visitFees, subtotal, tax, total } = useMemo(() => {
-    const mult = zone === "commercial" ? 1.3 : 1
-    const { baseRatePerHour, materialCostPerSqft } = RATES[projectType]
-    const l = Math.round(hours * baseRatePerHour * mult * 100) / 100
-    const m = Math.round(sqft * materialCostPerSqft * mult * 100) / 100
-    const v = Math.max(0, visits - 1) * VISIT_FEE
-    const sub = l + m + v
-    const t = Math.round(sub * PHOENIX_TAX_RATE * 100) / 100
-    const tot = Math.round((sub + t) * 100) / 100
+    const breakdown = computeBreakdown({
+      hours,
+      sqft,
+      visits,
+      zone,
+      projectType,
+    })
+    const t = Math.round(breakdown.subtotal * PHOENIX_TAX_RATE * 100) / 100
+    const tot = Math.round((breakdown.subtotal + t) * 100) / 100
     console.log("[JobCostCalculator] Recalculate", {
       hours,
       sqft,
       zone,
       projectType,
       visits,
-      labor: l,
-      materials: m,
-      visitFees: v,
-      subtotal: sub,
+      ...breakdown,
       tax: t,
       total: tot,
     })
-    return { labor: l, materials: m, visitFees: v, subtotal: sub, tax: t, total: tot }
+    return {
+      labor: breakdown.labor,
+      materials: breakdown.materials,
+      visitFees: breakdown.visitFees,
+      subtotal: breakdown.subtotal,
+      tax: t,
+      total: tot,
+    }
   }, [hours, sqft, zone, projectType, visits])
 
   const formatCurrency = (n: number) =>
