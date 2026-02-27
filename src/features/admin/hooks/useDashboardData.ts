@@ -59,7 +59,8 @@ export const useDashboardData = (
 			console.log('✅ getRevenueHistory response:', revenueData);
 
 			console.log('Calling getRecentActivity...');
-			const activityData = await getRecentActivity(10);
+			// Dashboard preview: show the 5 most recent activities
+			const activityData = await getRecentActivity(5);
 			console.log('✅ getRecentActivity response:', activityData);
 
 			console.log('Calling getPendingActions...');

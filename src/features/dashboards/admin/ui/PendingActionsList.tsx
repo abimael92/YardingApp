@@ -1,21 +1,24 @@
-/**
- * Pending Actions List Component
- * 
- * Displays a list of pending actions requiring attention with priority indicators
- */
-
 "use client"
 
 import { motion } from "framer-motion"
-import { CheckCircleIcon } from "@heroicons/react/24/outline"
+import {
+    WrenchIcon,
+    ClockIcon,
+    CurrencyDollarIcon,
+    DocumentIcon,
+    MapPinIcon,
+    CheckCircleIcon,
+    UserGroupIcon,
+} from "@heroicons/react/24/outline"
 import type { PendingAction } from "@/src/services/adminService"
 
 interface PendingActionsListProps {
     actions: PendingAction[]
     onActionClick: (link?: string) => void
+    onViewAll?: () => void
 }
 
-export const PendingActionsList = ({ actions, onActionClick }: PendingActionsListProps) => {
+export const PendingActionsList = ({ actions, onActionClick, onViewAll }: PendingActionsListProps) => {
     const getPriorityColor = (priority: PendingAction["priority"]) => {
         switch (priority) {
             case "high":
@@ -45,22 +48,23 @@ export const PendingActionsList = ({ actions, onActionClick }: PendingActionsLis
         }
     }
 
-    const getPriorityLabel = (priority: PendingAction["priority"]): string => {
-        return priority.charAt(0).toUpperCase() + priority.slice(1)
-    }
+    const getPriorityLabel = (priority: PendingAction["priority"]) =>
+        priority.charAt(0).toUpperCase() + priority.slice(1)
 
     const getTypeIcon = (type: PendingAction["type"]) => {
         switch (type) {
             case "unassigned_job":
-                return "🔧"
+                return <WrenchIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             case "pending_approval":
-                return "⏳"
+                return <ClockIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             case "overdue_payment":
-                return "💰"
+                return <CurrencyDollarIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             case "pending_quote":
-                return "📄"
+                return <DocumentIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            case "pending_customer":
+                return <UserGroupIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             default:
-                return "📌"
+                return <MapPinIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
         }
     }
 
@@ -79,12 +83,8 @@ export const PendingActionsList = ({ actions, onActionClick }: PendingActionsLis
                 </div>
                 <div className="text-center py-8">
                     <CheckCircleIcon className="w-12 h-12 text-green-500 mx-auto mb-3" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                        All clear! No pending actions
-                    </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                        Everything is up to date
-                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">All clear! No pending actions</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Everything is up to date</p>
                 </div>
             </motion.div>
         )
@@ -99,13 +99,19 @@ export const PendingActionsList = ({ actions, onActionClick }: PendingActionsLis
         >
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                        Pending Actions
-                    </h2>
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Pending Actions</h2>
                     <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 text-xs font-semibold rounded-full">
                         {actions.length}
                     </span>
                 </div>
+                {onViewAll && (
+                    <button
+                        onClick={onViewAll}
+                        className="text-sm text-primary-600 dark:text-primary-400 hover:underline focus:outline-none focus:ring-2 focus:ring-primary-500 rounded"
+                    >
+                        View All
+                    </button>
+                )}
             </div>
 
             <div className="space-y-3">
@@ -122,13 +128,13 @@ export const PendingActionsList = ({ actions, onActionClick }: PendingActionsLis
                             onClick={() => isClickable && onActionClick(action.link)}
                             className={`
                 p-4 rounded-lg border-l-4 ${colors.border} ${colors.bg} ${colors.hover}
-                ${isClickable ? 'cursor-pointer transform transition-transform hover:scale-[1.02]' : ''}
+                ${isClickable ? "cursor-pointer transform transition-transform hover:scale-[1.02]" : ""}
                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500
               `}
                             role={isClickable ? "button" : "article"}
                             tabIndex={isClickable ? 0 : undefined}
                             onKeyDown={(e) => {
-                                if (isClickable && (e.key === 'Enter' || e.key === ' ') && action.link) {
+                                if (isClickable && (e.key === "Enter" || e.key === " ") && action.link) {
                                     e.preventDefault()
                                     onActionClick(action.link)
                                 }
@@ -137,27 +143,17 @@ export const PendingActionsList = ({ actions, onActionClick }: PendingActionsLis
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                     <div className="flex items-center space-x-2 mb-2">
-                                        <span className="text-lg" aria-hidden="true">
-                                            {getTypeIcon(action.type)}
-                                        </span>
-                                        <h3 className={`text-sm font-semibold ${colors.text}`}>
-                                            {action.title}
-                                        </h3>
-                                        <span
-                                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors.badge}`}
-                                        >
+                                        {getTypeIcon(action.type)}
+                                        <h3 className={`text-sm font-semibold ${colors.text}`}>{action.title}</h3>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors.badge}`}>
                                             {getPriorityLabel(action.priority)}
                                         </span>
                                     </div>
 
-                                    <p className="text-sm text-gray-600 dark:text-gray-300 ml-7">
-                                        {action.description}
-                                    </p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300 ml-7">{action.description}</p>
 
                                     {isClickable && (
-                                        <p className="text-xs text-primary-600 dark:text-primary-400 mt-2 ml-7">
-                                            Click to view →
-                                        </p>
+                                        <p className="text-xs text-primary-600 dark:text-primary-400 mt-2 ml-7">Click to view →</p>
                                     )}
                                 </div>
                             </div>
@@ -166,21 +162,18 @@ export const PendingActionsList = ({ actions, onActionClick }: PendingActionsLis
                 })}
             </div>
 
-            {/* Summary Section */}
             <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">
-                        Priority Breakdown:
-                    </span>
+                    <span className="text-gray-600 dark:text-gray-400">Priority Breakdown:</span>
                     <div className="flex space-x-3">
                         <span className="text-red-600 dark:text-red-400">
-                            High: {actions.filter(a => a.priority === 'high').length}
+                            High: {actions.filter((a) => a.priority === "high").length}
                         </span>
                         <span className="text-yellow-600 dark:text-yellow-400">
-                            Med: {actions.filter(a => a.priority === 'medium').length}
+                            Med: {actions.filter((a) => a.priority === "medium").length}
                         </span>
                         <span className="text-blue-600 dark:text-blue-400">
-                            Low: {actions.filter(a => a.priority === 'low').length}
+                            Low: {actions.filter((a) => a.priority === "low").length}
                         </span>
                     </div>
                 </div>

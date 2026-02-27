@@ -36,12 +36,16 @@ import { formatCurrency, formatDate, formatRelativeTime } from "@/src/features/a
 import { useDashboardData } from "@/src/features/admin/hooks/useDashboardData"
 import { RecentActivityList } from "./RecentActivityList"
 import { PendingActionsList } from "./PendingActionsList"
+import { ViewAllActivityModal } from "./ViewAllActivityModal"
+import { ViewAllPendingActionsModal } from "./ViewAllPendingActionsModal"
 import type { DateRange } from "@/src/features/admin/types/dashboard.types.ts"
 import { SystemHealthCard } from './SystemHealthCard'
 
 export const AdminDashboard = () => {
   const router = useRouter()
   const [dateRange, setDateRange] = useState<DateRange>("6m")
+  const [viewAllActivityOpen, setViewAllActivityOpen] = useState(false)
+  const [viewAllPendingOpen, setViewAllPendingOpen] = useState(false)
 
   const {
     stats,
@@ -161,17 +165,19 @@ export const AdminDashboard = () => {
         <div
           onClick={() => navigateTo("/admin/payments")}
           className="cursor-pointer group relative"
-          title="Click to view payment details - Data from database"
+          title="Click to view payment details - Based on completed payments"
         >
           <StatsCard
-            title="Total Revenue"
-            value={formatCurrency(stats.totalRevenue)}
+            title="Revenue (this month)"
+            value={formatCurrency(stats.currentMonthRevenue)}
             icon={CurrencyDollarIcon}
-            color="primary"
+            color="green"
             change={
-              <span className={revenueChange.isPositive ? "text-green-600" : "text-red-600"}>
-                {revenueChange.isPositive ? "↑" : "↓"} {revenueChange.percent}% from last month
-              </span>
+              <div className="space-y-0.5">
+                <span className={revenueChange.isPositive ? "text-green-600" : "text-red-600"}>
+                  {revenueChange.isPositive ? "↑" : "↓"} {revenueChange.percent}% last month: {formatCurrency(stats.lastMonthRevenue)}
+                </span>
+              </div>
             }
           />
         </div>
@@ -185,7 +191,7 @@ export const AdminDashboard = () => {
             title="Active Clients"
             value={stats.activeClients.toString()}
             icon={UserGroupIcon}
-            color="green"
+            color="brown"
             change={`${stats.newClientsThisMonth} new this month`}
           />
         </div>
@@ -199,7 +205,7 @@ export const AdminDashboard = () => {
             title="Team Members"
             value={`${stats.availableEmployees}/${stats.totalEmployees}`}
             icon={BriefcaseIcon}
-            color="earth"
+            color="purple"
             change={`${stats.activeEmployees} active`}
           />
         </div>
@@ -213,7 +219,7 @@ export const AdminDashboard = () => {
             title="Active Jobs"
             value={stats.activeJobs.toString()}
             icon={ClipboardDocumentListIcon}
-            color="sand"
+            color="blue"
             change={`${stats.pendingJobs} pending, ${stats.completedJobs} completed`}
           />
         </div>
@@ -229,13 +235,23 @@ export const AdminDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RecentActivityList
           activities={recentActivity}
-          onViewAll={() => navigateTo("/admin/analytics")}
+          onViewAll={() => setViewAllActivityOpen(true)}
         />
         <PendingActionsList
           actions={pendingActions}
           onActionClick={(link) => link && navigateTo(link)}
+          onViewAll={() => setViewAllPendingOpen(true)}
         />
       </div>
+
+      <ViewAllActivityModal
+        isOpen={viewAllActivityOpen}
+        onClose={() => setViewAllActivityOpen(false)}
+      />
+      <ViewAllPendingActionsModal
+        isOpen={viewAllPendingOpen}
+        onClose={() => setViewAllPendingOpen(false)}
+      />
     </div>
   )
 }
