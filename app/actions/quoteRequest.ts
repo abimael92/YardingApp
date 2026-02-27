@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/app/lib/prisma"
 import { sendSms } from "@/src/lib/sms"
+import { Prisma } from '@/src/generated/prisma/client'
 
 export type QuoteRequestStatus = "pending" | "reviewed" | "sent"
 
@@ -22,124 +23,146 @@ export interface CreateQuoteRequestInput {
   breakdown_metadata: Record<string, unknown>
 }
 
-export async function createQuoteRequest(input: CreateQuoteRequestInput): Promise<
-  { success: true; id: string } | { success: false; error: string }
-> {
-  try {
-    console.log("=== Starting quote request creation ===");
-    console.log("Input data:", JSON.stringify(input, (key, value) => 
-      typeof value === 'bigint' ? value.toString() : value, 2));
-    
-    // Validate required fields
-    if (!input.client_name || !input.client_email || !input.service_name) {
-      console.error("Missing required fields");
-      return { 
-        success: false, 
-        error: "Missing required fields: name, email, and service are required" 
-      };
-    }
+export async function createQuoteRequest(
+	input: CreateQuoteRequestInput,
+): Promise<{ success: true; id: string } | { success: false; error: string }> {
+	try {
+		console.log('=== Starting quote request creation ===');
+		console.log(
+			'Input data:',
+			JSON.stringify(
+				input,
+				(key, value) => (typeof value === 'bigint' ? value.toString() : value),
+				2,
+			),
+		);
 
-    // Ensure numeric values are valid
-    const minCents = BigInt(Math.round(input.min_cents));
-    const maxCents = BigInt(Math.round(input.max_cents));
-    
-    console.log("Attempting database insert...");
-    console.log("Database URL exists:", !!process.env.DATABASE_URL);
-    
-    const data = {
-      client_name: input.client_name,
-      client_email: input.client_email,
-      client_phone: input.client_phone ?? null,
-      service_name: input.service_name,
-      project_type: input.project_type,
-      zone: input.zone,
-      hours: input.hours,
-      sqft: input.sqft,
-      visits: input.visits,
-      extras: input.extras ?? null,
-      min_cents: minCents,
-      max_cents: maxCents,
-      breakdown_metadata: input.breakdown_metadata ?? {},
-      status: "pending",
-    };
-    
-    console.log("Insert data:", JSON.stringify(data, (key, value) => 
-      typeof value === 'bigint' ? value.toString() : value, 2));
+		// Validate required fields
+		if (!input.client_name || !input.client_email || !input.service_name) {
+			console.error('Missing required fields');
+			return {
+				success: false,
+				error: 'Missing required fields: name, email, and service are required',
+			};
+		}
 
-    const row = await prisma.quote_requests.create({
-      data: data,
-    });
+		// Ensure numeric values are valid
+		const minCents = BigInt(Math.round(input.min_cents));
+		const maxCents = BigInt(Math.round(input.max_cents));
 
-    console.log("✅ Quote request created successfully with ID:", row.id);
+		console.log('Attempting database insert...');
+		console.log('Database URL exists:', !!process.env.DATABASE_URL);
 
-    // Try to create notification but don't fail if it errors
-    try {
-      await prisma.admin_notifications.create({
-        data: {
-          type: "quote_request",
-          entity_id: row.id,
-          read: false,
-          quote_request_id: row.id,
-        },
-      });
-      console.log("✅ Admin notification created successfully");
-    } catch (notifError) {
-      console.error("❌ Failed to create admin notification:", notifError);
-      // Don't fail the main request
-    }
+		const data = {
+			client_name: input.client_name,
+			client_email: input.client_email,
+			client_phone: input.client_phone ?? null,
+			service_name: input.service_name,
+			project_type: input.project_type,
+			zone: input.zone,
+			hours: input.hours,
+			sqft: input.sqft,
+			visits: input.visits,
+			extras: input.extras ?? null,
+			min_cents: minCents,
+			max_cents: maxCents,
+			breakdown_metadata: input.breakdown_metadata ?? {},
+			status: 'pending' as const,
+		};
 
-    // Try SMS but don't fail if it errors
-    try {
-      const adminPhone = process.env.ADMIN_PHONE_FOR_SMS || process.env.TWILIO_ADMIN_PHONE;
-      if (adminPhone) {
-        await sendSms({
-          to: adminPhone,
-          body: `New quote request: ${input.service_name} from ${input.client_name}. Estimate: $${(input.min_cents / 100).toFixed(0)}–$${(input.max_cents / 100).toFixed(0)}. Check admin quotes.`,
-        });
-        console.log("✅ SMS sent successfully");
-      }
-    } catch (smsError) {
-      console.error("❌ Failed to send SMS:", smsError);
-    }
+		console.log(
+			'Insert data:',
+			JSON.stringify(
+				data,
+				(key, value) => (typeof value === 'bigint' ? value.toString() : value),
+				2,
+			),
+		);
 
-    revalidatePath("/admin/quotes");
-    return { success: true, id: row.id };
-  } catch (e) {
-    console.error("❌ ERROR in createQuoteRequest:");
-    console.error("Error object:", e);
-    console.error("Error message:", e instanceof Error ? e.message : String(e));
-    console.error("Error stack:", e instanceof Error ? e.stack : "No stack trace");
-    
-    if (e instanceof Error && 'code' in e) {
-      console.error("Prisma error code:", (e as any).code);
-    }
-    
-    const raw = e instanceof Error ? e.message : String(e);
-    
-    // Check for specific Prisma errors
-    if (raw.includes("Foreign key constraint")) {
-      return { success: false, error: "Database constraint error. Please check related data." };
-    }
-    if (raw.includes("violates not-null constraint")) {
-      return { success: false, error: "Missing required field in database." };
-    }
-    if (raw.includes("invalid input syntax")) {
-      return { success: false, error: "Invalid data format submitted." };
-    }
-    if (raw.includes("UUID")) {
-      return { success: false, error: "ID format error. Please try again." };
-    }
-    
-    const isMissingTable =
-      raw.includes("does not exist") ||
-      (raw.includes("relation") && raw.includes("quote_requests"));
-      
-    const message = isMissingTable
-      ? "Quote request feature is not set up yet. Please run database migrations first."
-      : raw;
-      
-    return { success: false, error: message };
-  }
+		const row = await prisma.quote_requests.create({
+			data: {
+				...data,
+				breakdown_metadata: data.breakdown_metadata as Prisma.InputJsonValue,
+			},
+		});
+
+		console.log('✅ Quote request created successfully with ID:', row.id);
+
+		// Try to create notification but don't fail if it errors
+		try {
+			await prisma.admin_notifications.create({
+				data: {
+					type: 'quote_request',
+					entity_id: row.id,
+					read: false,
+					quote_request_id: row.id,
+				},
+			});
+			console.log('✅ Admin notification created successfully');
+		} catch (notifError) {
+			console.error('❌ Failed to create admin notification:', notifError);
+			// Don't fail the main request
+		}
+
+		// Try SMS but don't fail if it errors
+		try {
+			const adminPhone =
+				process.env.ADMIN_PHONE_FOR_SMS || process.env.TWILIO_ADMIN_PHONE;
+			if (adminPhone) {
+				await sendSms({
+					to: adminPhone,
+					body: `New quote request: ${input.service_name} from ${input.client_name}. Estimate: $${(input.min_cents / 100).toFixed(0)}–$${(input.max_cents / 100).toFixed(0)}. Check admin quotes.`,
+				});
+				console.log('✅ SMS sent successfully');
+			}
+		} catch (smsError) {
+			console.error('❌ Failed to send SMS:', smsError);
+		}
+
+		revalidatePath('/admin/quotes');
+		return { success: true, id: row.id };
+	} catch (e) {
+		console.error('❌ ERROR in createQuoteRequest:');
+		console.error('Error object:', e);
+		console.error('Error message:', e instanceof Error ? e.message : String(e));
+		console.error(
+			'Error stack:',
+			e instanceof Error ? e.stack : 'No stack trace',
+		);
+
+		if (e instanceof Error && 'code' in e) {
+			console.error('Prisma error code:', (e as any).code);
+		}
+
+		const raw = e instanceof Error ? e.message : String(e);
+
+		// Check for specific Prisma errors
+		if (raw.includes('Foreign key constraint')) {
+			return {
+				success: false,
+				error: 'Database constraint error. Please check related data.',
+			};
+		}
+		if (raw.includes('violates not-null constraint')) {
+			return { success: false, error: 'Missing required field in database.' };
+		}
+		if (raw.includes('invalid input syntax')) {
+			return { success: false, error: 'Invalid data format submitted.' };
+		}
+		if (raw.includes('UUID')) {
+			return { success: false, error: 'ID format error. Please try again.' };
+		}
+
+		const isMissingTable =
+			raw.includes('does not exist') ||
+			(raw.includes('relation') && raw.includes('quote_requests'));
+
+		const message = isMissingTable
+			? 'Quote request feature is not set up yet. Please run database migrations first.'
+			: raw;
+
+		return { success: false, error: message };
+	}
 }
 
 export async function getQuoteRequests(): Promise<
