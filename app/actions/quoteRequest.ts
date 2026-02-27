@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/app/lib/prisma"
 import { sendSms } from "@/src/lib/sms"
-import { Prisma } from '@/src/generated/prisma/client'
+import { Prisma } from '@prisma/client';
 
 export type QuoteRequestStatus = "pending" | "reviewed" | "sent"
 
