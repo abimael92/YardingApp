@@ -133,8 +133,6 @@ export default function InvoicesPage() {
   ]
 
   return (
-
-
         <div className="p-4 sm:p-6">
           <Breadcrumbs />
 
@@ -150,7 +148,7 @@ export default function InvoicesPage() {
               <button
                 type="button"
                 onClick={handleNewInvoice}
-                className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 <PlusIcon className="w-5 h-5 mr-2" />
                 New Invoice
