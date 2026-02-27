@@ -127,7 +127,15 @@ export default function QuoteRequestDetailModal({
 
   if (!quote) return null
 
-  const breakdown = (quote.breakdown_metadata as { labor?: number; materials?: number; visitFees?: number; subtotal?: number }) | null
+  const breakdown =
+    quote.breakdown_metadata as
+    | {
+      labor?: number
+      materials?: number
+      visitFees?: number
+      subtotal?: number
+    }
+    | null
   const isSent = quote.status === "sent"
 
   return (
