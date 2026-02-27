@@ -36,7 +36,7 @@ export default function ViewInvoiceModal({
               <button
                 type="button"
                 onClick={() => onPrintPreview(invoice)}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
               >
                 <PrinterIcon className="h-5 w-5" />
                 Print Preview

@@ -90,15 +90,7 @@ export default function InvoicePrintPreviewModal({
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white truncate pr-2">
                   Print Preview — {invoice.invoiceNumber}
                 </h2>
-                <Dialog.Close asChild>
-                  <button
-                    type="button"
-                    className="shrink-0 rounded-lg p-2 -mr-2 text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:hover:text-gray-400 dark:hover:bg-gray-700 touch-manipulation"
-                    aria-label="Close"
-                  >
-                    <XMarkIcon className="h-5 w-5" />
-                  </button>
-                </Dialog.Close>
+               
               </div>
 
               {/* Action buttons - stacked on mobile, side-by-side on desktop */}
@@ -106,7 +98,7 @@ export default function InvoicePrintPreviewModal({
                 <button
                   type="button"
                   onClick={handlePrint}
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-3 py-2.5 sm:px-4 sm:py-2 text-sm font-medium text-white hover:bg-primary-700 active:bg-primary-800 touch-manipulation min-h-[44px]"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2.5 sm:px-4 sm:py-2 text-sm font-medium text-white hover:bg-blue-700 active:bg-blue-800 touch-manipulation min-h-[44px]"
                 >
                   <PrinterIcon className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
                   <span className="sm:inline">Print</span>
@@ -114,12 +106,21 @@ export default function InvoicePrintPreviewModal({
                 <button
                   type="button"
                   onClick={handleDownloadPDF}
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2.5 sm:px-4 sm:py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 touch-manipulation min-h-[44px]"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-amber-100 px-3 py-2.5 sm:px-4 sm:py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 active:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 touch-manipulation min-h-[44px]"
                 >
                   <ArrowDownTrayIcon className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
                   <span className="sm:inline">PDF</span>
                 </button>
               </div>
+              <Dialog.Close asChild>
+                <button
+                  type="button"
+                  className="shrink-0 rounded-lg p-2 -mr-2 text-gray-500 hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900 dark:hover:text-red-400 touch-manipulation"
+                  aria-label="Close"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </Dialog.Close>
             </div>
           </div>
 
@@ -140,6 +141,13 @@ export default function InvoicePrintPreviewModal({
               >
                 {/* Company header */}
                 <div style={{ borderBottom: "2px solid #059669", paddingBottom: "12px", marginBottom: "16px" }}>
+                  <img
+                    src="/brand-logo.png"
+                    alt="J&J Desert Landscaping LLC logo"
+                    width={160}
+                    height={80}
+                    className="h-20 w-40 object-contain bg-black rounded-lg"
+                  />
                   <h1 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#065f46", margin: 0, lineHeight: 1.25 }}>
                     J&J Desert Landscaping LLC
                   </h1>
