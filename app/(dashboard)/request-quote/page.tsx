@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { getServices } from "@/src/services/serviceCatalog"
 import { getAllowedProjectTypes } from "@/src/data/serviceProjectTypes"
 import { calculateQuoteRange, type QuoteCalculatorInput } from "@/src/lib/quoteCalculator"
@@ -13,20 +14,34 @@ const ZONES = [
 ] as const
 
 export default function RequestQuotePage() {
+  const searchParams = useSearchParams()
   const services = getServices()
   const [clientName, setClientName] = useState("")
   const [clientEmail, setClientEmail] = useState("")
   const [clientPhone, setClientPhone] = useState("")
   const [serviceId, setServiceId] = useState("")
+  const [submittedId, setSubmittedId] = useState<string | null>(null);
   const [projectType, setProjectType] = useState<ProjectType>("maintenance")
   const [zone, setZone] = useState<"residential" | "commercial">("residential")
-  const [hours, setHours] = useState(0)
   const [sqft, setSqft] = useState(0)
-  const [visits, setVisits] = useState(1)
   const [extras, setExtras] = useState("")
+
+  // Auto-calculated from sqft (hidden from customer): hours = (sqft/1000)*1.5, min 2; visits = 1
+  const computedHours = sqft > 0 ? Math.max(2, (sqft / 1000) * 1.5) : 2
+  const computedVisits = 1
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState("")
+
+  // Prefill service when landing page sends ?serviceId= (e.g. from "Request Quote" on a service card)
+  useEffect(() => {
+    const id = searchParams.get("serviceId")
+    if (id && services.some((s) => s.id === id)) {
+      setServiceId(id)
+      const types = getAllowedProjectTypes(id)
+      setProjectType(types[0])
+    }
+  }, [searchParams, services])
 
   const allowedTypes = useMemo(
     () => (serviceId ? getAllowedProjectTypes(serviceId) : (["maintenance", "installation", "repair"] as ProjectType[])),
@@ -41,15 +56,15 @@ export default function RequestQuotePage() {
   const quoteResult = useMemo(() => {
     const input: QuoteCalculatorInput = {
       serviceName: selectedService?.name,
-      hours,
+      hours: computedHours,
       sqft,
-      visits,
+      visits: computedVisits,
       zone,
       projectType,
       extras: extras || undefined,
     }
     return calculateQuoteRange(input)
-  }, [hours, sqft, visits, zone, projectType, extras, selectedService?.name])
+  }, [computedHours, sqft, computedVisits, zone, projectType, extras, selectedService?.name])
 
   const handleServiceChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -81,9 +96,9 @@ export default function RequestQuotePage() {
         service_name: selectedService.name,
         project_type: projectType,
         zone,
-        hours,
+        hours: computedHours,
         sqft,
-        visits,
+        visits: computedVisits,
         extras: extras.trim() || undefined,
         min_cents: quoteResult.minTotal * 100,
         max_cents: quoteResult.maxTotal * 100,
@@ -104,39 +119,98 @@ export default function RequestQuotePage() {
       clientPhone,
       projectType,
       zone,
-      hours,
+      computedHours,
       sqft,
-      visits,
+      computedVisits,
       extras,
     ]
   )
 
+  const pageBg = "min-h-screen bg-gradient-to-br from-green-50 via-emerald-50/80 to-amber-50/60 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800"
+
   if (submitted) {
     return (
-      <div className="mx-auto max-w-lg rounded-xl border border-green-200 bg-green-50 p-8 text-center dark:border-green-800 dark:bg-green-900/20">
-        <h2 className="text-xl font-semibold text-green-800 dark:text-green-200">Quote request received</h2>
-        <p className="mt-2 text-green-700 dark:text-green-300">
-          We&apos;ll review your request and get back to you with a formal quote. You may receive an SMS confirmation if you provided a phone number.
-        </p>
+      <div className={`${pageBg} py-12 px-4`}>
+        <div className="mx-auto max-w-lg">
+          <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50 p-8 text-center dark:border-emerald-700 dark:bg-emerald-900/30">
+            {/* Success Icon */}
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-800">
+              <svg className="h-8 w-8 text-emerald-600 dark:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+
+            <h2 className="mt-4 text-xl font-semibold text-emerald-800 dark:text-emerald-200">
+              Quote Request Received!
+            </h2>
+
+            <p className="mt-2 text-emerald-700 dark:text-emerald-300">
+              We'll review your request and get back to you with a formal quote.
+              {clientPhone && ` You'll receive SMS updates at ${clientPhone}`}
+            </p>
+
+            {submittedId && (
+              <p className="mt-4 text-sm text-emerald-600 dark:text-emerald-400">
+                Reference ID: {submittedId.substring(0, 8)}...
+              </p>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <button
+                onClick={() => window.location.href = '/'}
+                className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-6 py-3 font-medium text-white shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors"
+              >
+                <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Return to Home
+              </button>
+
+              <button
+                onClick={() => {
+                  setSubmitted(false);
+                  // Reset form fields
+                  setClientName("");
+                  setClientEmail("");
+                  setClientPhone("");
+                  setServiceId("");
+                  setSqft(0);
+                  setExtras("");
+                  setProjectType("maintenance");
+                  setZone("residential");
+                  setSubmittedId(null);
+                }}
+                className="inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 font-medium text-emerald-700 shadow-md border-2 border-emerald-200 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors dark:bg-gray-800 dark:text-emerald-300 dark:border-emerald-700 dark:hover:bg-gray-700"
+              >
+                <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Request Another Quote
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className={`${pageBg} py-8 px-4 sm:px-6`}>
+    <div className="mx-auto max-w-2xl pb-8">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Request a job quote</h1>
       <p className="mt-1 text-gray-600 dark:text-gray-400">
         Get an estimated price range. Final quote may vary after we review your details.
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-6 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800/50">
+      <form onSubmit={handleSubmit} className="mt-6 space-y-6 rounded-xl border-2 border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-900/20 p-6 shadow-lg">
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Name *</label>
           <input
             type="text"
             value={clientName}
             onChange={(e) => setClientName(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            className="w-full rounded-lg border-2 border-emerald-200 bg-white px-3 py-2.5 text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-emerald-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500"
             required
           />
         </div>
@@ -146,17 +220,17 @@ export default function RequestQuotePage() {
             type="email"
             value={clientEmail}
             onChange={(e) => setClientEmail(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            className="w-full rounded-lg border-2 border-emerald-200 bg-white px-3 py-2.5 text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-emerald-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500"
             required
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Phone (optional)</label>
+          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Phone*</label>
           <input
             type="tel"
             value={clientPhone}
             onChange={(e) => setClientPhone(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            className="w-full rounded-lg border-2 border-emerald-200 bg-white px-3 py-2.5 text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-emerald-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500"
           />
         </div>
 
@@ -165,7 +239,7 @@ export default function RequestQuotePage() {
           <select
             value={serviceId}
             onChange={handleServiceChange}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            className="w-full rounded-lg border-2 border-emerald-200 bg-white px-3 py-2.5 text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-emerald-700 dark:bg-gray-800 dark:text-white"
             required
           >
             <option value="">Select a service</option>
@@ -183,7 +257,7 @@ export default function RequestQuotePage() {
             <select
               value={projectType}
               onChange={(e) => setProjectType(e.target.value as ProjectType)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              className="w-full rounded-lg border-2 border-emerald-200 bg-white px-3 py-2.5 text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-emerald-700 dark:bg-gray-800 dark:text-white"
             >
               {allowedTypes.map((t) => (
                 <option key={t} value={t}>
@@ -199,7 +273,7 @@ export default function RequestQuotePage() {
           <select
             value={zone}
             onChange={(e) => setZone(e.target.value as "residential" | "commercial")}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            className="w-full rounded-lg border-2 border-emerald-200 bg-white px-3 py-2.5 text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-emerald-700 dark:bg-gray-800 dark:text-white"
           >
             {ZONES.map((z) => (
               <option key={z.value} value={z.value}>
@@ -209,41 +283,20 @@ export default function RequestQuotePage() {
           </select>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Hours (est.)</label>
-            <input
-              type="number"
-              min={0}
-              max={200}
-              step={0.25}
-              value={hours || ""}
-              onChange={(e) => setHours(parseFloat(e.target.value) || 0)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Sq ft</label>
-            <input
-              type="number"
-              min={0}
-              max={100000}
-              value={sqft || ""}
-              onChange={(e) => setSqft(parseInt(e.target.value, 10) || 0)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Visits</label>
-            <input
-              type="number"
-              min={1}
-              max={50}
-              value={visits}
-              onChange={(e) => setVisits(parseInt(e.target.value, 10) || 1)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            />
-          </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Property size (sq ft)</label>
+          <input
+            type="number"
+            min={0}
+            max={100000}
+            value={sqft || ""}
+            onChange={(e) => setSqft(parseInt(e.target.value, 10) || 0)}
+            placeholder="e.g. 1500"
+            className="w-full rounded-lg border-2 border-emerald-200 bg-white px-3 py-2.5 text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-emerald-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500"
+          />
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            We use this to estimate labor and provide your price range. Hours and visit count are calculated automatically.
+          </p>
         </div>
 
         <div>
@@ -253,12 +306,12 @@ export default function RequestQuotePage() {
             value={extras}
             onChange={(e) => setExtras(e.target.value)}
             placeholder="e.g. urgency, access, special requests"
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            className="w-full rounded-lg border-2 border-emerald-200 bg-white px-3 py-2.5 text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-emerald-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500"
           />
         </div>
 
         {quoteResult.valid && (quoteResult.minTotal > 0 || quoteResult.maxTotal > 0) && (
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-900/20">
+          <div className="rounded-lg border-2 border-emerald-300 bg-emerald-100 p-4 dark:border-emerald-700 dark:bg-emerald-900/40">
             <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">Estimated range</p>
             <p className="mt-1 text-2xl font-bold text-emerald-900 dark:text-emerald-100">
               ${quoteResult.minTotal.toFixed(0)} – ${quoteResult.maxTotal.toFixed(0)}
@@ -270,7 +323,7 @@ export default function RequestQuotePage() {
         )}
 
         {!quoteResult.valid && quoteResult.errors.length > 0 && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+          <div className="rounded-lg border-2 border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200">
             <ul className="list-inside list-disc">
               {quoteResult.errors.map((err, i) => (
                 <li key={i}>{err}</li>
@@ -280,17 +333,22 @@ export default function RequestQuotePage() {
         )}
 
         {error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <div className="rounded-lg border-2 border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
+            {error}
+          </div>
         )}
 
-        <button
-          type="submit"
-          disabled={submitting || !quoteResult.valid || !clientName.trim() || !clientEmail.trim() || !serviceId}
-          className="w-full rounded-lg bg-primary-600 px-4 py-3 font-medium text-white hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none"
-        >
-          {submitting ? "Submitting…" : "Request Job"}
-        </button>
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={submitting || !quoteResult.valid || !clientName.trim() || !clientEmail.trim() || !serviceId}
+            className="w-full rounded-lg bg-emerald-600 px-4 py-3.5 font-semibold text-white shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed transition-colors"
+          >
+            {submitting ? "Submitting…" : "Request Job"}
+          </button>
+        </div>
       </form>
+    </div>
     </div>
   )
 }

@@ -13,6 +13,8 @@
     "db:inspect": "tsx scripts/inspect-db.ts",
     "db:seed": "tsx scripts/seed-db.ts",
     "db:admin": "tsx scripts/seed-admin.ts",
+    "db:push": "prisma db push",
+    "db:create-quote-tables": "tsx scripts/create-quote-tables.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

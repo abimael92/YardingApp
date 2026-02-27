@@ -30,7 +30,10 @@ import { getJobs } from "@/src/services/jobService"
 import { JobStatus } from "@/src/domain/entities"
 import { getMockUserEmail } from "@/src/features/auth/services/mockAuth"
 import { getAllUsers } from "@/src/services/userService"
-import { getUnreadQuoteNotificationCount } from "@/app/actions/notifications"
+import {
+  getUnreadQuoteNotificationCount,
+  getUnreadQuoteNotifications
+} from "@/app/actions/notifications"
 
 interface SidebarProps {
   isOpen: boolean
@@ -438,30 +441,81 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
               </button>
               {userRole === "admin" && bellOpen && (
                 <>
-                  <div className="absolute right-0 top-full mt-1 w-72 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 z-[60]" role="menu">
-                    <div className="p-2 border-b border-gray-100 dark:border-gray-700">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">Notifications</p>
+                  {/* Dropdown anchored to the right side of the bell */}
+                  <div className="absolute top-full right-0 mt-2 w-60 rounded-xl bg-white shadow-xl ring-1 ring-black ring-opacity-5 dark:bg-gray-800 dark:ring-gray-700 z-50">
+                    {/* Header */}
+                    <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                        {unreadQuoteCount > 0 && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                            {unreadQuoteCount} new
+                          </span>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Notification list */}
                     {quoteNotifications.length === 0 ? (
-                      <p className="p-3 text-sm text-gray-500 dark:text-gray-400">No unread quote requests.</p>
+                      <div className="px-4 py-8 text-center">
+                        <BellIcon className="mx-auto h-8 w-8 text-gray-400 dark:text-gray-500" />
+                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">No new notifications</p>
+                      </div>
                     ) : (
-                      <ul className="max-h-64 overflow-y-auto">
-                        {quoteNotifications.map((n) => (
-                          <li key={n.id}>
-                            <Link
-                              href={`/admin/quotes?open=${n.entity_id}`}
-                              onClick={() => { setBellOpen(false); handleItemClick(); }}
-                              className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                            >
-                              New quote request
-                            </Link>
-                          </li>
+                      <div className="max-h-96 overflow-y-auto">
+                        {quoteNotifications.map((n, index) => (
+                          <Link
+                            key={n.id}
+                            href={`/admin/quotes?highlight=${n.entity_id}`}
+                            onClick={() => { setBellOpen(false); handleItemClick(); }}
+                            className={`
+                block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors
+                ${index !== quoteNotifications.length - 1 ? 'border-b border-gray-100 dark:border-gray-700' : ''}
+              `}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0">
+                                <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                  <DocumentTextIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                </div>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                  New Quote Request
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                  {new Date(n.created_at).toLocaleDateString(undefined, {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                              </div>
+                              <div className="flex-shrink-0">
+                                <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full"></span>
+                              </div>
+                            </div>
+                          </Link>
                         ))}
-                      </ul>
+                      </div>
                     )}
+
+                    {/* Footer */}
+                    <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700">
+                      <Link
+                        href="/admin/quotes"
+                        onClick={() => { setBellOpen(false); handleItemClick(); }}
+                        className="block text-center text-sm text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 font-medium"
+                      >
+                        View all quotes
+                      </Link>
+                    </div>
                   </div>
+
+                  {/* Backdrop */}
                   <div
-                    className="fixed inset-0 z-[55]"
+                    className="fixed inset-0 z-40"
                     aria-hidden
                     onClick={() => setBellOpen(false)}
                   />
