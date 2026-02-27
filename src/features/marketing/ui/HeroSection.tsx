@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronRightIcon, PhoneIcon, StarIcon } from "@heroicons/react/24/solid"
 import { useState, useEffect } from "react"
@@ -56,14 +57,16 @@ export default function HeroSection() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-6 py-3 border-2 bg-emerald-600 border-primary-600 text-zinc-50 dark:text-primary-400 dark:border-primary-400 rounded-lg font-medium hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors duration-200 flex items-center justify-center"
-              >
-                Get Free Quote
-                <ChevronRightIcon className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </motion.button>
+              <Link href="/request-quote">
+                <motion.span
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="inline-flex items-center justify-center px-6 py-3 border-2 bg-emerald-600 border-primary-600 text-zinc-50 dark:text-primary-400 dark:border-primary-400 rounded-lg font-medium hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors duration-200"
+                >
+                  Get Free Quote
+                  <ChevronRightIcon className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                </motion.span>
+              </Link>
               <motion.a
                 href="tel:+16028242791"
                 whileHover={{ scale: 1.05 }}

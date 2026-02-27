@@ -1,6 +1,7 @@
 // ServiceCard.tsx
 "use client"
 
+import Link from "next/link"
 import { motion } from "framer-motion"
 import { CheckIcon } from "@heroicons/react/24/solid"
 import type { Service } from "@/src/domain/models"
@@ -83,14 +84,16 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
         ))}
       </ul>
 
-      {/* Button */}
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        className="w-full bg-emerald-600 dark:bg-emerald-700 text-white py-2 px-4 rounded-lg font-medium hover:bg-emerald-700 dark:hover:bg-emerald-800 transition-colors duration-200"
-      >
-        Request Quote
-      </motion.button>
+      {/* Button — Create Quote CTA: navigates to request-quote with service prefill */}
+      <Link href={`/request-quote?serviceId=${encodeURIComponent(service.id)}`}>
+        <motion.span
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="block w-full bg-emerald-600 dark:bg-emerald-700 text-white py-2 px-4 rounded-lg font-medium hover:bg-emerald-700 dark:hover:bg-emerald-800 transition-colors duration-200 text-center"
+        >
+          Request Quote
+        </motion.span>
+      </Link>
     </motion.div>
   )
 }

@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { motion } from "framer-motion"
 import { ChevronRightIcon } from "@heroicons/react/24/solid"
 import { PhoneIcon } from "@heroicons/react/24/outline"
@@ -54,14 +55,16 @@ const LandingPage = () => {
               Arizona landscape with professional, sustainable solutions.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-white text-emerald-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center"
-              >
-                Schedule Consultation
-                <ChevronRightIcon className="w-5 h-5 ml-2" />
-              </motion.button>
+              <Link href="/request-quote">
+                <motion.span
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="inline-flex items-center justify-center bg-white text-emerald-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200"
+                >
+                  Schedule Consultation
+                  <ChevronRightIcon className="w-5 h-5 ml-2" />
+                </motion.span>
+              </Link>
               <motion.a
                 href="tel:+16028242791"
                 whileHover={{ scale: 1.05 }}
