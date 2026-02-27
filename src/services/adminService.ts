@@ -59,7 +59,8 @@ export interface PendingAction {
 		| 'unassigned_job'
 		| 'pending_approval'
 		| 'overdue_payment'
-		| 'pending_quote';
+		| 'pending_quote'
+		| 'pending_customer';
 	title: string;
 	description: string;
 	priority: 'high' | 'medium' | 'low';
@@ -94,7 +95,13 @@ export interface AdminStats {
 	pendingTasks: number;
 	inProgressTasks: number;
 	completedTasks: number;
+	/** All–time revenue from completed payments (paid invoices only). */
 	totalRevenue: number;
+	/** Revenue from completed payments in the current calendar month. */
+	currentMonthRevenue: number;
+	/** Revenue from completed payments in the previous calendar month. */
+	lastMonthRevenue: number;
+	/** Percentage change between current and last month revenue. */
 	revenueChangePercent: number;
 	pendingRevenue: number;
 	activeJobs: number;
@@ -112,7 +119,7 @@ export interface AdminService {
 		months?: number,
 	): Promise<Array<{ month: string; revenue: number }>>;
 	getRecentActivity(limit?: number): Promise<ActivityLog[]>;
-	getPendingActions(): Promise<PendingAction[]>;
+	getPendingActions(limits?: { jobs?: number; payments?: number }): Promise<PendingAction[]>;
 	getRecentUsers(limit?: number): Promise<User[]>;
 	getSystemHealth(): Promise<SystemHealth>;
 }
@@ -227,10 +234,15 @@ export const adminService: AdminService = {
 				pendingTasks: 0,
 				inProgressTasks: 0,
 				completedTasks: 0,
+				// Revenue definitions:
+				// - totalRevenue: sum of all COMPLETED payments (paid invoices).
+				// - currentMonthRevenue / lastMonthRevenue: based on COMPLETED payments in the respective calendar month.
 				totalRevenue: completedPayments.reduce(
 					(sum: number, p: any) => sum + (p.amount_cents || 0) / 100,
 					0,
 				),
+				currentMonthRevenue: thisMonthRevenue,
+				lastMonthRevenue,
 				revenueChangePercent: Math.round(revenueChangePercent * 10) / 10,
 				pendingRevenue: pendingPayments.reduce(
 					(sum: number, p: any) => sum + (p.amount_cents || 0) / 100,
@@ -386,11 +398,12 @@ export const adminService: AdminService = {
 		}
 	},
 
-	getPendingActions: async () => {
+	getPendingActions: async (limits = { jobs: 3, payments: 2 }) => {
 		try {
-			console.log('🔵 AdminService: Fetching pending actions...');
+			const jobsLimit = limits.jobs ?? 50;
+			const paymentsLimit = limits.payments ?? 50;
 
-			const [unassignedJobs, overduePayments, pendingQuotes] =
+			const [unassignedJobs, overduePayments, pendingQuotes, pendingCustomers] =
 				await Promise.all([
 					sql`
           SELECT j.id, j.title 
@@ -401,7 +414,7 @@ export const adminService: AdminService = {
           )
           AND j.status != ${JobStatus.COMPLETED}
           ORDER BY j.created_at DESC
-          LIMIT 3
+          LIMIT ${jobsLimit}
         `,
 					sql`
           SELECT py.id, py.amount_cents, py.created_at 
@@ -409,12 +422,17 @@ export const adminService: AdminService = {
           WHERE py.status = ${PaymentStatus.PENDING}
           AND py.created_at < NOW() - INTERVAL '30 days'
           ORDER BY py.created_at DESC
-          LIMIT 2
+          LIMIT ${paymentsLimit}
         `,
 					sql`
-          SELECT COUNT(*) as count 
+          SELECT COUNT(*)::text as count 
           FROM jobs j 
           WHERE j.status = ${JobStatus.QUOTED}
+        `,
+					sql`
+          SELECT COUNT(*)::text as count 
+          FROM clients c 
+          WHERE c.created_at >= NOW() - INTERVAL '30 days'
         `,
 				]);
 
@@ -426,7 +444,7 @@ export const adminService: AdminService = {
 					type: 'unassigned_job',
 					title: `Unassigned Job: ${job.title}`,
 					description: `Job needs to be assigned to an employee`,
-					priority: 'medium', // Default priority
+					priority: 'medium',
 					link: `/admin/jobs/${job.id}`,
 				});
 			});
@@ -442,7 +460,7 @@ export const adminService: AdminService = {
 				});
 			});
 
-			const quoteCount = parseInt(pendingQuotes[0]?.count || '0');
+			const quoteCount = parseInt(pendingQuotes[0]?.count || '0', 10);
 			if (quoteCount > 0) {
 				actions.push({
 					id: `action-quotes-${Date.now()}`,
@@ -451,6 +469,18 @@ export const adminService: AdminService = {
 					description: `Quotes awaiting client approval`,
 					priority: 'medium',
 					link: `/admin/quotes`,
+				});
+			}
+
+			const customerCount = parseInt(pendingCustomers[0]?.count || '0', 10);
+			if (customerCount > 0) {
+				actions.push({
+					id: `action-pending-customers-${Date.now()}`,
+					type: 'pending_customer',
+					title: `${customerCount} New client(s) this month`,
+					description: `Recent clients to review or follow up`,
+					priority: 'low',
+					link: `/admin/clients`,
 				});
 			}
 
