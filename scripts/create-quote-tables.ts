@@ -59,15 +59,15 @@ async function main() {
 
   try {
     for (const statement of statements) {
-      await sql(statement)
+      await sql([statement] as unknown as TemplateStringsArray);
     }
     // Create indexes and FK if not exist (ignore errors if they exist)
-    await sql(`CREATE INDEX IF NOT EXISTS "idx_quote_requests_status" ON "quote_requests"("status")`)
-    await sql(`CREATE INDEX IF NOT EXISTS "idx_quote_requests_created_at" ON "quote_requests"("created_at")`)
-    await sql(`CREATE INDEX IF NOT EXISTS "idx_admin_notifications_read" ON "admin_notifications"("read")`)
-    await sql(`CREATE INDEX IF NOT EXISTS "idx_admin_notifications_quote_request" ON "admin_notifications"("quote_request_id")`)
+    await sql([`CREATE INDEX IF NOT EXISTS "idx_quote_requests_status" ON "quote_requests"("status")`] as unknown as TemplateStringsArray)
+    await sql([`CREATE INDEX IF NOT EXISTS "idx_quote_requests_created_at" ON "quote_requests"("created_at")`] as unknown as TemplateStringsArray)
+    await sql([`CREATE INDEX IF NOT EXISTS "idx_admin_notifications_read" ON "admin_notifications"("read")`] as unknown as TemplateStringsArray)
+    await sql([`CREATE INDEX IF NOT EXISTS "idx_admin_notifications_quote_request" ON "admin_notifications"("quote_request_id")`] as unknown as TemplateStringsArray)
     try {
-      await sql(`ALTER TABLE "admin_notifications" ADD CONSTRAINT "admin_notifications_quote_request_id_fkey" FOREIGN KEY ("quote_request_id") REFERENCES "quote_requests"("id") ON DELETE CASCADE ON UPDATE NOACTION`)
+      await sql([`ALTER TABLE "admin_notifications" ADD CONSTRAINT "admin_notifications_quote_request_id_fkey" FOREIGN KEY ("quote_request_id") REFERENCES "quote_requests"("id") ON DELETE CASCADE ON UPDATE NOACTION`] as unknown as TemplateStringsArray)
     } catch (_) {
       // FK may already exist
     }
