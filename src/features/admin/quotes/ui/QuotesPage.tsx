@@ -11,6 +11,7 @@ import DataTable, { type Column } from "@/src/shared/ui/DataTable"
 import LoadingState from "@/src/shared/ui/LoadingState"
 import EmptyState from "@/src/shared/ui/EmptyState"
 import { getQuoteRequests } from "@/app/actions/quoteRequest"
+import { PlusIcon } from "@heroicons/react/24/outline"
 import QuoteRequestDetailModal, { type QuoteRequestRow } from "@/src/features/admin/quotes/components/QuoteRequestDetailModal"
 import { EyeIcon, PencilIcon, PaperAirplaneIcon } from "@heroicons/react/24/outline"
 
@@ -161,6 +162,10 @@ export default function QuotesPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold mt-2">Quote Management</h1>
+        </div>
+      
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
         <select
           value={statusFilter}
@@ -174,6 +179,10 @@ export default function QuotesPage() {
             </option>
           ))}
         </select>
+        <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+          <PlusIcon className="w-5 h-5" />
+          New Quote
+        </button>
       </div>
 
       {quotes.length === 0 ? (

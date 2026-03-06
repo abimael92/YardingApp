@@ -1,7 +1,9 @@
 // components/employees/EmployeeList.tsx
 "use client"
 
-import React , { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { motion, AnimatePresence } from "framer-motion"
 import { Grid } from "@/src/components/layout/Grid"
 import { Button } from "@/src/components/layout/Button"
 import { Card } from "@/src/components/layout/Card"
@@ -25,6 +27,7 @@ import {
   updateEmployee
 } from "@/src/services/employeeService"
 import type { User, JobAssignment, EmployeeStats } from "@/src/domain/models"
+import { UserGroupIcon, BriefcaseIcon } from "@heroicons/react/24/outline"
 
 interface EmployeeFilters {
   search: string
@@ -82,6 +85,10 @@ const FilterSelect = React.memo(({
 FilterSelect.displayName = 'FilterSelect'
 
 export const EmployeeList = () => {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const activeTab = searchParams.get("tab") || "employees"
+
   // State management
   const [employees, setEmployees] = useState<User[]>([])
   const [stats, setStats] = useState<EmployeeStats>({ total: 0, active: 0, pending: 0, inactive: 0 })
@@ -99,6 +106,13 @@ export const EmployeeList = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [filterRole, setFilterRole] = useState<string>("all")
+  const [crews, setCrews] = useState<Array<{
+    crewName: string
+    available: number
+    total: number
+    supervisor: string
+    members?: Array<{ name: string; role: string; status: string }>
+  }>>([])
 
   const isMobile = useMediaQuery('(max-width: 767px)')
   const isTablet = useMediaQuery('(min-width: 768px) and (max-width: 1024px)')
@@ -161,6 +175,7 @@ export const EmployeeList = () => {
           phone: emp.phone,
           avatar: emp.avatar,
           assignedJobs: [],
+          hourlyRate: emp.hourlyRate,
         }
       })
 
@@ -176,6 +191,31 @@ export const EmployeeList = () => {
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  // Load crews when tab changes
+  useEffect(() => {
+    if (activeTab === "crews") {
+      const loadCrews = async () => {
+        try {
+          const { getCrewAvailability } = await import("@/src/services/adminService")
+          const data = await getCrewAvailability("today", new Date())
+          // Enhance crew data with mock members for demo
+          const enhancedCrews = (data.byCrew || []).map((crew: any) => ({
+            ...crew,
+            members: [
+              { name: "John Worker", role: "Worker", status: "active" },
+              { name: "Jane Worker", role: "Worker", status: "active" },
+              { name: "Bob Helper", role: "Worker", status: "inactive" },
+            ].slice(0, crew.total)
+          }))
+          setCrews(enhancedCrews)
+        } catch (error) {
+          console.error("Failed to load crews:", error)
+        }
+      }
+      loadCrews()
+    }
+  }, [activeTab])
 
   // Initialize filters from persisted state
   useEffect(() => {
@@ -627,115 +667,260 @@ export const EmployeeList = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header with Stats and Hire Button */}
+      {/* Header with Tabs and Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#8b4513] dark:text-[#d4a574] sm:text-3xl">
-            Employees
+            {activeTab === "employees" ? "Employees" : "Crews"}
           </h1>
           <p className="text-sm text-[#b85e1a]/80 dark:text-gray-400 mt-1">
-            Manage your workforce and track employee performance
+            {activeTab === "employees"
+              ? "Manage your workforce and track employee performance"
+              : "View and manage your crews and team assignments"}
           </p>
         </div>
 
         <div className="mt-4 sm:mt-0 flex items-center gap-3">
-          {/* Stats Cards */}
-          <Card className="p-3 bg-[#2e8b57]/10 border border-[#2e8b57]/30 dark:border-[#4a7c5c]/50">
-            <div className="text-xs text-[#2e8b57] dark:text-[#4a7c5c]">Active</div>
-            <div className="text-xl font-bold text-[#2e8b57] dark:text-[#4a7c5c]">{stats.active}</div>
-          </Card>
-          <Card className="p-3 bg-[#d88c4a]/10 border border-[#d88c4a]/30 dark:border-[#d88c4a]/50">
-            <div className="text-xs text-[#b85e1a] dark:text-[#d88c4a]">Pending</div>
-            <div className="text-xl font-bold text-[#b85e1a] dark:text-[#d88c4a]">{stats.pending}</div>
-          </Card>
-          <Card className="p-3 bg-[#8b4513]/10 border border-[#8b4513]/30 dark:border-[#d4a574]/50">
-            <div className="text-xs text-[#8b4513] dark:text-[#d4a574]">Inactive</div>
-            <div className="text-xl font-bold text-[#8b4513] dark:text-[#d4a574]">{stats.inactive}</div>
-          </Card>
-          <Button
-            variant="primary"
-            onClick={() => setShowHireModal(true)}
-            className="ml-2 bg-[#2e8b57] hover:bg-[#1f6b41] text-white transition-all hover:shadow-lg hover:shadow-[#2e8b57]/20 transform hover:-translate-y-0.5"
-            aria-label="Hire new employee"
-          >
-            + Hire
-          </Button>
+          {/* Tabs */}
+          <div className="flex gap-1 bg-[#f5f1e6] dark:bg-gray-800 p-1 rounded-lg border border-[#d4a574]/30">
+            <button
+              onClick={() => router.push("/admin/employees?tab=employees")}
+              className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-all
+                ${activeTab === "employees"
+                  ? "bg-[#2e8b57] text-white shadow-md"
+                  : "text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20"
+                }`}
+            >
+              <UserGroupIcon className="w-4 h-4" />
+              Employees
+            </button>
+            <button
+              onClick={() => router.push("/admin/employees?tab=crews")}
+              className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-all
+                ${activeTab === "crews"
+                  ? "bg-[#2e8b57] text-white shadow-md"
+                  : "text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20"
+                }`}
+            >
+              <BriefcaseIcon className="w-4 h-4" />
+              Crews
+            </button>
+          </div>
+
+          {/* Stats Cards - Only show for employees tab */}
+          {activeTab === "employees" && (
+            <>
+              <Card className="p-3 bg-[#2e8b57]/10 border border-[#2e8b57]/30 dark:border-[#4a7c5c]/50">
+                <div className="text-xs text-[#2e8b57] dark:text-[#4a7c5c]">Active</div>
+                <div className="text-xl font-bold text-[#2e8b57] dark:text-[#4a7c5c]">{stats.active}</div>
+              </Card>
+              <Card className="p-3 bg-[#d88c4a]/10 border border-[#d88c4a]/30 dark:border-[#d88c4a]/50">
+                <div className="text-xs text-[#b85e1a] dark:text-[#d88c4a]">Pending</div>
+                <div className="text-xl font-bold text-[#b85e1a] dark:text-[#d88c4a]">{stats.pending}</div>
+              </Card>
+              <Card className="p-3 bg-[#8b4513]/10 border border-[#8b4513]/30 dark:border-[#d4a574]/50">
+                <div className="text-xs text-[#8b4513] dark:text-[#d4a574]">Inactive</div>
+                <div className="text-xl font-bold text-[#8b4513] dark:text-[#d4a574]">{stats.inactive}</div>
+              </Card>
+              <Button
+                variant="primary"
+                onClick={() => setShowHireModal(true)}
+                className="ml-2 bg-[#2e8b57] hover:bg-[#1f6b41] text-white transition-all hover:shadow-lg hover:shadow-[#2e8b57]/20 transform hover:-translate-y-0.5"
+                aria-label="Hire new employee"
+              >
+                + Hire
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="relative">
-          <Input
-            type="search"
-            placeholder="Search by name, email, or ID..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] placeholder-[#b85e1a]/50 dark:placeholder-gray-500 focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent"
-            aria-label="Search employees"
+      {/* Filters - Only show for employees tab */}
+      {activeTab === "employees" && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="relative">
+            <Input
+              type="search"
+              placeholder="Search by name, email, or ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] placeholder-[#b85e1a]/50 dark:placeholder-gray-500 focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent"
+              aria-label="Search employees"
+            />
+            <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#b85e1a]/60 dark:text-[#d4a574]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+
+          {/* Status Filter - using memoized component */}
+          <FilterSelect
+            key="status-filter"
+            value={filterStatus}
+            onChange={setFilterStatus}
+            options={statusOptions}
+            label="Filter by status"
           />
-          <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#b85e1a]/60 dark:text-[#d4a574]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
 
-        {/* Status Filter - using memoized component */}
-        <FilterSelect
-          key="status-filter"
-          value={filterStatus}
-          onChange={setFilterStatus}
-          options={statusOptions}
-          label="Filter by status"
-        />
-
-        {/* Role Filter - using memoized component */}
-        <FilterSelect
-          key="role-filter"
-          value={filterRole}
-          onChange={setFilterRole}
-          options={roleOptions}
-          label="Filter by role"
-        />
-      </div>
-
-      {/* Employee List */}
-      {filteredEmployees.length === 0 ? (
-        <EmptyState
-          title="No employees found"
-          description={searchQuery || filterStatus !== 'all' || filterRole !== 'all'
-            ? "Try adjusting your filters"
-            : "Get started by hiring your first employee"
-          }
-          action={
-            <Button variant="primary" onClick={() => setShowHireModal(true)} className="bg-[#2e8b57] hover:bg-[#1f6b41] text-white">
-              Hire Employee
-            </Button>
-          }
-        />
-      ) : isMobile ? (
-        // Mobile: Card grid
-        <div className="space-y-4">
-          {filteredEmployees.map(employee => (
-            <EmployeeCard key={employee.id} user={employee} />
-          ))}
-        </div>
-      ) : (
-        // Tablet/Desktop: Data table
-        <div className="card overflow-hidden border-[#d4a574]/30 dark:border-[#8b4513]/50" style={{ background: "var(--bg-primary)" }}>
-          <DataTable
-            data={filteredEmployees}
-            columns={columns.filter(col => {
-              if (isTablet && col.hideOnTablet) return false
-              if (isMobile && col.hideOnMobile) return false
-              return true
-            })}
-            keyExtractor={(user: User) => user.id}
-            emptyMessage="No employees found."
+          {/* Role Filter - using memoized component */}
+          <FilterSelect
+            key="role-filter"
+            value={filterRole}
+            onChange={setFilterRole}
+            options={roleOptions}
+            label="Filter by role"
           />
         </div>
       )}
 
-      {/* Modals */}
+      {/* Content based on active tab */}
+      {activeTab === "employees" ? (
+        // EMPLOYEES TAB CONTENT
+        <>
+          {filteredEmployees.length === 0 ? (
+            <EmptyState
+              title="No employees found"
+              description={searchQuery || filterStatus !== 'all' || filterRole !== 'all'
+                ? "Try adjusting your filters"
+                : "Get started by hiring your first employee"
+              }
+              action={
+                <Button variant="primary" onClick={() => setShowHireModal(true)} className="bg-[#2e8b57] hover:bg-[#1f6b41] text-white">
+                  Hire Employee
+                </Button>
+              }
+            />
+          ) : isMobile ? (
+            // Mobile: Card grid
+            <div className="space-y-4">
+              {filteredEmployees.map(employee => (
+                <EmployeeCard key={employee.id} user={employee} />
+              ))}
+            </div>
+          ) : (
+            // Tablet/Desktop: Data table
+            <div className="card overflow-hidden border-[#d4a574]/30 dark:border-[#8b4513]/50" style={{ background: "var(--bg-primary)" }}>
+              <DataTable
+                data={filteredEmployees}
+                columns={columns.filter(col => {
+                  if (isTablet && col.hideOnTablet) return false
+                  if (isMobile && col.hideOnMobile) return false
+                  return true
+                })}
+                keyExtractor={(user: User) => user.id}
+                emptyMessage="No employees found."
+              />
+            </div>
+          )}
+        </>
+      ) : (
+        // CREWS TAB CONTENT
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {crews.length === 0 ? (
+            <div className="col-span-2">
+              <EmptyState
+                title="No crews found"
+                description="Create crews by assigning supervisors and team members"
+                action={
+                  <Button
+                    variant="primary"
+                    onClick={() => router.push("/admin/employees?tab=employees")}
+                    className="bg-[#2e8b57] hover:bg-[#1f6b41] text-white"
+                  >
+                    Assign Crews
+                  </Button>
+                }
+              />
+            </div>
+          ) : (
+            crews.map((crew) => (
+              <motion.div
+                key={crew.crewName}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="card p-6 border-[#d4a574]/30 hover:shadow-lg transition-all cursor-pointer"
+                onClick={() => router.push(`/admin/employees?tab=employees&crew=${encodeURIComponent(crew.crewName)}`)}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#8b4513] dark:text-[#d4a574]">
+                      {crew.crewName}
+                    </h3>
+                    <p className="text-sm text-[#b85e1a]/70 dark:text-gray-400">
+                      Supervisor: {crew.supervisor}
+                    </p>
+                  </div>
+                  <BriefcaseIcon className="w-6 h-6 text-[#2e8b57] opacity-50" />
+                </div>
+
+                <div className="space-y-4">
+                  {/* Availability bar */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#b85e1a]/70 dark:text-gray-400">Crew Availability</span>
+                      <span className="font-medium text-[#8b4513] dark:text-[#d4a574]">
+                        {crew.available}/{crew.total} members
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(crew.available / crew.total) * 100}%` }}
+                        transition={{ duration: 0.8 }}
+                        className="h-full bg-gradient-to-r from-[#2e8b57] to-[#4a7c5c] rounded-full"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Stats grid */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-[#2e8b57]/10 p-3 rounded-lg text-center">
+                      <div className="text-xl font-bold text-[#2e8b57] dark:text-[#4a7c5c]">{crew.total}</div>
+                      <div className="text-xs text-[#b85e1a]/70 dark:text-gray-400">Total Members</div>
+                    </div>
+                    <div className="bg-[#d88c4a]/10 p-3 rounded-lg text-center">
+                      <div className="text-xl font-bold text-[#b85e1a] dark:text-[#d88c4a]">{crew.total - crew.available}</div>
+                      <div className="text-xs text-[#b85e1a]/70 dark:text-gray-400">On Jobs</div>
+                    </div>
+                  </div>
+
+                  {/* Team members preview */}
+                  {crew.members && crew.members.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-2">Team Members</h4>
+                      <div className="space-y-2">
+                        {crew.members.slice(0, 3).map((member, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-[#2e8b57]"></div>
+                              <span className="text-[#8b4513] dark:text-[#d4a574]">{member.name}</span>
+                            </div>
+                            <span className="text-xs text-[#b85e1a]/70 dark:text-gray-400">{member.role}</span>
+                          </div>
+                        ))}
+                        {crew.members.length > 3 && (
+                          <p className="text-xs text-[#2e8b57] dark:text-[#4a7c5c] mt-1">
+                            +{crew.members.length - 3} more members
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* View details indicator */}
+                <div className="mt-4 pt-4 border-t border-[#d4a574]/30 dark:border-gray-700">
+                  <p className="text-xs text-[#2e8b57] dark:text-[#4a7c5c] text-center">
+                    Click to view crew details and assignments
+                  </p>
+                </div>
+              </motion.div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Modals - Keep all existing modals */}
       <Modal
         isOpen={showHireModal}
         onClose={() => setShowHireModal(false)}
