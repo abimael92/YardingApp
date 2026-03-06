@@ -11,6 +11,7 @@
     "test": "node --test",
     "typecheck": "tsc --noEmit",
     "db:inspect": "tsx scripts/inspect-db.ts",
+    "db:data": "tsx scripts/query-data.ts",
     "db:seed": "tsx scripts/seed-db.ts",
     "db:admin": "tsx scripts/seed-admin.ts",
     "db:push": "prisma db push",
