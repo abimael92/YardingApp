@@ -1,0 +1,1309 @@
+🔍 Inspecting database schema...
+
+📊 Tables found:
+
+📋 Table: User
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - email (text) NOT NULL
+    - password (text) NULL
+    - role (text) NOT NULL DEFAULT 'worker'::text
+    - email_verified (timestamp without time zone) NULL
+    - image (text) NULL
+    - name (text) NULL
+  🔑 Primary Key: id
+  📊 Indexes:
+    - User_email_key (email) [UNIQUE]
+    - User_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: admin_notifications
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - type (text) NOT NULL
+    - entity_id (uuid) NOT NULL
+    - read (boolean) NOT NULL DEFAULT false
+    - quote_request_id (uuid) NULL
+    - created_at (timestamp with time zone) NOT NULL DEFAULT CURRENT_TIMESTAMP
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - quote_request_id → quote_requests(id)
+  📊 Indexes:
+    - admin_notifications_pkey (id) [PRIMARY] [UNIQUE]
+    - idx_admin_notifications_quote_request (quote_request_id)
+    - idx_admin_notifications_read (read)
+  📈 Approx rows: -1
+
+📋 Table: audit_logs
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - entity_type (character varying) NOT NULL
+    - entity_id (uuid) NOT NULL
+    - action (character varying) NOT NULL
+    - actor_id (uuid) NULL
+    - old_values (jsonb) NULL
+    - new_values (jsonb) NULL
+    - created_at (timestamp with time zone) NOT NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - actor_id → profiles(id)
+  📊 Indexes:
+    - audit_logs_pkey (id) [PRIMARY] [UNIQUE]
+    - idx_audit_logs_created_at (created_at)
+    - idx_audit_logs_entity (entity_type, entity_id)
+  📈 Approx rows: -1
+
+📋 Table: client_addresses
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - client_id (uuid) NULL
+    - address_type (character varying) NULL DEFAULT 'primary'::character varying
+    - street (character varying) NOT NULL
+    - city (character varying) NOT NULL
+    - state (character varying) NOT NULL
+    - zip_code (character varying) NOT NULL
+    - is_primary (boolean) NULL DEFAULT false
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - client_id → clients(id)
+  📊 Indexes:
+    - client_addresses_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: client_communications
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - client_id (uuid) NOT NULL
+    - job_id (uuid) NULL
+    - communication_type (character varying) NOT NULL
+    - direction (character varying) NULL DEFAULT 'outgoing'::character varying
+    - subject (character varying) NULL
+    - content (text) NULL
+    - sent_by (uuid) NULL
+    - sent_to (character varying) NULL
+    - sent_at (timestamp with time zone) NULL DEFAULT now()
+    - status (character varying) NULL DEFAULT 'sent'::character varying
+    - delivered_at (timestamp with time zone) NULL
+    - read_at (timestamp with time zone) NULL
+    - requires_response (boolean) NULL DEFAULT false
+    - responded_at (timestamp with time zone) NULL
+    - responded_by (uuid) NULL
+    - parent_communication_id (uuid) NULL
+    - attachments (jsonb) NULL
+    - metadata (jsonb) NULL
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - client_id → clients(id)
+    - job_id → jobs(id)
+    - sent_by → profiles(id)
+    - responded_by → profiles(id)
+    - parent_communication_id → client_communications(id)
+  📊 Indexes:
+    - client_communications_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: client_preferences
+  Columns:
+    - client_id (uuid) NOT NULL
+    - preferred_contact_method (character varying) NULL
+    - do_not_email (boolean) NULL DEFAULT false
+    - do_not_call (boolean) NULL DEFAULT false
+    - do_not_text (boolean) NULL DEFAULT false
+    - newsletter_subscribed (boolean) NULL DEFAULT true
+    - marketing_consent (boolean) NULL DEFAULT false
+    - preferred_language (character varying) NULL DEFAULT 'en'::character varying
+    - notes (text) NULL
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: client_id
+  🔗 Foreign Keys:
+    - client_id → clients(id)
+  📊 Indexes:
+    - client_preferences_pkey (client_id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: clients
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - name (character varying) NOT NULL
+    - email (character varying) NOT NULL
+    - phone (character varying) NOT NULL
+    - street (character varying) NOT NULL
+    - city (character varying) NOT NULL
+    - state (character varying) NOT NULL
+    - zip_code (character varying) NOT NULL
+    - country (character) NULL DEFAULT 'US'::bpchar
+    - created_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - created_by (uuid) NULL
+    - deleted_at (timestamp with time zone) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - created_by → profiles(id)
+  📊 Indexes:
+    - clients_pkey (id) [PRIMARY] [UNIQUE]
+    - idx_clients_created_at (created_at)
+    - idx_clients_email_active (email)
+  📈 Approx rows: 1
+
+📋 Table: communication_reminders
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - communication_id (uuid) NULL
+    - reminder_date (timestamp with time zone) NOT NULL
+    - reminder_type (character varying) NULL
+    - assigned_to (uuid) NULL
+    - completed (boolean) NULL DEFAULT false
+    - completed_at (timestamp with time zone) NULL
+    - notes (text) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - communication_id → client_communications(id)
+    - assigned_to → profiles(id)
+  📊 Indexes:
+    - communication_reminders_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: communication_templates
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - name (character varying) NOT NULL
+    - type (character varying) NULL
+    - subject (character varying) NULL
+    - content (text) NOT NULL
+    - variables (jsonb) NULL
+    - is_active (boolean) NULL DEFAULT true
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  📊 Indexes:
+    - communication_templates_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: contract_amendments
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - contract_id (uuid) NULL
+    - amendment_number (character varying) NULL
+    - description (text) NULL
+    - changes (text) NULL
+    - amount_change_cents (bigint(64)) NULL
+    - signed_date (date) NULL
+    - document_url (text) NULL
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - contract_id → contracts(id)
+  📊 Indexes:
+    - contract_amendments_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: contract_templates
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - name (character varying) NOT NULL
+    - template_type (character varying) NULL
+    - content (text) NOT NULL
+    - version (character varying) NULL
+    - is_active (boolean) NULL DEFAULT true
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+    - created_by (uuid) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - created_by → profiles(id)
+  📊 Indexes:
+    - contract_templates_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: contracts
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - contract_number (character varying) NOT NULL
+    - job_id (uuid) NULL
+    - client_id (uuid) NOT NULL
+    - template_id (uuid) NULL
+    - title (character varying) NOT NULL
+    - description (text) NULL
+    - contract_date (date) NULL DEFAULT CURRENT_DATE
+    - start_date (date) NULL
+    - end_date (date) NULL
+    - status (character varying) NULL DEFAULT 'draft'::character varying
+    - content (text) NULL
+    - terms (text) NULL
+    - deposit_required_cents (bigint(64)) NULL
+    - deposit_received (boolean) NULL DEFAULT false
+    - deposit_received_date (date) NULL
+    - total_value_cents (bigint(64)) NULL
+    - payment_terms (character varying) NULL
+    - cancellation_terms (text) NULL
+    - special_conditions (text) NULL
+    - document_url (text) NULL
+    - signed_by_client (boolean) NULL DEFAULT false
+    - client_signed_at (timestamp with time zone) NULL
+    - client_ip_address (character varying) NULL
+    - signed_by_company (uuid) NULL
+    - company_signed_at (timestamp with time zone) NULL
+    - created_by (uuid) NULL
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - job_id → jobs(id)
+    - client_id → clients(id)
+    - template_id → contract_templates(id)
+    - signed_by_company → profiles(id)
+    - created_by → profiles(id)
+  📊 Indexes:
+    - contracts_contract_number_key (contract_number) [UNIQUE]
+    - contracts_job_id_key (job_id) [UNIQUE]
+    - contracts_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: crew_members
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - crew_id (uuid) NULL
+    - employee_id (uuid) NULL
+    - role (character varying) NULL DEFAULT 'member'::character varying
+    - joined_date (date) NULL DEFAULT CURRENT_DATE
+    - left_date (date) NULL
+    - is_active (boolean) NULL DEFAULT true
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - crew_id → crews(id)
+    - employee_id → profiles(id)
+  📊 Indexes:
+    - crew_members_crew_id_employee_id_is_active_key (crew_id, employee_id, is_active) [UNIQUE]
+    - crew_members_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: crews
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - name (character varying) NOT NULL
+    - supervisor_id (uuid) NULL
+    - description (text) NULL
+    - vehicle_id (uuid) NULL
+    - region (character varying) NULL
+    - is_active (boolean) NULL DEFAULT true
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - supervisor_id → profiles(id)
+    - vehicle_id → equipment(id)
+  📊 Indexes:
+    - crews_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: dashboard_widget_assignments
+  Columns:
+    - dashboard_id (uuid) NOT NULL
+    - widget_id (uuid) NOT NULL
+    - widget_order (integer(32)) NULL
+    - widget_size (character varying) NULL
+    - widget_position (jsonb) NULL
+  🔑 Primary Key: dashboard_id, widget_id
+  🔗 Foreign Keys:
+    - dashboard_id → user_dashboards(id)
+    - widget_id → dashboard_widgets(id)
+  📊 Indexes:
+    - dashboard_widget_assignments_pkey (dashboard_id, widget_id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: dashboard_widgets
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - name (character varying) NOT NULL
+    - widget_type (character varying) NOT NULL
+    - data_source (character varying) NULL
+    - configuration (jsonb) NULL
+    - refresh_interval (integer(32)) NULL
+    - is_active (boolean) NULL DEFAULT true
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  📊 Indexes:
+    - dashboard_widgets_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: employee_details
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - profile_id (uuid) NULL
+    - employee_number (character varying) NULL
+    - hire_date (date) NULL
+    - status (character varying) NULL DEFAULT 'active'::character varying
+    - department (character varying) NULL
+    - position (character varying) NULL
+    - hourly_rate_cents (integer(32)) NULL
+    - created_at (timestamp without time zone) NULL DEFAULT now()
+    - updated_at (timestamp without time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - profile_id → profiles(id)
+  📊 Indexes:
+    - employee_details_employee_number_key (employee_number) [UNIQUE]
+    - employee_details_pkey (id) [PRIMARY] [UNIQUE]
+    - employee_details_profile_id_key (profile_id) [UNIQUE]
+    - idx_employee_details_profile (profile_id)
+  📈 Approx rows: -1
+
+📋 Table: employee_jobs
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - employee_id (uuid) NULL
+    - job_id (uuid) NULL
+    - assigned_at (timestamp without time zone) NULL DEFAULT now()
+    - status (character varying) NULL DEFAULT 'assigned'::character varying
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - employee_id → profiles(id)
+    - job_id → jobs(id)
+  📊 Indexes:
+    - employee_jobs_employee_id_job_id_key (employee_id, job_id) [UNIQUE]
+    - employee_jobs_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: 103
+
+📋 Table: employee_skills
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - employee_id (uuid) NULL
+    - skill_name (character varying) NOT NULL
+    - years_experience (integer(32)) NULL
+    - certified (boolean) NULL DEFAULT false
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - employee_id → profiles(id)
+  📊 Indexes:
+    - employee_skills_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: equipment
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - name (character varying) NOT NULL
+    - type (character varying) NOT NULL
+    - manufacturer (character varying) NULL
+    - model (character varying) NULL
+    - year (integer(32)) NULL
+    - serial_number (character varying) NULL
+    - plate_number (character varying) NULL
+    - identification_number (character varying) NULL
+    - purchase_date (date) NULL
+    - purchase_price_cents (bigint(64)) NULL
+    - current_value_cents (bigint(64)) NULL
+    - status (character varying) NULL DEFAULT 'available'::character varying
+    - condition (character varying) NULL
+    - location (character varying) NULL
+    - hourly_rate_cents (bigint(64)) NULL
+    - daily_rate_cents (bigint(64)) NULL
+    - weekly_rate_cents (bigint(64)) NULL
+    - fuel_type (character varying) NULL
+    - hours_meter (numeric) NULL
+    - last_maintenance_date (date) NULL
+    - next_maintenance_date (date) NULL
+    - maintenance_interval_hours (integer(32)) NULL
+    - notes (text) NULL
+    - image_url (text) NULL
+    - is_active (boolean) NULL DEFAULT true
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+    - created_by (uuid) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - created_by → profiles(id)
+  📊 Indexes:
+    - equipment_pkey (id) [PRIMARY] [UNIQUE]
+    - equipment_serial_number_key (serial_number) [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: equipment_assignments
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - equipment_id (uuid) NOT NULL
+    - job_id (uuid) NULL
+    - employee_id (uuid) NULL
+    - assigned_by (uuid) NULL
+    - assigned_at (timestamp with time zone) NULL DEFAULT now()
+    - returned_at (timestamp with time zone) NULL
+    - start_hours (numeric) NULL
+    - end_hours (numeric) NULL
+    - hours_used (numeric) NULL
+    - status (character varying) NULL DEFAULT 'assigned'::character varying
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - equipment_id → equipment(id)
+    - job_id → jobs(id)
+    - employee_id → profiles(id)
+    - assigned_by → profiles(id)
+  📊 Indexes:
+    - equipment_assignments_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: equipment_fuel_logs
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - equipment_id (uuid) NOT NULL
+    - filled_by (uuid) NULL
+    - fill_date (date) NULL DEFAULT CURRENT_DATE
+    - gallons (numeric) NOT NULL
+    - cost_per_gallon_cents (bigint(64)) NULL
+    - total_cost_cents (bigint(64)) NULL
+    - hours_meter (numeric) NULL
+    - location (character varying) NULL
+    - notes (text) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - equipment_id → equipment(id)
+    - filled_by → profiles(id)
+  📊 Indexes:
+    - equipment_fuel_logs_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: equipment_maintenance_logs
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - equipment_id (uuid) NOT NULL
+    - maintenance_date (date) NOT NULL
+    - type (character varying) NOT NULL
+    - description (text) NULL
+    - performed_by (character varying) NULL
+    - cost_cents (bigint(64)) NULL
+    - hours_at_service (numeric) NULL
+    - next_due_date (date) NULL
+    - next_due_hours (numeric) NULL
+    - parts_used (jsonb) NULL
+    - notes (text) NULL
+    - created_by (uuid) NULL
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - equipment_id → equipment(id)
+    - created_by → profiles(id)
+  📊 Indexes:
+    - equipment_maintenance_logs_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: invoices
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - invoice_number (character varying) NOT NULL
+    - client_id (uuid) NOT NULL
+    - job_id (uuid) NULL
+    - status (USER-DEFINED) NOT NULL DEFAULT 'draft'::invoice_status
+    - amount_cents (bigint(64)) NOT NULL
+    - tax_cents (bigint(64)) NOT NULL
+    - total_cents (bigint(64)) NOT NULL
+    - currency (character) NOT NULL DEFAULT 'USD'::bpchar
+    - due_date (date) NOT NULL
+    - created_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - created_by (uuid) NULL
+    - deleted_at (timestamp with time zone) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - client_id → clients(id)
+    - job_id → jobs(id)
+    - created_by → profiles(id)
+  📊 Indexes:
+    - idx_invoices_client_id (client_id)
+    - idx_invoices_invoice_number_active (invoice_number) [UNIQUE]
+    - idx_invoices_status (status)
+    - invoices_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: job_items
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - job_id (uuid) NOT NULL
+    - service_id (uuid) NULL
+    - description (character varying) NOT NULL
+    - quantity (integer(32)) NOT NULL DEFAULT 1
+    - unit_price_cents (bigint(64)) NOT NULL
+    - total_cents (bigint(64)) NOT NULL
+    - sort_order (integer(32)) NOT NULL DEFAULT 0
+    - created_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - created_by (uuid) NULL
+    - deleted_at (timestamp with time zone) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - job_id → jobs(id)
+    - service_id → services(id)
+    - created_by → profiles(id)
+  📊 Indexes:
+    - idx_job_items_job_id (job_id)
+    - job_items_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: 276
+
+📋 Table: job_materials
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - job_id (uuid) NOT NULL
+    - material_id (uuid) NOT NULL
+    - quantity_used (numeric) NOT NULL
+    - unit (character varying) NOT NULL
+    - unit_cost_cents (bigint(64)) NULL
+    - total_cost_cents (bigint(64)) NULL
+    - billed_to_client (boolean) NULL DEFAULT true
+    - markup_percentage (numeric) NULL DEFAULT 0
+    - notes (text) NULL
+    - used_by (uuid) NULL
+    - used_date (date) NULL DEFAULT CURRENT_DATE
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - job_id → jobs(id)
+    - material_id → materials(id)
+    - used_by → profiles(id)
+  📊 Indexes:
+    - job_materials_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: job_milestones
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - job_id (uuid) NOT NULL
+    - milestone_name (character varying) NOT NULL
+    - description (text) NULL
+    - scheduled_date (date) NULL
+    - completed_date (date) NULL
+    - status (character varying) NULL DEFAULT 'pending'::character varying
+    - percent_complete (integer(32)) NULL DEFAULT 0
+    - notes (text) NULL
+    - completed_by (uuid) NULL
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - job_id → jobs(id)
+    - completed_by → profiles(id)
+  📊 Indexes:
+    - job_milestones_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: job_notes
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - job_id (uuid) NOT NULL
+    - note_type (character varying) NULL
+    - note (text) NOT NULL
+    - created_by (uuid) NULL
+    - is_private (boolean) NULL DEFAULT false
+    - is_archived (boolean) NULL DEFAULT false
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - job_id → jobs(id)
+    - created_by → profiles(id)
+  📊 Indexes:
+    - job_notes_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: job_photos
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - job_id (uuid) NOT NULL
+    - photo_url (text) NOT NULL
+    - thumbnail_url (text) NULL
+    - photo_type (character varying) NOT NULL
+    - title (character varying) NULL
+    - description (text) NULL
+    - taken_by (uuid) NULL
+    - taken_at (timestamp with time zone) NULL
+    - latitude (numeric) NULL
+    - longitude (numeric) NULL
+    - weather_conditions (character varying) NULL
+    - is_public (boolean) NULL DEFAULT false
+    - is_approved (boolean) NULL DEFAULT false
+    - approved_by (uuid) NULL
+    - approved_at (timestamp with time zone) NULL
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - job_id → jobs(id)
+    - taken_by → profiles(id)
+    - approved_by → profiles(id)
+  📊 Indexes:
+    - job_photos_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: jobs
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - job_number (character varying) NOT NULL
+    - client_id (uuid) NOT NULL
+    - status (USER-DEFINED) NOT NULL DEFAULT 'draft'::job_status
+    - title (character varying) NOT NULL
+    - description (text) NULL
+    - street (character varying) NOT NULL
+    - city (character varying) NOT NULL
+    - state (character varying) NOT NULL
+    - zip_code (character varying) NOT NULL
+    - country (character) NULL DEFAULT 'US'::bpchar
+    - quoted_price_cents (bigint(64)) NOT NULL
+    - currency (character) NOT NULL DEFAULT 'USD'::bpchar
+    - created_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - created_by (uuid) NULL
+    - deleted_at (timestamp with time zone) NULL
+    - approved_by (uuid) NULL
+    - approved_at (timestamp without time zone) NULL
+    - completed_by (uuid) NULL
+    - completed_at (timestamp without time zone) NULL
+    - quote_request_id (uuid) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - client_id → clients(id)
+    - created_by → profiles(id)
+    - approved_by → profiles(id)
+    - completed_by → profiles(id)
+    - quote_request_id → quote_requests(id)
+  📊 Indexes:
+    - idx_jobs_client_id (client_id)
+    - idx_jobs_job_number_active (job_number) [UNIQUE]
+    - idx_jobs_status (status)
+    - jobs_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: 140
+
+📋 Table: materials
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - name (character varying) NOT NULL
+    - category (character varying) NOT NULL
+    - subcategory (character varying) NULL
+    - sku (character varying) NULL
+    - description (text) NULL
+    - unit (character varying) NOT NULL
+    - unit_size (numeric) NULL
+    - cost_per_unit_cents (bigint(64)) NULL
+    - retail_price_cents (bigint(64)) NULL
+    - supplier_id (uuid) NULL
+    - minimum_stock (integer(32)) NULL DEFAULT 0
+    - current_stock (integer(32)) NULL DEFAULT 0
+    - reorder_level (integer(32)) NULL
+    - reorder_quantity (integer(32)) NULL
+    - storage_location (character varying) NULL
+    - image_url (text) NULL
+    - is_active (boolean) NULL DEFAULT true
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+    - created_by (uuid) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - supplier_id → suppliers(id)
+    - created_by → profiles(id)
+  📊 Indexes:
+    - materials_pkey (id) [PRIMARY] [UNIQUE]
+    - materials_sku_key (sku) [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: metadata
+  Columns:
+    - key (character varying) NOT NULL
+    - value (jsonb) NOT NULL DEFAULT '{}'::jsonb
+    - updated_at (timestamp with time zone) NOT NULL DEFAULT now()
+  🔑 Primary Key: key
+  📊 Indexes:
+    - metadata_pkey (key) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: payment_intents
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - client_id (uuid) NOT NULL
+    - invoice_id (uuid) NULL
+    - amount_cents (bigint(64)) NOT NULL
+    - currency (character) NOT NULL DEFAULT 'USD'::bpchar
+    - status (USER-DEFINED) NOT NULL DEFAULT 'requires_payment_method'::payment_intent_status
+    - method (USER-DEFINED) NULL
+    - processor (character varying) NULL
+    - processor_intent_id (character varying) NULL
+    - metadata (jsonb) NULL
+    - created_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - created_by (uuid) NULL
+    - deleted_at (timestamp with time zone) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - client_id → clients(id)
+    - invoice_id → invoices(id)
+    - created_by → profiles(id)
+  📊 Indexes:
+    - idx_payment_intents_client_id (client_id)
+    - idx_payment_intents_invoice_id (invoice_id)
+    - idx_payment_intents_status (status)
+    - payment_intents_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: payments
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - payment_number (character varying) NOT NULL
+    - payment_intent_id (uuid) NULL
+    - client_id (uuid) NOT NULL
+    - invoice_id (uuid) NULL
+    - job_id (uuid) NULL
+    - status (USER-DEFINED) NOT NULL DEFAULT 'pending'::payment_status
+    - method (USER-DEFINED) NOT NULL
+    - amount_cents (bigint(64)) NOT NULL
+    - currency (character) NOT NULL DEFAULT 'USD'::bpchar
+    - transaction_id (character varying) NULL
+    - processor (character varying) NULL
+    - processor_response (jsonb) NULL
+    - created_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - created_by (uuid) NULL
+    - deleted_at (timestamp with time zone) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - payment_intent_id → payment_intents(id)
+    - client_id → clients(id)
+    - invoice_id → invoices(id)
+    - job_id → jobs(id)
+    - created_by → profiles(id)
+  📊 Indexes:
+    - idx_payments_client_id (client_id)
+    - idx_payments_invoice_id (invoice_id)
+    - idx_payments_payment_number_active (payment_number) [UNIQUE]
+    - idx_payments_status (status)
+    - payments_payment_intent_id_key (payment_intent_id) [UNIQUE]
+    - payments_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: payouts
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - payee_id (uuid) NOT NULL
+    - amount_cents (bigint(64)) NOT NULL
+    - currency (character) NOT NULL DEFAULT 'USD'::bpchar
+    - status (USER-DEFINED) NOT NULL DEFAULT 'pending'::payout_status
+    - method (character varying) NULL
+    - reference_job_id (uuid) NULL
+    - metadata (jsonb) NULL
+    - created_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - created_by (uuid) NULL
+    - deleted_at (timestamp with time zone) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - reference_job_id → jobs(id)
+    - created_by → profiles(id)
+  📊 Indexes:
+    - idx_payouts_payee_id (payee_id)
+    - payouts_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: permissions
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - code (character varying) NOT NULL
+    - description (text) NULL
+    - created_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - created_by (uuid) NULL
+    - deleted_at (timestamp with time zone) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - created_by → profiles(id)
+  📊 Indexes:
+    - idx_permissions_code_active (code) [UNIQUE]
+    - permissions_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: plant_catalog
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - name (character varying) NOT NULL
+    - botanical_name (character varying) NULL
+    - common_name (character varying) NULL
+    - plant_type (character varying) NULL
+    - evergreen (boolean) NULL DEFAULT false
+    - native_region (character varying) NULL
+    - mature_height_inches (integer(32)) NULL
+    - mature_width_inches (integer(32)) NULL
+    - growth_rate (character varying) NULL
+    - sun_requirements (character varying) NULL
+    - water_requirements (character varying) NULL
+    - bloom_color (character varying) NULL
+    - bloom_season (character varying) NULL
+    - special_features (text) NULL
+    - hardiness_zones (character varying) NULL
+    - image_url (text) NULL
+    - is_active (boolean) NULL DEFAULT true
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+    - created_by (uuid) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - created_by → profiles(id)
+  📊 Indexes:
+    - plant_catalog_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: plant_inventory
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - plant_id (uuid) NULL
+    - size (character varying) NOT NULL
+    - container_type (character varying) NULL
+    - quantity (integer(32)) NULL DEFAULT 0
+    - minimum_quantity (integer(32)) NULL DEFAULT 0
+    - cost_cents (bigint(64)) NULL
+    - retail_price_cents (bigint(64)) NULL
+    - supplier_id (uuid) NULL
+    - location (character varying) NULL
+    - date_received (date) NULL
+    - health_status (character varying) NULL DEFAULT 'good'::character varying
+    - notes (text) NULL
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+    - last_counted_date (date) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - plant_id → plant_catalog(id)
+    - supplier_id → suppliers(id)
+  📊 Indexes:
+    - plant_inventory_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: plant_usage
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - plant_inventory_id (uuid) NULL
+    - job_id (uuid) NULL
+    - quantity_used (integer(32)) NOT NULL
+    - unit_price_cents (bigint(64)) NULL
+    - total_price_cents (bigint(64)) NULL
+    - used_by (uuid) NULL
+    - used_date (date) NULL DEFAULT CURRENT_DATE
+    - notes (text) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - plant_inventory_id → plant_inventory(id)
+    - job_id → jobs(id)
+    - used_by → profiles(id)
+  📊 Indexes:
+    - plant_usage_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: profiles
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - user_id (uuid) NULL
+    - full_name (character varying) NULL
+    - avatar_url (character varying) NULL
+    - created_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - created_by (uuid) NULL
+    - deleted_at (timestamp with time zone) NULL
+    - status (USER-DEFINED) NULL DEFAULT 'active'::user_status
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - created_by → profiles(id)
+  📊 Indexes:
+    - idx_profiles_user_id (user_id)
+    - profiles_pkey (id) [PRIMARY] [UNIQUE]
+    - profiles_user_id_key (user_id) [UNIQUE]
+  📈 Approx rows: 42
+
+📋 Table: purchase_order_items
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - po_id (uuid) NULL
+    - material_id (uuid) NULL
+    - quantity_ordered (numeric) NOT NULL
+    - quantity_received (numeric) NULL DEFAULT 0
+    - unit (character varying) NOT NULL
+    - unit_price_cents (bigint(64)) NULL
+    - total_price_cents (bigint(64)) NULL
+    - notes (text) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - po_id → purchase_orders(id)
+    - material_id → materials(id)
+  📊 Indexes:
+    - purchase_order_items_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: purchase_orders
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - po_number (character varying) NOT NULL
+    - supplier_id (uuid) NULL
+    - status (character varying) NULL DEFAULT 'draft'::character varying
+    - order_date (date) NULL DEFAULT CURRENT_DATE
+    - expected_delivery (date) NULL
+    - delivered_date (date) NULL
+    - subtotal_cents (bigint(64)) NULL
+    - tax_cents (bigint(64)) NULL
+    - shipping_cents (bigint(64)) NULL
+    - total_cents (bigint(64)) NULL
+    - notes (text) NULL
+    - created_by (uuid) NULL
+    - approved_by (uuid) NULL
+    - approved_at (timestamp with time zone) NULL
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - supplier_id → suppliers(id)
+    - created_by → profiles(id)
+    - approved_by → profiles(id)
+  📊 Indexes:
+    - purchase_orders_pkey (id) [PRIMARY] [UNIQUE]
+    - purchase_orders_po_number_key (po_number) [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: quote_requests
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - client_name (text) NOT NULL
+    - client_email (text) NOT NULL
+    - client_phone (text) NULL
+    - service_name (text) NOT NULL
+    - project_type (text) NOT NULL
+    - zone (text) NOT NULL
+    - hours (double precision(53)) NOT NULL
+    - sqft (integer(32)) NOT NULL
+    - visits (integer(32)) NOT NULL
+    - extras (text) NULL
+    - min_cents (bigint(64)) NOT NULL
+    - max_cents (bigint(64)) NOT NULL
+    - breakdown_metadata (jsonb) NOT NULL DEFAULT '{}'::jsonb
+    - status (USER-DEFINED) NOT NULL DEFAULT 'pending'::quote_request_status
+    - message_to_client (text) NULL
+    - approved_min_cents (bigint(64)) NULL
+    - approved_max_cents (bigint(64)) NULL
+    - created_at (timestamp with time zone) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    - updated_at (timestamp with time zone) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    - sent_at (timestamp with time zone) NULL
+  🔑 Primary Key: id
+  📊 Indexes:
+    - idx_quote_requests_created_at (created_at)
+    - idx_quote_requests_status (status)
+    - quote_requests_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: refunds
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - payment_id (uuid) NOT NULL
+    - amount_cents (bigint(64)) NOT NULL
+    - currency (character) NOT NULL DEFAULT 'USD'::bpchar
+    - status (USER-DEFINED) NOT NULL DEFAULT 'pending'::refund_status
+    - reason (text) NULL
+    - processor_refund_id (character varying) NULL
+    - metadata (jsonb) NULL
+    - created_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - created_by (uuid) NULL
+    - deleted_at (timestamp with time zone) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - payment_id → payments(id)
+    - created_by → profiles(id)
+  📊 Indexes:
+    - idx_refunds_payment_id (payment_id)
+    - refunds_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: report_definitions
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - name (character varying) NOT NULL
+    - description (text) NULL
+    - report_type (character varying) NULL
+    - query_definition (jsonb) NULL
+    - parameters (jsonb) NULL
+    - is_system (boolean) NULL DEFAULT false
+    - is_active (boolean) NULL DEFAULT true
+    - created_by (uuid) NULL
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - created_by → profiles(id)
+  📊 Indexes:
+    - report_definitions_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: role_permission
+  Columns:
+    - role_id (uuid) NOT NULL
+    - permission_id (uuid) NOT NULL
+    - created_at (timestamp with time zone) NOT NULL DEFAULT now()
+  🔑 Primary Key: role_id, permission_id
+  🔗 Foreign Keys:
+    - role_id → roles(id)
+    - permission_id → permissions(id)
+  📊 Indexes:
+    - idx_role_permission_permission_id (permission_id)
+    - role_permission_pkey (role_id, permission_id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: roles
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - name (character varying) NOT NULL
+    - description (text) NULL
+    - created_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - created_by (uuid) NULL
+    - deleted_at (timestamp with time zone) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - created_by → profiles(id)
+  📊 Indexes:
+    - idx_roles_name_active (name) [UNIQUE]
+    - roles_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: route_optimization
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - schedule_id (uuid) NULL
+    - optimized_route (jsonb) NULL
+    - total_distance_miles (numeric) NULL
+    - total_drive_time_minutes (integer(32)) NULL
+    - total_job_time_minutes (integer(32)) NULL
+    - optimized_by (uuid) NULL
+    - optimized_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - schedule_id → schedules(id)
+    - optimized_by → profiles(id)
+  📊 Indexes:
+    - route_optimization_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: saved_reports
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - report_definition_id (uuid) NULL
+    - name (character varying) NOT NULL
+    - description (text) NULL
+    - parameter_values (jsonb) NULL
+    - result_data (jsonb) NULL
+    - file_url (text) NULL
+    - format (character varying) NULL
+    - scheduled (boolean) NULL DEFAULT false
+    - schedule_frequency (character varying) NULL
+    - last_run (timestamp with time zone) NULL
+    - next_run (timestamp with time zone) NULL
+    - recipients (jsonb) NULL
+    - created_by (uuid) NULL
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - report_definition_id → report_definitions(id)
+    - created_by → profiles(id)
+  📊 Indexes:
+    - saved_reports_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: schedule_jobs
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - schedule_id (uuid) NULL
+    - job_id (uuid) NULL
+    - route_order (integer(32)) NOT NULL
+    - estimated_start_time (time without time zone) NULL
+    - estimated_duration_minutes (integer(32)) NULL
+    - actual_start_time (timestamp with time zone) NULL
+    - actual_end_time (timestamp with time zone) NULL
+    - travel_time_minutes (integer(32)) NULL
+    - travel_distance_miles (numeric) NULL
+    - status (character varying) NULL DEFAULT 'pending'::character varying
+    - notes (text) NULL
+    - completed_by (uuid) NULL
+    - completed_at (timestamp with time zone) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - schedule_id → schedules(id)
+    - job_id → jobs(id)
+    - completed_by → profiles(id)
+  📊 Indexes:
+    - schedule_jobs_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: schedules
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - crew_id (uuid) NULL
+    - date (date) NOT NULL
+    - status (character varying) NULL DEFAULT 'scheduled'::character varying
+    - notes (text) NULL
+    - created_by (uuid) NULL
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - crew_id → crews(id)
+    - created_by → profiles(id)
+  📊 Indexes:
+    - schedules_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: services
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - name (character varying) NOT NULL
+    - description (text) NULL
+    - category (character varying) NOT NULL
+    - price_display (character varying) NOT NULL
+    - duration (character varying) NULL
+    - features (jsonb) NULL
+    - created_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NOT NULL DEFAULT now()
+    - created_by (uuid) NULL
+    - deleted_at (timestamp with time zone) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - created_by → profiles(id)
+  📊 Indexes:
+    - idx_services_category (category)
+    - idx_services_created_at (created_at)
+    - services_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: stock_movements
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - material_id (uuid) NULL
+    - job_id (uuid) NULL
+    - quantity_change (integer(32)) NOT NULL
+    - movement_type (character varying) NOT NULL
+    - unit_cost_cents (bigint(64)) NULL
+    - total_cost_cents (bigint(64)) NULL
+    - notes (text) NULL
+    - moved_by (uuid) NULL
+    - moved_at (timestamp with time zone) NULL DEFAULT now()
+    - reference_document (character varying) NULL
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - material_id → materials(id)
+    - job_id → jobs(id)
+    - moved_by → profiles(id)
+  📊 Indexes:
+    - stock_movements_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: suppliers
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - name (character varying) NOT NULL
+    - contact_name (character varying) NULL
+    - email (character varying) NULL
+    - phone (character varying) NULL
+    - address (text) NULL
+    - payment_terms (character varying) NULL
+    - tax_id (character varying) NULL
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+    - created_by (uuid) NULL
+    - is_active (boolean) NULL DEFAULT true
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - created_by → profiles(id)
+  📊 Indexes:
+    - suppliers_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: time_entries
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - employee_id (uuid) NULL
+    - job_id (uuid) NULL
+    - start_time (timestamp without time zone) NOT NULL
+    - end_time (timestamp without time zone) NULL
+    - duration_minutes (integer(32)) NULL
+    - created_at (timestamp without time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - employee_id → profiles(id)
+    - job_id → jobs(id)
+  📊 Indexes:
+    - idx_time_entries_active (employee_id)
+    - idx_time_entries_employee (employee_id)
+    - time_entries_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: transactions
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - type (USER-DEFINED) NOT NULL
+    - amount_cents (bigint(64)) NOT NULL
+    - currency (character) NOT NULL DEFAULT 'USD'::bpchar
+    - payment_id (uuid) NULL
+    - refund_id (uuid) NULL
+    - payout_id (uuid) NULL
+    - client_id (uuid) NULL
+    - created_at (timestamp with time zone) NOT NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - payment_id → payments(id)
+    - refund_id → refunds(id)
+    - payout_id → payouts(id)
+    - client_id → clients(id)
+  📊 Indexes:
+    - idx_transactions_client_id (client_id)
+    - idx_transactions_payment_id (payment_id)
+    - idx_transactions_payout_id (payout_id)
+    - idx_transactions_refund_id (refund_id)
+    - idx_transactions_type (type)
+    - transactions_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: user_dashboards
+  Columns:
+    - id (uuid) NOT NULL DEFAULT gen_random_uuid()
+    - user_id (uuid) NULL
+    - name (character varying) NOT NULL
+    - layout (jsonb) NULL
+    - is_default (boolean) NULL DEFAULT false
+    - created_at (timestamp with time zone) NULL DEFAULT now()
+    - updated_at (timestamp with time zone) NULL DEFAULT now()
+  🔑 Primary Key: id
+  🔗 Foreign Keys:
+    - user_id → profiles(id)
+  📊 Indexes:
+    - user_dashboards_pkey (id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: -1
+
+📋 Table: user_roles
+  Columns:
+    - profile_id (uuid) NOT NULL
+    - role_id (uuid) NOT NULL
+    - created_at (timestamp with time zone) NOT NULL DEFAULT now()
+  🔑 Primary Key: profile_id, role_id
+  🔗 Foreign Keys:
+    - profile_id → profiles(id)
+    - role_id → roles(id)
+  📊 Indexes:
+    - idx_user_roles_role_id (role_id)
+    - user_roles_pkey (profile_id, role_id) [PRIMARY] [UNIQUE]
+  📈 Approx rows: 41
+
+🔤 Enum Types:
+  - QuoteRequestStatus: pending, reviewed, sent
+  - invoice_status: draft, sent, paid, overdue, cancelled
+  - job_status: draft, quoted, scheduled, in_progress, completed, cancelled, on_hold
+  - payment_intent_status: requires_payment_method, requires_confirmation, requires_action, processing, succeeded, cancelled
+  - payment_method_type: credit_card, debit_card, ach, check, cash, other
+  - payment_status: pending, processing, completed, failed
+  - payout_status: pending, processing, completed, failed, cancelled
+  - quote_request_status: pending, reviewed, sent
+  - refund_status: pending, succeeded, failed, cancelled
+  - transaction_type: payment, refund, payout
+  - user_status: active, pending, inactive
+
+📊 Database Statistics:
+  Total Tables: 58
+  Total Columns: 665
+  New Tables Added: 33
