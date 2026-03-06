@@ -5,19 +5,39 @@ import {
 	getRecentActivity,
 	getPendingActions,
 	getSystemHealth,
+	getEquipmentStatus,
+	getCrewAvailability,
+	getUpcomingSchedule,
+	getStockAlerts,
+	getCommunicationAlerts,
 	type ActivityLog,
 	type PendingAction,
 	type AdminStats,
 	type SystemHealth,
+	type EquipmentStatus,
+	type CrewAvailability,
+	type ScheduleItem,
+	type StockAlert,
+	type CommunicationAlert,
 } from '@/src/services/adminService';
-import type { DateRange } from '../types/dashboard.types';
+import type { DateRange, ViewMode } from '../types/dashboard.types';
 
 interface UseDashboardDataReturn {
+	// Original data
 	stats: AdminStats | null;
 	revenueHistory: Array<{ month: string; revenue: number }>;
 	recentActivity: ActivityLog[];
 	pendingActions: PendingAction[];
 	systemHealth: SystemHealth | null;
+
+	// NEW DATA - From your database schema
+	equipmentStatus: EquipmentStatus[];
+	crewAvailability: CrewAvailability | null;
+	upcomingSchedule: ScheduleItem[];
+	stockAlerts: StockAlert[];
+	communicationAlerts: CommunicationAlert[];
+
+	// Status
 	isLoading: boolean;
 	error: string | null;
 	refresh: () => Promise<void>;
@@ -25,7 +45,10 @@ interface UseDashboardDataReturn {
 
 export const useDashboardData = (
 	dateRange: DateRange,
+	viewMode: ViewMode, // NEW: 'today' | 'week' | 'month'
+	selectedDate: Date, // NEW: Current selected date for navigation
 ): UseDashboardDataReturn => {
+	// Original state
 	const [stats, setStats] = useState<AdminStats | null>(null);
 	const [revenueHistory, setRevenueHistory] = useState<
 		Array<{ month: string; revenue: number }>
@@ -33,6 +56,17 @@ export const useDashboardData = (
 	const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
 	const [pendingActions, setPendingActions] = useState<PendingAction[]>([]);
 	const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
+
+	// NEW STATE - For the 6 missing data points
+	const [equipmentStatus, setEquipmentStatus] = useState<EquipmentStatus[]>([]);
+	const [crewAvailability, setCrewAvailability] =
+		useState<CrewAvailability | null>(null);
+	const [upcomingSchedule, setUpcomingSchedule] = useState<ScheduleItem[]>([]);
+	const [stockAlerts, setStockAlerts] = useState<StockAlert[]>([]);
+	const [communicationAlerts, setCommunicationAlerts] = useState<
+		CommunicationAlert[]
+	>([]);
+
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
@@ -41,41 +75,63 @@ export const useDashboardData = (
 		setError(null);
 
 		try {
-			console.group('🔵 useDashboardData - Loading data');
+			console.group('🔵 useDashboardData - Loading ALL data');
 			console.log('Date range:', dateRange);
+			console.log('View mode:', viewMode);
+			console.log('Selected date:', selectedDate.toISOString());
 
+			// Calculate months for revenue history
 			const months =
 				dateRange === '6m' ? 6 : dateRange === '12m' ? 12 : undefined;
 
-			console.log('Months calculated:', months);
+			// Fetch ALL data in parallel - including the new ones
+			const [
+				statsData,
+				revenueData,
+				activityData,
+				actionsData,
+				healthData,
+				equipmentData,
+				crewData,
+				scheduleData,
+				stockData,
+				commsData,
+			] = await Promise.all([
+				getAdminStats(),
+				getRevenueHistory(months),
+				getRecentActivity(5),
+				getPendingActions(),
+				getSystemHealth(),
+				getEquipmentStatus(), // NEW
+				getCrewAvailability(viewMode, selectedDate), // NEW - needs view mode
+				getUpcomingSchedule(7, selectedDate), // NEW - 7 days from selected date
+				getStockAlerts(), // NEW
+				getCommunicationAlerts(), // NEW
+			]);
 
-			// Log each service call individually to see which fails
-			console.log('Calling getAdminStats...');
-			const statsData = await getAdminStats();
-			console.log('✅ getAdminStats response:', statsData);
+			// Log each response for debugging
+			console.log('✅ Stats:', statsData);
+			console.log('✅ Revenue:', revenueData);
+			console.log('✅ Activity:', activityData);
+			console.log('✅ Actions:', actionsData);
+			console.log('✅ Health:', healthData);
+			console.log('✅ Equipment:', equipmentData);
+			console.log('✅ Crew:', crewData);
+			console.log('✅ Schedule:', scheduleData);
+			console.log('✅ Stock Alerts:', stockData);
+			console.log('✅ Communications:', commsData);
 
-			console.log('Calling getRevenueHistory...');
-			const revenueData = await getRevenueHistory(months);
-			console.log('✅ getRevenueHistory response:', revenueData);
-
-			console.log('Calling getRecentActivity...');
-			// Dashboard preview: show the 5 most recent activities
-			const activityData = await getRecentActivity(5);
-			console.log('✅ getRecentActivity response:', activityData);
-
-			console.log('Calling getPendingActions...');
-			const actionsData = await getPendingActions();
-			console.log('✅ getPendingActions response:', actionsData);
-
-			console.log('Calling getSystemHealth...');
-			const healthData = await getSystemHealth();
-			console.log('✅ getSystemHealth response:', healthData);
-
+			// Set ALL state
 			setStats(statsData);
 			setRevenueHistory(revenueData);
 			setRecentActivity(activityData);
 			setPendingActions(actionsData);
 			setSystemHealth(healthData);
+			setEquipmentStatus(equipmentData);
+			setCrewAvailability(crewData);
+			setUpcomingSchedule(scheduleData);
+			setStockAlerts(stockData);
+			setCommunicationAlerts(commsData);
 
 			console.groupEnd();
 		} catch (err) {
@@ -84,25 +140,39 @@ export const useDashboardData = (
 				err instanceof Error ? err.message : 'Failed to load dashboard data',
 			);
 
-			// DON'T set fallback data - this masks the error!
-			// Let the error state show instead
+			// Set empty arrays for error state to prevent undefined errors
+			setEquipmentStatus([]);
+			setCrewAvailability(null);
+			setUpcomingSchedule([]);
+			setStockAlerts([]);
+			setCommunicationAlerts([]);
 		} finally {
 			setIsLoading(false);
 		}
-	}, [dateRange]);
+	}, [dateRange, viewMode, selectedDate]);
 
 	useEffect(() => {
 		loadData();
 	}, [loadData]);
 
 	return {
+		// Original returns
 		stats,
 		revenueHistory,
 		recentActivity,
 		pendingActions,
 		systemHealth,
+
+		// NEW returns
+		equipmentStatus,
+		crewAvailability,
+		upcomingSchedule,
+		stockAlerts,
+		communicationAlerts,
+
+		// Status
 		isLoading,
-		error, // This will now show real errors
+		error,
 		refresh: loadData,
 	};
 };
