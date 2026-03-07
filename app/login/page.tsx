@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"
+import { EyeIcon, EyeSlashIcon, ArrowLeftIcon } from "@heroicons/react/24/outline"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -108,6 +109,16 @@ export default function LoginPage() {
           >
             {loading ? "Authenticating..." : "Sign In"}
           </button>
+
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600 text-center">
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+            >
+              <ArrowLeftIcon className="w-4 h-4" />
+              Back to Website
+            </Link>
+          </div>
         </form>
       </div>
     </div>
