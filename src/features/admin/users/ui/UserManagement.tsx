@@ -26,7 +26,7 @@ import LoadingState from "@/src/shared/ui/LoadingState"
 import EmptyState from "@/src/shared/ui/EmptyState"
 import FormModal from "@/src/shared/ui/FormModal"
 import {
-  getAllUsers,
+  getSystemUsers,
   deleteUser,
   updateUser,
   getUsersByRole,
@@ -71,20 +71,12 @@ const UserManagement = () => {
   const loadUsers = async () => {
     setIsLoading(true)
     try {
-      let data = await getAllUsers()
-
-      // System Users: Only show Client or Worker roles, and only Active status
-      data = data.filter((u) =>
-        (u.role === "Client" || u.role === "Worker") && u.status === "Active"
-      )
-
-      // Add mock lastLogin and avatar
+      const data = await getSystemUsers()
       const extendedData: ExtendedUser[] = data.map((user) => ({
         ...user,
-        lastLogin: user.joinDate, // Mock: using joinDate as lastLogin
+        lastLogin: (user as ExtendedUser).lastLogin ?? user.joinDate,
         avatar: `/placeholder-user.jpg`,
       }))
-
       setUsers(extendedData)
     } catch (error) {
       console.error("Failed to load users:", error)
@@ -853,6 +845,17 @@ const UserManagement = () => {
             setSelectedUser(null)
           }}
           user={selectedUser}
+          onEdit={handleEdit}
+          onDisable={handleDeactivate}
+          onResetPassword={(u) => {
+            if (confirm(`Send password reset email to ${u.email}?`)) {
+              alert("Password reset would be sent via your auth provider.")
+            }
+          }}
+          onImpersonate={(u) => {
+            alert(`Impersonate ${u.name} would require backend support.`)
+          }}
+          onDelete={handleDelete}
         />
       )}
     </>
