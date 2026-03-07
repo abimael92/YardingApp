@@ -30,18 +30,20 @@ const initializeCommunications = async () => {
       const employee = employees[0]
       const job = jobs[0]
 
-      mockStore.createCommunication({
-        clientId: client.id,
-        employeeId: employee.id,
-        jobId: job.id,
-        type: CommunicationType.EMAIL,
-        direction: CommunicationDirection.OUTBOUND,
-        subject: "Job Scheduled",
-        content: "Your job has been scheduled for tomorrow at 9:00 AM.",
-        status: "sent",
-        priority: Priority.MEDIUM,
-        sentAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
-      })
+     mockStore.createCommunication({
+				clientId: client.id,
+				employeeId: employee.id,
+				jobId: job.id,
+				type: CommunicationType.EMAIL,
+				direction: CommunicationDirection.OUTBOUND,
+				subject: 'Job Scheduled',
+				content: 'Your job has been scheduled for tomorrow at 9:00 AM.',
+				status: 'sent',
+				priority: Priority.MEDIUM,
+				sentAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+				activityLogIds: [],
+				reminderIds: [],
+			});
     }
     communicationsInitialized = true
   } catch (error) {
@@ -127,12 +129,17 @@ export const communicationService: CommunicationService = {
 // Convenience Functions
 // ============================================================================
 
-export const getCommunications = () => communicationService.getAll()
-export const getCommunicationById = (id: EntityId) => communicationService.getById(id)
+export const getCommunications = () => communicationService.getAll();
+export const getCommunicationById = (id: EntityId) =>
+	communicationService.getById(id);
+
 export const getCommunicationsByClientId = (clientId: EntityId) =>
-  communicationService.getByClientId(clientId)
+	communicationService.getByClientId(clientId);
+
+export const getCommunicationsByClient = getCommunicationsByClientId;
+
 export const getCommunicationsByJobId = (jobId: EntityId) =>
-  communicationService.getByJobId(jobId)
+	communicationService.getByJobId(jobId);
 export const createCommunication = (
   communication: Omit<Communication, "id" | "createdAt" | "updatedAt">
 ) => communicationService.create(communication)
