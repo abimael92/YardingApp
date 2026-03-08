@@ -275,7 +275,7 @@ export const AdminDashboard = () => {
         <div onClick={() => navigateTo("/admin/payments")} className="cursor-pointer">
           <StatsCard
             title={`Revenue ${viewMode === 'today' ? 'Today' : viewMode === 'week' ? 'This Week' : 'This Month'}`}
-            value={formatCurrency(stats.currentMonthRevenue)}
+            value={formatCurrency(stats.totalRevenue || 0)}
             icon={CurrencyDollarIcon}
             color="green"
             change={
@@ -301,10 +301,10 @@ export const AdminDashboard = () => {
         <div onClick={() => navigateTo("/admin/quotes")} className="cursor-pointer">
           <StatsCard
             title="Pending Quotes"
-            value={stats.pendingQuotes?.toString() || "0"}
+            value={(stats as any).pendingQuotes?.toString() || "0"}
             icon={DocumentTextIcon}
             color="purple"
-            change={`Total value: ${formatCurrency(stats.pendingQuotesValue || 0)}`}
+            change={`${(stats as any).pendingQuotes || 0} waiting for approval`}
           />
         </div>
 

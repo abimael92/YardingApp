@@ -32,6 +32,11 @@ function buildStubJobForService(clientId: string, service: Service): Job {
     estimatedCost: { amount: 0, currency: "USD" },
     quotedPrice: { amount: 0, currency: "USD" },
     assignedEmployeeIds: [],
+    noteIds: [],
+    activityLogIds: [],
+    communicationIds: [],
+    paymentIds: [],
+    scheduleIds: [],
     createdAt: now,
     updatedAt: now,
   }

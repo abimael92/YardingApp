@@ -108,6 +108,11 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
         paymentIds: [],
         communicationIds: [],
         notes: formData.notes || undefined,
+        invoiceIds: [],
+        contractIds: [],
+        propertyIds: [],
+        noteIds: [],
+        activityLogIds: []
       }
 
       if (client) {

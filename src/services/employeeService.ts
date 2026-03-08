@@ -39,7 +39,7 @@ if (!process.env.DATABASE_URL) {
 
 export interface EmployeeService {
 	getAll(): Promise<Employee[]>;
-	getById(id: EntityId): Promise<Employee | undefined>;
+	getById(id: EntityId): Promise<Partial<Employee> | undefined>;
 	getByStatus(status: EmployeeStatus): Promise<Employee[]>;
 	create(
 		employee: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>,
@@ -47,7 +47,7 @@ export interface EmployeeService {
 	update(
 		id: EntityId,
 		updates: Partial<Employee>,
-	): Promise<Employee | undefined>;
+	): Promise<Partial<Employee> | undefined>;
 	delete(id: EntityId): Promise<boolean>;
 }
 
@@ -73,36 +73,41 @@ export const employeeService: EmployeeService = {
 				ORDER BY p.full_name
 			`;
 
-			return employees.map((emp: any) => ({
-				id: emp.id,
-				firstName: emp.name?.split(' ')[0] || '',
-				lastName: emp.name?.split(' ').slice(1).join(' ') || '',
-				displayName: emp.name || '',
-				email:
-					emp.email ||
-					`${emp.name?.toLowerCase().replace(' ', '.') || 'employee'}@jjlandscaping.com`,
-				phone: '+1-555-0101',
-				role: emp.role || 'employee',
-				status: emp.status || 'active',
-				hireDate: emp.hireDate || new Date().toISOString(),
-				availability: {
-					monday: [],
-					tuesday: [],
-					wednesday: [],
-					thursday: [],
-					friday: [],
-					saturday: [],
-					sunday: [],
-				},
-				completedJobsCount: 0,
-				totalHoursWorked: 0,
-				assignedJobIds: [],
-				supervisedJobIds: [],
-				rating: 4.5,
-				department: 'General',
-				createdAt: emp.hireDate || new Date().toISOString(),
-				updatedAt: emp.updatedAt || emp.hireDate || new Date().toISOString(),
-			}));
+		return employees.map((emp: any) => ({
+			id: emp.id,
+			firstName: emp.name?.split(' ')[0] || '',
+			lastName: emp.name?.split(' ').slice(1).join(' ') || '',
+			displayName: emp.name || '',
+			email:
+				emp.email ||
+				`${emp.name?.toLowerCase().replace(' ', '.') || 'employee'}@jjlandscaping.com`,
+			phone: '+1-555-0101',
+			role: emp.role || 'employee',
+			status: emp.status || 'active',
+			hireDate: emp.hireDate || new Date().toISOString(),
+			availability: {
+				monday: [],
+				tuesday: [],
+				wednesday: [],
+				thursday: [],
+				friday: [],
+				saturday: [],
+				sunday: [],
+			},
+			completedJobsCount: 0,
+			totalHoursWorked: 0,
+			assignedJobIds: [],
+			supervisedJobIds: [],
+			rating: 4.5,
+			department: 'General',
+			createdAt: emp.hireDate || new Date().toISOString(),
+			updatedAt: emp.updatedAt || emp.hireDate || new Date().toISOString(),
+
+			// Add missing Employee properties
+			noteIds: [],
+			activityLogIds: [],
+			reminderIds: [],
+		}));
 		} catch (error) {
 			console.error('Database error in getAll:', error);
 			// Return empty array during build/error
@@ -158,6 +163,11 @@ export const employeeService: EmployeeService = {
 				department: 'General',
 				createdAt: emp.hireDate || new Date().toISOString(),
 				updatedAt: emp.updatedAt || emp.hireDate || new Date().toISOString(),
+
+				// Add these to satisfy Employee type
+				noteIds: [],
+				activityLogIds: [],
+				reminderIds: [],
 			};
 		} catch (error) {
 			console.error('Database error in getById:', error);

@@ -70,14 +70,14 @@ export default function EquipmentPage() {
             <div className="card p-6">
                 <DataTable
                     columns={[
-                        { key: "name", label: "Equipment Name" },
-                        { key: "type", label: "Type" },
-                        { key: "status", label: "Status" },
-                        { key: "hours", label: "Hours Used" },
-                        { key: "nextMaintenance", label: "Next Maintenance" },
+                        { key: "name", header: "Equipment Name" },
+                        { key: "type", header: "Type" },
+                        { key: "status", header: "Status" },
+                        { key: "hours", header: "Hours Used" },
+                        { key: "nextMaintenance", header: "Next Maintenance" },
                     ]}
                     data={equipment}
-                    onRowClick={(item) => router.push(`/admin/equipment/${item.id}`)}
+                    keyExtractor={(item) => item.id}
                 />
             </div>
         </div>

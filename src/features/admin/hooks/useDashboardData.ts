@@ -12,7 +12,6 @@ import {
 	getCommunicationAlerts,
 	type ActivityLog,
 	type PendingAction,
-	type AdminStats,
 	type SystemHealth,
 	type EquipmentStatus,
 	type CrewAvailability,
@@ -20,11 +19,11 @@ import {
 	type StockAlert,
 	type CommunicationAlert,
 } from '@/src/services/adminService';
-import type { DateRange, ViewMode } from '../types/dashboard.types';
+import type { DashboardStats, DateRange, ViewMode } from '../types/dashboard.types';
 
 interface UseDashboardDataReturn {
 	// Original data
-	stats: AdminStats | null;
+	stats: DashboardStats | null;
 	revenueHistory: Array<{ month: string; revenue: number }>;
 	recentActivity: ActivityLog[];
 	pendingActions: PendingAction[];
@@ -49,7 +48,7 @@ export const useDashboardData = (
 	selectedDate: Date, // NEW: Current selected date for navigation
 ): UseDashboardDataReturn => {
 	// Original state
-	const [stats, setStats] = useState<AdminStats | null>(null);
+	const [stats, setStats] = useState<DashboardStats | null>(null);
 	const [revenueHistory, setRevenueHistory] = useState<
 		Array<{ month: string; revenue: number }>
 	>([]);

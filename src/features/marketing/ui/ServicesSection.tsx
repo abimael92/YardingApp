@@ -20,8 +20,8 @@ const ServicesSection = () => {
             Our Professional Services
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            From weekly lawn maintenance to complete landscape transformations, we provide
-            comprehensive outdoor services tailored to Phoenix's unique climate.
+            Desert landscaping, yard cleanup, irrigation, gravel installation, tree trimming, and yard maintenance.
+            Comprehensive outdoor services tailored to Phoenix&apos;s unique climate.
           </p>
         </motion.div>
 

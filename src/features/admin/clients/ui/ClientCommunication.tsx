@@ -89,6 +89,8 @@ const ClientCommunication = ({ client, isOpen, onClose }: ClientCommunicationPro
         content: message,
         status: "sent",
         priority: Priority.MEDIUM,
+        activityLogIds: [],
+        reminderIds: []
       })
       alert("Message sent successfully!")
       setMessage("")

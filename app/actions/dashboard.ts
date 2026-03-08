@@ -14,5 +14,5 @@ export async function getRecentActivityForModal() {
 
 /** Fetches pending actions from DB for the Pending Actions modal. Job → jobs page, customer → clients page. */
 export async function getPendingActionsForModal() {
-	return getPendingActions({ jobs: 100, payments: 100 })
+	return getPendingActions();
 }

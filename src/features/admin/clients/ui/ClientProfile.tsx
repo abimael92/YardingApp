@@ -27,7 +27,7 @@ import { getAllEmployees } from "@/src/services/employeeService"
 import { getCommunications } from "@/src/services/communicationService"
 import type { Job } from "@/src/domain/entities"
 import type { Payment } from "@/src/domain/entities"
-import type { Invoice } from "@/src/services/invoiceService"
+import type { Invoice } from "@/src/domain/entities"
 import type { Employee } from "@/src/domain/entities"
 import type { Communication } from "@/src/domain/entities"
 import { PaymentStatus } from "@/src/domain/entities"
@@ -112,7 +112,10 @@ const ClientProfile = ({ isOpen, onClose, client }: ClientProfileProps) => {
   ]
 
   const outstandingInvoices = invoices.filter((inv) => inv.status !== "paid" && inv.status !== "cancelled")
-  const totalOutstanding = outstandingInvoices.reduce((sum, inv) => sum + inv.total, 0)
+  const totalOutstanding = outstandingInvoices.reduce(
+    (sum, inv) => sum + inv.total.amount,
+    0
+  )
   const totalPaid = payments.filter((p) => p.status === PaymentStatus.COMPLETED).reduce((sum, p) => sum + p.amount.amount, 0)
   
   // Calculate spending patterns (last 6 months)
@@ -505,7 +508,7 @@ const ClientProfile = ({ isOpen, onClose, client }: ClientProfileProps) => {
                       </div>
                       <div className="text-right">
                         <div className="font-medium text-red-600 dark:text-red-400">
-                          {formatCurrency({ amount: invoice.total, currency: "USD" })}
+                          {formatCurrency(invoice.total)}
                         </div>
                         <div className="text-xs text-red-500 dark:text-red-400 capitalize">
                           {invoice.status}

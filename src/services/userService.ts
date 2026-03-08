@@ -361,6 +361,88 @@ export const userService: UserService = {
 // Convenience Functions
 // ============================================================================
 
+/**
+ * Fetches all system users (profiles + User email + roles + employee_details + last login).
+ * Use for admin user management table.
+ */
+export async function getSystemUsers(): Promise<User[]> {
+	try {
+		const rows = await sql`
+      SELECT 
+        p.id,
+        p.full_name as name,
+        p.status,
+        p.created_at as "joinDate",
+        u.email,
+        ed.employee_number as "employeeNumber",
+        ed.department,
+        ed.position,
+        ed.hourly_rate_cents as "hourlyRate",
+        CASE 
+          WHEN r.name = 'employee' THEN 'Worker'
+          WHEN r.name = 'supervisor' THEN 'Supervisor'
+          WHEN r.name = 'admin' THEN 'Admin'
+          WHEN r.name = 'client' THEN 'Client'
+          ELSE r.name
+        END as role,
+        (
+          SELECT al.created_at
+          FROM audit_logs al
+          WHERE al.actor_id = p.id AND al.action = 'login'
+          ORDER BY al.created_at DESC
+          LIMIT 1
+        ) as "lastLoginAt",
+        (
+          SELECT json_agg(json_build_object(
+            'jobId', ej.job_id,
+            'jobNumber', j.job_number,
+            'jobTitle', j.title,
+            'status', ej.status,
+            'assignedAt', ej.assigned_at
+          ))
+          FROM employee_jobs ej
+          JOIN jobs j ON ej.job_id = j.id
+          WHERE ej.employee_id = p.id
+        ) as "assignedJobs"
+      FROM profiles p
+      LEFT JOIN "User" u ON u.id = p.user_id
+      JOIN user_roles ur ON p.id = ur.profile_id
+      JOIN roles r ON ur.role_id = r.id
+      LEFT JOIN employee_details ed ON p.id = ed.profile_id
+      ORDER BY p.full_name
+    `;
+		return (rows as Record<string, unknown>[]).map((row) => {
+			const status: 'Active' | 'Pending' | 'Inactive' =
+				row.status === 'active'
+					? 'Active'
+					: row.status === 'pending'
+						? 'Pending'
+						: 'Inactive';
+			return {
+				id: String(row.id),
+				name: String(row.name ?? ''),
+				email:
+					row.email != null
+						? String(row.email)
+						: `${String(row.name ?? '').toLowerCase().replace(/\s+/g, '.')}@example.com`,
+				role: (row.role as User['role']) ?? 'Worker',
+				status,
+				joinDate: String(row.joinDate ?? row.created_at ?? new Date().toISOString()),
+				employeeNumber: row.employeeNumber != null ? String(row.employeeNumber) : undefined,
+				department: row.department != null ? String(row.department) : undefined,
+				position: row.position != null ? String(row.position) : undefined,
+				hourlyRate:
+					row.hourlyRate != null ? Math.floor(Number(row.hourlyRate) / 100) : undefined,
+				assignedJobs: (row.assignedJobs as User['assignedJobs']) ?? [],
+				lastLogin: row.lastLoginAt != null ? String(row.lastLoginAt) : undefined,
+			} as User & { lastLogin?: string };
+		});
+	} catch (error) {
+		console.error('getSystemUsers error:', error);
+		return [];
+	}
+}
+
 export const getAllUsers = () => userService.getAll();
 export const getUserById = (id: string) => userService.getById(id);
 export const getUsersByRole = (role: User['role']) =>

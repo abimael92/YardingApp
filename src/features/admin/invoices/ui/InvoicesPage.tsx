@@ -1,6 +1,5 @@
 /**
  * Invoices Page Component
- * 
  * Professional invoicing management
  */
 
@@ -13,10 +12,10 @@ import DataTable, { Column } from "@/src/shared/ui/DataTable"
 import LoadingState from "@/src/shared/ui/LoadingState"
 import EmptyState from "@/src/shared/ui/EmptyState"
 import { invoiceService } from "@/src/services/invoiceService"
-import type { Invoice } from "@/src/services/invoiceService"
+import type { Invoice as InvoiceType, InvoiceStatus, Money } from "@/src/domain/entities"
 
 const InvoicesPage = () => {
-  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [invoices, setInvoices] = useState<InvoiceType[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [outstanding, setOutstanding] = useState<number>(0)
   const [totalPaid, setTotalPaid] = useState<number>(0)
@@ -42,33 +41,33 @@ const InvoicesPage = () => {
     loadData()
   }, [])
 
-  const getStatusBadge = (status: Invoice["status"]) => {
-    const colors: Record<Invoice["status"], string> = {
+  const getStatusBadge = (status: InvoiceStatus) => {
+    const colors: Record<InvoiceStatus, string> = {
       draft: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
       sent: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
       paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
       overdue: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
       cancelled: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
+      viewed: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400",
+      partially_paid: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+      refunded: "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400",
     }
+
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[status]}`}>
-        {status.toUpperCase()}
+      <span
+        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${colors[status]}`}
+      >
+        {status.replace("_", " ").toUpperCase()}
       </span>
     )
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount)
-  }
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount)
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString()
-  }
+  const formatDate = (date: string) => new Date(date).toLocaleDateString()
 
-  const columns: Column<Invoice>[] = [
+  const columns: Column<InvoiceType>[] = [
     {
       key: "invoiceNumber",
       header: "Invoice #",
@@ -77,19 +76,15 @@ const InvoicesPage = () => {
       ),
     },
     {
-      key: "clientName",
+      key: "clientId",
       header: "Client",
-      render: (invoice) => (
-        <div className="text-gray-900 dark:text-white">{invoice.clientName}</div>
-      ),
+      render: (invoice) => <div className="text-gray-900 dark:text-white">{invoice.clientId}</div>,
     },
     {
       key: "total",
       header: "Amount",
       render: (invoice) => (
-        <span className="font-medium text-gray-900 dark:text-white">
-          {formatCurrency(invoice.total)}
-        </span>
+        <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(invoice.total.amount)}</span>
       ),
     },
     {
@@ -106,9 +101,7 @@ const InvoicesPage = () => {
     },
   ]
 
-  if (isLoading) {
-    return <LoadingState message="Loading invoices..." />
-  }
+  if (isLoading) return <LoadingState message="Loading invoices..." />
 
   const overdueCount = invoices.filter((inv) => inv.status === "overdue").length
   const pendingCount = invoices.filter((inv) => inv.status === "sent" || inv.status === "draft").length
@@ -124,80 +117,44 @@ const InvoicesPage = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="card p-6"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Outstanding</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {formatCurrency(outstanding)}
-              </p>
+        {[{
+          label: "Outstanding",
+          value: formatCurrency(outstanding),
+          iconColor: "text-yellow-500",
+        }, {
+          label: "Total Paid",
+          value: formatCurrency(totalPaid),
+          iconColor: "text-green-500",
+        }, {
+          label: "Overdue",
+          value: overdueCount,
+          iconColor: "text-red-500",
+        }, {
+          label: "Pending",
+          value: pendingCount,
+          iconColor: "text-blue-500",
+        }].map((card, idx) => (
+          <motion.div
+            key={card.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.1 }}
+            className="card p-6"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{card.label}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{card.value}</p>
+              </div>
+              <DocumentDuplicateIcon className={`w-10 h-10 ${card.iconColor}`} />
             </div>
-            <DocumentDuplicateIcon className="w-10 h-10 text-yellow-500" />
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="card p-6"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Paid</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {formatCurrency(totalPaid)}
-              </p>
-            </div>
-            <DocumentDuplicateIcon className="w-10 h-10 text-green-500" />
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="card p-6"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Overdue</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {overdueCount}
-              </p>
-            </div>
-            <DocumentDuplicateIcon className="w-10 h-10 text-red-500" />
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="card p-6"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Pending</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {pendingCount}
-              </p>
-            </div>
-            <DocumentDuplicateIcon className="w-10 h-10 text-blue-500" />
-          </div>
-        </motion.div>
+          </motion.div>
+        ))}
       </div>
 
       {/* Invoices Table */}
       {invoices.length === 0 ? (
-        <EmptyState
-          title="No invoices yet"
-          message="Create your first invoice to get started."
-        />
+        <EmptyState title="No invoices yet" message="Create your first invoice to get started." />
       ) : (
         <DataTable
           data={invoices}

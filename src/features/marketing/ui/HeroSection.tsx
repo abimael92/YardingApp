@@ -52,8 +52,8 @@ export default function HeroSection() {
               <span className="text-emerald-600 block">Outdoor Space</span>
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
-              Professional lawn care and landscaping services in Phoenix. From weekly
-              maintenance to complete landscape transformations, we bring your vision to life.
+              Professional desert landscaping, yard cleanup, irrigation, and yard maintenance in Phoenix, Arizona.
+              From weekly maintenance to complete landscape transformations, we bring your vision to life.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">

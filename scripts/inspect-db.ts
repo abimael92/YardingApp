@@ -18,7 +18,12 @@ async function simplifiedInspect() {
 
 		const summaryStream = fs.createWriteStream(outputFile, { flags: 'w' });
 
-		const write = (text) => summaryStream.write(text + '\n');
+		interface SummaryWriteFn {
+			(text: string): boolean;
+		}
+
+		const write: SummaryWriteFn = (text: string): boolean =>
+			summaryStream.write(text + '\n');
 
 		write('📊 DATABASE SCHEMA SUMMARY\n');
 		write('==========================\n');
