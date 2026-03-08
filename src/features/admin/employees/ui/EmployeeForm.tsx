@@ -89,6 +89,9 @@ const EmployeeForm = ({ isOpen, onClose, onSuccess, employee }: EmployeeFormProp
         totalHoursWorked: 0,
         assignedJobIds: [],
         supervisedJobIds: [],
+        noteIds: [],
+        activityLogIds: [],
+        reminderIds: []
       }
 
       if (employee) {

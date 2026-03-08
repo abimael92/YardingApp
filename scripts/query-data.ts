@@ -160,37 +160,37 @@ async function queryData() {
 		summaryStream.write('===============\n\n');
 
 		summaryStream.write('👤 Recent Users:\n');
-		data.users.forEach((u) => {
+		data.users.forEach((u: { email: any; role: any; }) => {
 			summaryStream.write(`  - ${u.email} (${u.role})\n`);
 		});
 
 		summaryStream.write('\n🤝 Recent Clients:\n');
-		data.clients.forEach((c) => {
+		data.clients.forEach((c: { name: any; city: any; state: any; }) => {
 			summaryStream.write(`  - ${c.name} | ${c.city}, ${c.state}\n`);
 		});
 
 		summaryStream.write('\n🔧 Recent Jobs:\n');
-		data.jobs.forEach((j) => {
+		data.jobs.forEach((j: { job_number: any; title: any; status: any; }) => {
 			summaryStream.write(`  - ${j.job_number}: ${j.title} (${j.status})\n`);
 		});
 
 		if (data.materials) {
 			summaryStream.write('\n📦 Recent Materials:\n');
-			data.materials.forEach((m) => {
+			data.materials.forEach((m: { name: any; current_stock: any; unit: any; }) => {
 				summaryStream.write(`  - ${m.name} | ${m.current_stock} ${m.unit}\n`);
 			});
 		}
 
 		if (data.equipment) {
 			summaryStream.write('\n🚜 Recent Equipment:\n');
-			data.equipment.forEach((e) => {
+			data.equipment.forEach((e: { name: any; status: any; }) => {
 				summaryStream.write(`  - ${e.name} | ${e.status}\n`);
 			});
 		}
 
 		if (data.contracts) {
 			summaryStream.write('\n📝 Recent Contracts:\n');
-			data.contracts.forEach((c) => {
+			data.contracts.forEach((c: { contract_number: any; title: any; }) => {
 				summaryStream.write(`  - ${c.contract_number}: ${c.title}\n`);
 			});
 		}
@@ -222,7 +222,7 @@ async function queryData() {
 }
 
 // Helper function to check if table exists
-async function tableExists(client, tableName) {
+async function tableExists(client: Client, tableName: string) {
 	const result = await client.query(
 		`
         SELECT EXISTS (

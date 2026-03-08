@@ -60,14 +60,14 @@ export default function MaterialsPage() {
             <div className="card p-6">
                 <DataTable
                     columns={[
-                        { key: "materialName", label: "Material" },
-                        { key: "currentStock", label: "Stock" },
-                        { key: "reorderLevel", label: "Reorder Level" },
-                        { key: "unit", label: "Unit" },
-                        { key: "supplier", label: "Supplier" },
+                        { key: "materialName", header: "Material" },
+                        { key: "currentStock", header: "Stock" },
+                        { key: "reorderLevel", header: "Reorder Level" },
+                        { key: "unit", header: "Unit" },
+                        { key: "supplier", header: "Supplier" },
                     ]}
                     data={materials}
-                    onRowClick={(item) => router.push(`/admin/materials/${item.id}`)}
+                    keyExtractor={(item) => item.id}
                 />
             </div>
         </div>

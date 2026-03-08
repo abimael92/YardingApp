@@ -1,17 +1,17 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { ArrowLeftIcon } from "@heroicons/react/24/outline"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import LoadingState from "@/src/shared/ui/LoadingState"
 
-export default function EquipmentDetailsPage({ params }: { params: { id: string } }) {
+export default function EquipmentDetailsPage() {
     const router = useRouter()
+    const params = useParams<{ id: string }>()
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        // Fetch equipment details
         setTimeout(() => setLoading(false), 500)
     }, [params.id])
 
@@ -25,7 +25,9 @@ export default function EquipmentDetailsPage({ params }: { params: { id: string 
                 </button>
                 <Breadcrumbs />
             </div>
+
             <h1 className="text-2xl font-bold">Equipment Details</h1>
+
             <div className="card p-6">
                 <p>Equipment ID: {params.id}</p>
             </div>

@@ -109,17 +109,13 @@ const mapJobRow = (job: any, assignedEmployeeIds?: any[]): Job => ({
 	status: job.status,
 	title: job.title,
 	description: job.description,
-	quotedPriceCents: Number(job.quotedPriceCents) || 0,
 	quotedPrice: {
 		amount: Number(job.quotedPriceCents || 0) / 100,
 		currency: job.currency || 'USD',
 	},
-	currency: job.currency || 'USD',
 	priority: job.priority || 'medium',
 	estimatedDuration: Number(job.estimatedDuration) || 0,
-	actualDuration: job.actualDuration
-		? Number(job.actualDuration)
-		: undefined,
+	actualDuration: job.actualDuration ? Number(job.actualDuration) : undefined,
 	scheduledStart: job.scheduledStart,
 	scheduledEnd: job.scheduledEnd,
 	actualStart: job.actualStart,
@@ -133,17 +129,28 @@ const mapJobRow = (job: any, assignedEmployeeIds?: any[]): Job => ({
 	completionNotes: job.completionNotes,
 	createdAt: job.createdAt,
 	updatedAt: job.updatedAt,
-	createdBy: job.createdBy,
+	// createdBy: job.createdBy,
 	completedAt: job.completedAt,
 	cancelledAt: job.cancelledAt,
 	cancellationReason: job.cancellationReason,
+
+	// Task and Material arrays
 	tasks: [],
+	materials: [],
+
+	// Employee assignments
 	assignedEmployeeIds: assignedEmployeeIds
 		? assignedEmployeeIds.filter(Boolean)
 		: job.assignedEmployeeIds
-		? job.assignedEmployeeIds.filter(Boolean)
-		: [],
+			? job.assignedEmployeeIds.filter(Boolean)
+			: [],
+
+	// Cost tracking
 	estimatedCost: { amount: 0, currency: 'USD' },
+	actualCost: undefined,
+	finalPrice: undefined,
+
+	// Address
 	address: {
 		street: job.street,
 		city: job.city,
@@ -151,6 +158,15 @@ const mapJobRow = (job: any, assignedEmployeeIds?: any[]): Job => ({
 		zipCode: job.zipCode,
 		country: job.country || 'US',
 	},
+
+	// Relationship ID arrays (from Job entity)
+	noteIds: [],
+	activityLogIds: [],
+	communicationIds: [],
+	paymentIds: [],
+	scheduleIds: [],
+	quoteId: job.quote_id || undefined,
+	serviceRequestId: job.service_request_id || undefined,
 });
 
 // ============================================================================
@@ -202,93 +218,14 @@ export const jobService: JobService = {
       ORDER BY j.created_at DESC
     `;
 
-		return jobs.map((job) => ({
-			id: job.id,
-			jobNumber: job.jobNumber,
-			clientId: job.clientId,
-			status: job.status,
-			title: job.title,
-			description: job.description,
-			quotedPriceCents: Number(job.quotedPriceCents) || 0,
-			quotedPrice: {
-				amount: Number(job.quotedPriceCents || 0) / 100,
-				currency: job.currency || 'USD',
-			},
-			currency: job.currency || 'USD',
-			priority: job.priority || 'medium',
-			estimatedDuration: Number(job.estimatedDuration) || 0,
-			actualDuration: job.actualDuration
-				? Number(job.actualDuration)
-				: undefined,
-			scheduledStart: job.scheduledStart,
-			scheduledEnd: job.scheduledEnd,
-			actualStart: job.actualStart,
-			actualEnd: job.actualEnd,
-			supervisorId: job.supervisorId,
-			invoiceId: job.invoiceId,
-			contractId: job.contractId,
-			notes: job.notes,
-			internalNotes: job.internalNotes,
-			photos: job.photos ? job.photos.split(',') : [],
-			completionNotes: job.completionNotes,
-			createdAt: job.createdAt,
-			updatedAt: job.updatedAt,
-			createdBy: job.createdBy,
-			completedAt: job.completedAt,
-			cancelledAt: job.cancelledAt,
-			cancellationReason: job.cancellationReason,
-			tasks: [],
-			assignedEmployeeIds: job.assignedEmployeeIds
-				? job.assignedEmployeeIds.filter(Boolean)
-				: [],
-			estimatedCost: { amount: 0, currency: 'USD' },
-			address: {
-				street: job.street,
-				city: job.city,
-				state: job.state,
-				zipCode: job.zipCode,
-				country: job.country || 'US',
-			},
-		})) as Job[];
+		return jobs.map((job) => mapJobRow(job, job.assignedEmployeeIds));
 	},
 
 	getById: async (id: EntityId) => {
 		const sql = neon(process.env.DATABASE_URL!);
 		const jobs = await sql`
       SELECT 
-        j.id,
-        j.job_number as "jobNumber",
-        j.client_id as "clientId",
-        j.status,
-        j.title,
-        j.description,
-        j.street,
-        j.city,
-        j.state,
-        j.zip_code as "zipCode",
-        j.country,
-        j.quoted_price_cents as "quotedPriceCents",
-        j.currency,
-        j.priority,
-        j.estimated_duration as "estimatedDuration",
-        j.actual_duration as "actualDuration",
-        j.scheduled_start as "scheduledStart",
-        j.scheduled_end as "scheduledEnd",
-        j.actual_start as "actualStart",
-        j.actual_end as "actualEnd",
-        j.supervisor_id as "supervisorId",
-        j.invoice_id as "invoiceId",
-        j.contract_id as "contractId",
-        j.notes,
-        j.internal_notes as "internalNotes",
-        j.photos,
-        j.completion_notes as "completionNotes",
-        j.created_at as "createdAt",
-        j.updated_at as "updatedAt",
-        j.created_by as "createdBy",
-        j.completed_at as "completedAt",
-        j.cancelled_at as "cancelledAt",
-        j.cancellation_reason as "cancellationReason",
+        j.*,
         array_agg(DISTINCT ej.employee_id) as "assignedEmployeeIds"
       FROM jobs j
       LEFT JOIN employee_jobs ej ON j.id = ej.job_id
@@ -297,95 +234,14 @@ export const jobService: JobService = {
     `;
 
 		if (jobs.length === 0) return undefined;
-
-		const job = jobs[0];
-		return {
-			id: job.id,
-			jobNumber: job.jobNumber,
-			clientId: job.clientId,
-			status: job.status,
-			title: job.title,
-			description: job.description,
-			quotedPriceCents: Number(job.quotedPriceCents) || 0,
-			quotedPrice: {
-				amount: Number(job.quotedPriceCents || 0) / 100,
-				currency: job.currency || 'USD',
-			},
-			currency: job.currency || 'USD',
-			priority: job.priority || 'medium',
-			estimatedDuration: Number(job.estimatedDuration) || 0,
-			actualDuration: job.actualDuration
-				? Number(job.actualDuration)
-				: undefined,
-			scheduledStart: job.scheduledStart,
-			scheduledEnd: job.scheduledEnd,
-			actualStart: job.actualStart,
-			actualEnd: job.actualEnd,
-			supervisorId: job.supervisorId,
-			invoiceId: job.invoiceId,
-			contractId: job.contractId,
-			notes: job.notes,
-			internalNotes: job.internalNotes,
-			photos: job.photos ? job.photos.split(',') : [],
-			completionNotes: job.completionNotes,
-			createdAt: job.createdAt,
-			updatedAt: job.updatedAt,
-			createdBy: job.createdBy,
-			completedAt: job.completedAt,
-			cancelledAt: job.cancelledAt,
-			cancellationReason: job.cancellationReason,
-			tasks: [],
-			assignedEmployeeIds: job.assignedEmployeeIds
-				? job.assignedEmployeeIds.filter(Boolean)
-				: [],
-			estimatedCost: { amount: 0, currency: 'USD' },
-			address: {
-				street: job.street,
-				city: job.city,
-				state: job.state,
-				zipCode: job.zipCode,
-				country: job.country || 'US',
-			},
-		} as Job;
+		return mapJobRow(jobs[0], jobs[0].assignedEmployeeIds);
 	},
 
 	getByClientId: async (clientId: EntityId) => {
 		const sql = neon(process.env.DATABASE_URL!);
 		const jobs = await sql`
       SELECT 
-        j.id,
-        j.job_number as "jobNumber",
-        j.client_id as "clientId",
-        j.status,
-        j.title,
-        j.description,
-        j.street,
-        j.city,
-        j.state,
-        j.zip_code as "zipCode",
-        j.country,
-        j.quoted_price_cents as "quotedPriceCents",
-        j.currency,
-        j.priority,
-        j.estimated_duration as "estimatedDuration",
-        j.actual_duration as "actualDuration",
-        j.scheduled_start as "scheduledStart",
-        j.scheduled_end as "scheduledEnd",
-        j.actual_start as "actualStart",
-        j.actual_end as "actualEnd",
-        j.supervisor_id as "supervisorId",
-        j.invoice_id as "invoiceId",
-        j.contract_id as "contractId",
-        j.notes,
-        j.internal_notes as "internalNotes",
-        j.photos,
-        j.completion_notes as "completionNotes",
-        j.created_at as "createdAt",
-        j.updated_at as "updatedAt",
-        j.created_by as "createdBy",
-        j.completed_at as "completedAt",
-        j.cancelled_at as "cancelledAt",
-        j.cancellation_reason as "cancellationReason",
+        j.*,
         array_agg(DISTINCT ej.employee_id) as "assignedEmployeeIds"
       FROM jobs j
       LEFT JOIN employee_jobs ej ON j.id = ej.job_id
@@ -394,184 +250,28 @@ export const jobService: JobService = {
       ORDER BY j.created_at DESC
     `;
 
-		return jobs.map((job) => ({
-			id: job.id,
-			jobNumber: job.jobNumber,
-			clientId: job.clientId,
-			status: job.status,
-			title: job.title,
-			description: job.description,
-			quotedPriceCents: Number(job.quotedPriceCents) || 0,
-			quotedPrice: {
-				amount: Number(job.quotedPriceCents || 0) / 100,
-				currency: job.currency || 'USD',
-			},
-			currency: job.currency || 'USD',
-			priority: job.priority || 'medium',
-			estimatedDuration: Number(job.estimatedDuration) || 0,
-			actualDuration: job.actualDuration
-				? Number(job.actualDuration)
-				: undefined,
-			scheduledStart: job.scheduledStart,
-			scheduledEnd: job.scheduledEnd,
-			actualStart: job.actualStart,
-			actualEnd: job.actualEnd,
-			supervisorId: job.supervisorId,
-			invoiceId: job.invoiceId,
-			contractId: job.contractId,
-			notes: job.notes,
-			internalNotes: job.internalNotes,
-			photos: job.photos ? job.photos.split(',') : [],
-			completionNotes: job.completionNotes,
-			createdAt: job.createdAt,
-			updatedAt: job.updatedAt,
-			createdBy: job.createdBy,
-			completedAt: job.completedAt,
-			cancelledAt: job.cancelledAt,
-			cancellationReason: job.cancellationReason,
-			tasks: [],
-			assignedEmployeeIds: job.assignedEmployeeIds
-				? job.assignedEmployeeIds.filter(Boolean)
-				: [],
-			estimatedCost: { amount: 0, currency: 'USD' },
-			address: {
-				street: job.street,
-				city: job.city,
-				state: job.state,
-				zipCode: job.zipCode,
-				country: job.country || 'US',
-			},
-		})) as Job[];
+		return jobs.map((job) => mapJobRow(job, job.assignedEmployeeIds));
 	},
 
 	getByEmployeeId: async (employeeId: EntityId) => {
 		const sql = neon(process.env.DATABASE_URL!);
 		const jobs = await sql`
       SELECT 
-        j.id,
-        j.job_number as "jobNumber",
-        j.client_id as "clientId",
-        j.status,
-        j.title,
-        j.description,
-        j.street,
-        j.city,
-        j.state,
-        j.zip_code as "zipCode",
-        j.country,
-        j.quoted_price_cents as "quotedPriceCents",
-        j.currency,
-        j.priority,
-        j.estimated_duration as "estimatedDuration",
-        j.actual_duration as "actualDuration",
-        j.scheduled_start as "scheduledStart",
-        j.scheduled_end as "scheduledEnd",
-        j.actual_start as "actualStart",
-        j.actual_end as "actualEnd",
-        j.supervisor_id as "supervisorId",
-        j.invoice_id as "invoiceId",
-        j.contract_id as "contractId",
-        j.notes,
-        j.internal_notes as "internalNotes",
-        j.photos,
-        j.completion_notes as "completionNotes",
-        j.created_at as "createdAt",
-        j.updated_at as "updatedAt",
-        j.created_by as "createdBy",
-        j.completed_at as "completedAt",
-        j.cancelled_at as "cancelledAt",
-        j.cancellation_reason as "cancellationReason"
+        j.*
       FROM jobs j
       JOIN employee_jobs ej ON j.id = ej.job_id
       WHERE ej.employee_id = ${employeeId}
       ORDER BY j.created_at DESC
     `;
 
-		return jobs.map((job) => ({
-			id: job.id,
-			jobNumber: job.jobNumber,
-			clientId: job.clientId,
-			status: job.status,
-			title: job.title,
-			description: job.description,
-			quotedPriceCents: Number(job.quotedPriceCents) || 0,
-			quotedPrice: {
-				amount: Number(job.quotedPriceCents || 0) / 100,
-				currency: job.currency || 'USD',
-			},
-			currency: job.currency || 'USD',
-			priority: job.priority || 'medium',
-			estimatedDuration: Number(job.estimatedDuration) || 0,
-			actualDuration: job.actualDuration
-				? Number(job.actualDuration)
-				: undefined,
-			scheduledStart: job.scheduledStart,
-			scheduledEnd: job.scheduledEnd,
-			actualStart: job.actualStart,
-			actualEnd: job.actualEnd,
-			supervisorId: job.supervisorId,
-			invoiceId: job.invoiceId,
-			contractId: job.contractId,
-			notes: job.notes,
-			internalNotes: job.internalNotes,
-			photos: job.photos ? job.photos.split(',') : [],
-			completionNotes: job.completionNotes,
-			createdAt: job.createdAt,
-			updatedAt: job.updatedAt,
-			createdBy: job.createdBy,
-			completedAt: job.completedAt,
-			cancelledAt: job.cancelledAt,
-			cancellationReason: job.cancellationReason,
-			tasks: [],
-			assignedEmployeeIds: [employeeId],
-			estimatedCost: { amount: 0, currency: 'USD' },
-			address: {
-				street: job.street,
-				city: job.city,
-				state: job.state,
-				zipCode: job.zipCode,
-				country: job.country || 'US',
-			},
-		})) as Job[];
+		return jobs.map((job) => mapJobRow(job, [employeeId]));
 	},
 
 	getByStatus: async (status: JobStatus) => {
 		const sql = neon(process.env.DATABASE_URL!);
 		const jobs = await sql`
       SELECT 
-        j.id,
-        j.job_number as "jobNumber",
-        j.client_id as "clientId",
-        j.status,
-        j.title,
-        j.description,
-        j.street,
-        j.city,
-        j.state,
-        j.zip_code as "zipCode",
-        j.country,
-        j.quoted_price_cents as "quotedPriceCents",
-        j.currency,
-        j.priority,
-        j.estimated_duration as "estimatedDuration",
-        j.actual_duration as "actualDuration",
-        j.scheduled_start as "scheduledStart",
-        j.scheduled_end as "scheduledEnd",
-        j.actual_start as "actualStart",
-        j.actual_end as "actualEnd",
-        j.supervisor_id as "supervisorId",
-        j.invoice_id as "invoiceId",
-        j.contract_id as "contractId",
-        j.notes,
-        j.internal_notes as "internalNotes",
-        j.photos,
-        j.completion_notes as "completionNotes",
-        j.created_at as "createdAt",
-        j.updated_at as "updatedAt",
-        j.created_by as "createdBy",
-        j.completed_at as "completedAt",
-        j.cancelled_at as "cancelledAt",
-        j.cancellation_reason as "cancellationReason",
+        j.*,
         array_agg(DISTINCT ej.employee_id) as "assignedEmployeeIds"
       FROM jobs j
       LEFT JOIN employee_jobs ej ON j.id = ej.job_id
@@ -580,54 +280,7 @@ export const jobService: JobService = {
       ORDER BY j.created_at DESC
     `;
 
-		return jobs.map((job) => ({
-			id: job.id,
-			jobNumber: job.jobNumber,
-			clientId: job.clientId,
-			status: job.status,
-			title: job.title,
-			description: job.description,
-			quotedPriceCents: Number(job.quotedPriceCents) || 0,
-			quotedPrice: {
-				amount: Number(job.quotedPriceCents || 0) / 100,
-				currency: job.currency || 'USD',
-			},
-			currency: job.currency || 'USD',
-			priority: job.priority || 'medium',
-			estimatedDuration: Number(job.estimatedDuration) || 0,
-			actualDuration: job.actualDuration
-				? Number(job.actualDuration)
-				: undefined,
-			scheduledStart: job.scheduledStart,
-			scheduledEnd: job.scheduledEnd,
-			actualStart: job.actualStart,
-			actualEnd: job.actualEnd,
-			supervisorId: job.supervisorId,
-			invoiceId: job.invoiceId,
-			contractId: job.contractId,
-			notes: job.notes,
-			internalNotes: job.internalNotes,
-			photos: job.photos ? job.photos.split(',') : [],
-			completionNotes: job.completionNotes,
-			createdAt: job.createdAt,
-			updatedAt: job.updatedAt,
-			createdBy: job.createdBy,
-			completedAt: job.completedAt,
-			cancelledAt: job.cancelledAt,
-			cancellationReason: job.cancellationReason,
-			tasks: [],
-			assignedEmployeeIds: job.assignedEmployeeIds
-				? job.assignedEmployeeIds.filter(Boolean)
-				: [],
-			estimatedCost: { amount: 0, currency: 'USD' },
-			address: {
-				street: job.street,
-				city: job.city,
-				state: job.state,
-				zipCode: job.zipCode,
-				country: job.country || 'US',
-			},
-		})) as Job[];
+		return jobs.map((job) => mapJobRow(job, job.assignedEmployeeIds));
 	},
 
 	getWithRelations: async (id: EntityId) => {
@@ -651,7 +304,7 @@ export const jobService: JobService = {
         json_agg(DISTINCT jsonb_build_object(
           'id', p.id,
           'paymentNumber', p.payment_number,
-          'amount', p.amount_cents,
+          'amount_cents', p.amount_cents,
           'status', p.status
         )) FILTER (WHERE p.id IS NOT NULL) as payments,
         json_agg(DISTINCT jsonb_build_object(
@@ -659,7 +312,8 @@ export const jobService: JobService = {
           'scheduledStart', s.scheduled_start,
           'scheduledEnd', s.scheduled_end,
           'status', s.status
-        )) FILTER (WHERE s.id IS NOT NULL) as schedules
+        )) FILTER (WHERE s.id IS NOT NULL) as schedules,
+        array_agg(DISTINCT ej.employee_id) as "assignedEmployeeIds"
       FROM jobs j
       LEFT JOIN clients c ON j.client_id = c.id
       LEFT JOIN employee_jobs ej ON j.id = ej.job_id
@@ -673,11 +327,16 @@ export const jobService: JobService = {
 		if (jobs.length === 0) return undefined;
 
 		const job = jobs[0];
+		const mappedJob = mapJobRow(job, job.assignedEmployeeIds);
+
 		return {
-			job: (await jobService.getById(id)) as Job,
+			job: mappedJob,
 			client: job.client?.[0],
 			employees: job.employees?.filter(Boolean) || [],
-			payments: job.payments?.filter(Boolean) || [],
+			payments: (job.payments?.filter(Boolean) || []).map((p: any) => ({
+				...p,
+				amount: { amount: Number(p.amount_cents) / 100, currency: 'USD' },
+			})),
 			schedules: job.schedules?.filter(Boolean) || [],
 		} as JobWithFullRelations;
 	},
@@ -685,43 +344,63 @@ export const jobService: JobService = {
 	getByDateRange: async (startDate: Date, endDate: Date) => {
 		const sql = neon(process.env.DATABASE_URL!);
 		const jobs = await sql`
-      SELECT * FROM jobs 
-      WHERE created_at BETWEEN ${startDate.toISOString()} AND ${endDate.toISOString()}
-      ORDER BY created_at DESC
+      SELECT 
+        j.*,
+        array_agg(DISTINCT ej.employee_id) as "assignedEmployeeIds"
+      FROM jobs j
+      LEFT JOIN employee_jobs ej ON j.id = ej.job_id
+      WHERE j.created_at BETWEEN ${startDate.toISOString()} AND ${endDate.toISOString()}
+      GROUP BY j.id
+      ORDER BY j.created_at DESC
     `;
-		return jobs as Job[];
+		return jobs.map((job) => mapJobRow(job, job.assignedEmployeeIds));
 	},
 
 	getByPriority: async (priority: Priority) => {
 		const sql = neon(process.env.DATABASE_URL!);
 		const jobs = await sql`
-      SELECT * FROM jobs 
-      WHERE priority = ${priority}::priority
-      ORDER BY created_at DESC
+      SELECT 
+        j.*,
+        array_agg(DISTINCT ej.employee_id) as "assignedEmployeeIds"
+      FROM jobs j
+      LEFT JOIN employee_jobs ej ON j.id = ej.job_id
+      WHERE j.priority = ${priority}::priority
+      GROUP BY j.id
+      ORDER BY j.created_at DESC
     `;
-		return jobs as Job[];
+		return jobs.map((job) => mapJobRow(job, job.assignedEmployeeIds));
 	},
 
 	getUpcoming: async (limit = 10) => {
 		const sql = neon(process.env.DATABASE_URL!);
 		const jobs = await sql`
-      SELECT * FROM jobs 
-      WHERE status IN ('scheduled', 'in_progress')
-      ORDER BY scheduled_start ASC
+      SELECT 
+        j.*,
+        array_agg(DISTINCT ej.employee_id) as "assignedEmployeeIds"
+      FROM jobs j
+      LEFT JOIN employee_jobs ej ON j.id = ej.job_id
+      WHERE j.status IN ('scheduled', 'in_progress')
+      GROUP BY j.id
+      ORDER BY j.scheduled_start ASC
       LIMIT ${limit}
     `;
-		return jobs as Job[];
+		return jobs.map((job) => mapJobRow(job, job.assignedEmployeeIds));
 	},
 
 	getOverdue: async () => {
 		const sql = neon(process.env.DATABASE_URL!);
 		const jobs = await sql`
-      SELECT * FROM jobs 
-      WHERE status = 'scheduled' 
-      AND scheduled_end < NOW()
-      ORDER BY scheduled_end ASC
+      SELECT 
+        j.*,
+        array_agg(DISTINCT ej.employee_id) as "assignedEmployeeIds"
+      FROM jobs j
+      LEFT JOIN employee_jobs ej ON j.id = ej.job_id
+      WHERE j.status = 'scheduled' 
+      AND j.scheduled_end < NOW()
+      GROUP BY j.id
+      ORDER BY j.scheduled_end ASC
     `;
-		return jobs as Job[];
+		return jobs.map((job) => mapJobRow(job, job.assignedEmployeeIds));
 	},
 
 	assignEmployee: async (jobId: EntityId, employeeId: EntityId) => {
@@ -857,15 +536,19 @@ export const jobService: JobService = {
         name,
         quantity,
         unit,
-        cost_cents as "cost",
+        cost_cents as "costCents",
         supplier
       FROM job_materials
       WHERE job_id = ${jobId}
     `;
 
 		return materials.map((m) => ({
-			...m,
-			cost: { amount: Number(m.cost) / 100, currency: 'USD' },
+			id: m.id,
+			name: m.name,
+			quantity: Number(m.quantity),
+			unit: m.unit,
+			cost: { amount: Number(m.costCents) / 100, currency: 'USD' },
+			supplier: m.supplier,
 		})) as JobMaterial[];
 	},
 
@@ -889,12 +572,20 @@ export const jobService: JobService = {
 
 		const result = newMaterial[0];
 		return {
-			...result,
+			id: result.id,
+			name: result.name,
+			quantity: Number(result.quantity),
+			unit: result.unit,
 			cost: { amount: Number(result.cost_cents) / 100, currency: 'USD' },
+			supplier: result.supplier,
 		} as JobMaterial;
 	},
 
-	updateMaterial: async (jobId: EntityId, materialId: EntityId, updates) => {
+	updateMaterial: async (
+		jobId: EntityId,
+		materialId: EntityId,
+		updates: Partial<JobMaterial>,
+	) => {
 		const sql = neon(process.env.DATABASE_URL!);
 
 		const updated = await sql`
@@ -903,7 +594,7 @@ export const jobService: JobService = {
         name = COALESCE(${updates.name}, name),
         quantity = COALESCE(${updates.quantity}, quantity),
         unit = COALESCE(${updates.unit}, unit),
-        cost_cents = COALESCE(${updates.cost ? updates.cost.amount * 100 : undefined}, cost_cents),
+        cost_cents = COALESCE(${updates.cost ? updates.cost.amount * 100 : 'cost_cents'}::integer, cost_cents),
         supplier = COALESCE(${updates.supplier}, supplier),
         updated_at = NOW()
       WHERE job_id = ${jobId} AND id = ${materialId}
@@ -914,8 +605,12 @@ export const jobService: JobService = {
 
 		const result = updated[0];
 		return {
-			...result,
+			id: result.id,
+			name: result.name,
+			quantity: Number(result.quantity),
+			unit: result.unit,
 			cost: { amount: Number(result.cost_cents) / 100, currency: 'USD' },
+			supplier: result.supplier,
 		} as JobMaterial;
 	},
 
@@ -932,16 +627,13 @@ export const jobService: JobService = {
 	updateStatus: async (jobId: EntityId, status: JobStatus) => {
 		const sql = neon(process.env.DATABASE_URL!);
 
-		const updated = await sql`
+		await sql`
       UPDATE jobs 
       SET 
         status = ${status}::job_status,
         updated_at = NOW()
       WHERE id = ${jobId}
-      RETURNING *
     `;
-
-		if (updated.length === 0) return undefined;
 
 		return jobService.getById(jobId);
 	},
@@ -949,7 +641,7 @@ export const jobService: JobService = {
 	markAsCompleted: async (jobId: EntityId, completionNotes?: string) => {
 		const sql = neon(process.env.DATABASE_URL!);
 
-		const updated = await sql`
+		await sql`
       UPDATE jobs 
       SET 
         status = 'completed'::job_status,
@@ -957,10 +649,7 @@ export const jobService: JobService = {
         completion_notes = ${completionNotes || null},
         updated_at = NOW()
       WHERE id = ${jobId}
-      RETURNING *
     `;
-
-		if (updated.length === 0) return undefined;
 
 		return jobService.getById(jobId);
 	},
@@ -968,7 +657,7 @@ export const jobService: JobService = {
 	markAsCancelled: async (jobId: EntityId, reason?: string) => {
 		const sql = neon(process.env.DATABASE_URL!);
 
-		const updated = await sql`
+		await sql`
       UPDATE jobs 
       SET 
         status = 'cancelled'::job_status,
@@ -976,10 +665,7 @@ export const jobService: JobService = {
         cancellation_reason = ${reason || null},
         updated_at = NOW()
       WHERE id = ${jobId}
-      RETURNING *
     `;
-
-		if (updated.length === 0) return undefined;
 
 		return jobService.getById(jobId);
 	},
@@ -1062,7 +748,7 @@ export const jobService: JobService = {
       ) s
     `;
 
-		const result = stats[0];
+		const result = stats[0] || {};
 		return {
 			total: Number(result.total) || 0,
 			active: Number(result.active) || 0,
@@ -1124,7 +810,7 @@ export const jobService: JobService = {
 	update: async (id, updates) => {
 		const sql = neon(process.env.DATABASE_URL!);
 
-		const updated = await sql`
+		await sql`
       UPDATE jobs 
       SET 
         title = COALESCE(${updates.title}, title),
@@ -1137,10 +823,7 @@ export const jobService: JobService = {
         internal_notes = COALESCE(${updates.internalNotes}, internal_notes),
         updated_at = NOW()
       WHERE id = ${id}
-      RETURNING id
     `;
-
-		if (updated.length === 0) return undefined;
 
 		return jobService.getById(id);
 	},

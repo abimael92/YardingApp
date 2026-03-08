@@ -103,6 +103,13 @@ const JobForm = ({ isOpen, onClose, onSuccess, job, clients, employees }: JobFor
           amount: parseFloat(formData.quotedPrice) || 0,
           currency: "USD",
         },
+
+        // Required arrays from Job type
+        paymentIds: [],
+        communicationIds: [],
+        noteIds: [],
+        activityLogIds: [],
+        scheduleIds: [],
       }
 
       if (job) {

@@ -221,6 +221,7 @@ const ClientNotes = ({ client, notes: initialNotes, onBack, onUpdate }: ClientNo
       category: note?.category || "general" as Note["category"],
       priority: note?.priority || "medium" as Note["priority"],
       isPrivate: note?.isPrivate || false,
+      isArchived: note?.isArchived || false,
       createdBy: note?.createdBy || "Current User",
     })
 

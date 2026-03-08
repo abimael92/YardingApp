@@ -1,18 +1,20 @@
-
 "use client"
 
+import { Suspense } from "react"
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { EnvelopeIcon, PhoneIcon, ChatBubbleLeftIcon } from "@heroicons/react/24/outline"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import LoadingState from "@/src/shared/ui/LoadingState"
+import { CommunicationAlert } from '@/src/services/adminService'
 
-export default function CommunicationsPage() {
+// Move the component that uses useSearchParams to a separate component
+function CommunicationsContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const type = searchParams.get("type")
     const [loading, setLoading] = useState(true)
-    const [communications, setCommunications] = useState([])
+    const [communications, setCommunications] = useState<CommunicationAlert[]>([])
 
     useEffect(() => {
         const fetchCommunications = async () => {
@@ -38,7 +40,7 @@ export default function CommunicationsPage() {
             <h1 className="text-2xl font-bold">Communications Center</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {communications.map((comm: any) => (
+                {communications.map((comm) => (
                     <div key={comm.type} className="card p-6">
                         <div className="flex items-center gap-3 mb-4">
                             {comm.type === 'email' && <EnvelopeIcon className="w-6 h-6 text-blue-500" />}
@@ -57,5 +59,14 @@ export default function CommunicationsPage() {
                 ))}
             </div>
         </div>
+    )
+}
+
+// Main page component with Suspense boundary
+export default function CommunicationsPage() {
+    return (
+        <Suspense fallback={<LoadingState message="Loading communications..." />}>
+            <CommunicationsContent />
+        </Suspense>
     )
 }

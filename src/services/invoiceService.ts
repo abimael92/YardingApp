@@ -5,6 +5,9 @@
  */
 
 import { neon } from '@neondatabase/serverless';
+// at the top of src/services/invoiceService.ts
+export type { Invoice, InvoiceLineItem, InvoiceStatus, EntityId, Money, InvoiceWithRelations } from '@/src/domain/entities'
+
 import type {
 	EntityId,
 	Invoice,
