@@ -18,6 +18,7 @@ import {
   CheckCircleIcon
 } from "@heroicons/react/24/outline"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
+import { EmailTemplateEditor } from "../components/EmailTemplateSettings/EmailTemplateEditor"
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState("company")
@@ -215,25 +216,11 @@ const SettingsPage = () => {
         )}
 
         {activeTab === "email" && (
-          <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-[#8b4513] dark:text-[#d4a574]">Email Templates</h2>
-            <div className="space-y-4">
-              {[
-                "Invoice Email",
-                "Quote Email",
-                "Payment Reminder",
-                "Job Completion",
-                "Welcome Email",
-              ].map((template) => (
-                <div key={template} className="flex items-center justify-between p-4 border border-[#d4a574]/50 dark:border-[#8b4513]/50 rounded-lg hover:bg-[#f5f1e6] dark:hover:bg-gray-800/50 transition-all group">
-                  <span className="text-[#8b4513] dark:text-[#d4a574] font-medium">{template}</span>
-                  <button className="px-4 py-2 border border-[#d4a574] dark:border-[#8b4513] rounded-lg text-sm hover:bg-[#f5f1e6] dark:hover:bg-gray-700 text-[#8b4513] dark:text-[#d4a574] transition-all hover:border-[#2e8b57] dark:hover:border-[#4a7c5c]">
-                    Edit
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
+          <EmailTemplateEditor
+            onSave={handleSave}
+            saveSuccess={saveSuccess}
+            setSaveSuccess={setSaveSuccess}
+          />
         )}
       </motion.div>
     </div>
