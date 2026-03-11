@@ -57,6 +57,7 @@ export enum EmployeeStatus {
 	INACTIVE = 'inactive',
 	ON_LEAVE = 'on_leave',
 	TERMINATED = 'terminated',
+	PENDING = 'pending',
 }
 
 export enum ScheduleStatus {
@@ -564,6 +565,8 @@ export interface Employee {
 	// Timestamps
 	createdAt: Timestamp;
 	updatedAt: Timestamp;
+	createdBy?: EntityId;
+	updatedBy?: EntityId;
 }
 
 // ============================================================================
