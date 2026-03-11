@@ -5,7 +5,7 @@
 
 📋 TABLES:
 
-📌 User (7 cols)
+📌 User (11 cols)
 📌 admin_notifications (6 cols)
 📌 audit_logs (8 cols)
 📌 client_addresses (9 cols)
@@ -21,7 +21,7 @@
 🆕 crews (9 cols)
 🆕 dashboard_widget_assignments (5 cols)
 🆕 dashboard_widgets (9 cols)
-📌 employee_details (10 cols)
+📌 employee_details (12 cols)
 📌 employee_jobs (5 cols)
 📌 employee_skills (6 cols)
 🆕 equipment (29 cols)
@@ -34,7 +34,8 @@
 🆕 job_milestones (12 cols)
 🆕 job_notes (9 cols)
 🆕 job_photos (17 cols)
-📌 jobs (22 cols)
+📌 job_tasks (11 cols)
+📌 jobs (39 cols)
 🆕 materials (21 cols)
 📌 metadata (3 cols)
 📌 payment_intents (14 cols)
@@ -68,6 +69,7 @@
 
   - QuoteRequestStatus (3 values)
   - invoice_status (5 values)
+  - job_priority (4 values)
   - job_status (7 values)
   - payment_intent_status (6 values)
   - payment_method_type (6 values)
@@ -80,7 +82,7 @@
 
 📊 SUMMARY:
 
-  Total tables: 58
+  Total tables: 59
   New tables added: 33
   New columns added: 418
 
@@ -88,4 +90,4 @@
   Total columns: 13
 
 📋 JOBS TABLE:
-  Total columns: 22
+  Total columns: 39
