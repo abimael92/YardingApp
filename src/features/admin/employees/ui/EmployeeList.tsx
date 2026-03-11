@@ -26,6 +26,7 @@ import {
   deleteEmployee,
   updateEmployee
 } from "@/src/services/employeeService"
+import { mapUserToEmployee } from '@/src/lib/mappers/employeeMappers';
 import type { User, JobAssignment, EmployeeStats } from "@/src/domain/models"
 import { UserGroupIcon, BriefcaseIcon } from "@heroicons/react/24/outline"
 
@@ -943,6 +944,7 @@ export const EmployeeList = () => {
             isOpen={showEditModal}
             onClose={() => setShowEditModal(false)}
             onSuccess={handleFormSuccess}
+            employee={mapUserToEmployee(selectedEmployee)}  
           />
         )}
       </Modal>
