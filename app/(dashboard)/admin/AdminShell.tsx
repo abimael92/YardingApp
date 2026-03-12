@@ -26,9 +26,9 @@ export default function AdminShell({
                 sectionDescription: "Manage users, clients, and employees",
             },
             {
-                match: ["/admin/jobs", "/admin/tasks", "/admin/schedule", "/admin/quotes"],
+                match: ["/admin/jobs", "/admin/tasks", "/admin/schedule", "/admin/quotes", "/admin/equipment"],
                 section: "OPERATIONS",
-                sectionDescription: "Manage jobs, tasks, and schedules",
+                sectionDescription: "Manage jobs, tasks, schedules, and equipment",
             },
             {
                 match: ["/admin/payments", "/admin/invoices", "/admin/reports"],
