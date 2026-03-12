@@ -76,7 +76,7 @@ const Navbar = ({ darkMode, setDarkMode }: NavbarProps) => {
           </a>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-4 mx-auto">
             {navigation.map((item) => {
               const Icon = item.icon
               return (
