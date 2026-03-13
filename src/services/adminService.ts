@@ -3,6 +3,7 @@
  * Admin Service
  *
  * Service layer for admin-specific aggregations and summaries.
+ * ONLY uses real database data - no fallbacks, no mock data.
  */
 
 import type { User } from '@/src/domain/models';
@@ -14,28 +15,27 @@ import {
 } from '@/src/domain/entities';
 
 // ============================================================================
-// Safe database connection
+// Database connection - will throw if DATABASE_URL is not set
 // ============================================================================
 
 let sql: any;
 
 if (!process.env.DATABASE_URL) {
-	console.warn(
-		'⚠️ DATABASE_URL environment variable is not set. Using mock data mode.',
+	throw new Error(
+		'DATABASE_URL environment variable is not set. Cannot connect to database.',
 	);
-	sql = async () => [];
 } else {
 	try {
 		const { neon } = require('@neondatabase/serverless');
 		sql = neon(process.env.DATABASE_URL);
 	} catch (error) {
 		console.error('Failed to initialize database:', error);
-		sql = async () => [];
+		throw new Error('Database connection failed');
 	}
 }
 
 // ============================================================================
-// Types (defined locally, not imported)
+// Types
 // ============================================================================
 
 export interface ActivityLog {
@@ -95,31 +95,22 @@ export interface AdminStats {
 	pendingTasks: number;
 	inProgressTasks: number;
 	completedTasks: number;
-	/** All–time revenue from completed payments (paid invoices only). */
 	totalRevenue: number;
-	/** Revenue from completed payments in the current calendar month. */
 	currentMonthRevenue: number;
-	/** Revenue from completed payments in the previous calendar month. */
 	lastMonthRevenue: number;
-	/** Percentage change between current and last month revenue. */
 	revenueChangePercent: number;
 	pendingRevenue: number;
 	activeJobs: number;
 	pendingJobs: number;
 	completedJobs: number;
-	// ✅ ADDED: Missing fields for quotes
 	pendingQuotes: number;
 	pendingQuotesValue: number;
 }
 
-// ============================================================================
-// NEW TYPES - For the missing dashboard components
-// ============================================================================
-
 export interface EquipmentStatus {
-	name: string; // 'available', 'in_use', 'maintenance', 'retired'
-	value: number; // count
-	color?: string; // hex color for pie chart
+	name: string;
+	value: number;
+	color?: string;
 }
 
 export interface CrewAvailability {
@@ -162,6 +153,64 @@ export interface CommunicationAlert {
 	latest: Date;
 }
 
+export interface EquipmentCategory {
+	id: string;
+	name: string;
+}
+
+export interface Crew {
+	id: string;
+	name: string;
+}
+
+export interface Equipment {
+	id: string;
+	name: string;
+	type: string;
+	category?: string;
+	status:
+		| 'operational'
+		| 'maintenance'
+		| 'repair'
+		| 'idle'
+		| 'out_of_service'
+		| 'pending_purchase';
+	hours: number;
+	nextMaintenance: string;
+	location?: string;
+	lastService?: string;
+	purchaseDate?: string;
+	purchasePrice?: number;
+	warranty?: string;
+	serialNumber?: string;
+	manufacturer?: string;
+	model?: string;
+	year?: number;
+	fuelType?: string;
+	requiresLicense?: boolean;
+	requiredLicenseType?: string;
+	requiresTraining?: boolean;
+	currentCrew?: string;
+	currentJob?: string;
+	insuranceExpiration?: string;
+	notes?: string;
+	// New fields for category-specific data
+	bladeCondition?: string;
+	licensePlate?: string;
+	vin?: string;
+	odometer?: number;
+	registrationExpiration?: string;
+	gvwr?: number;
+	axles?: string;
+	condition?: string;
+	tankCapacity?: number;
+	lastCalibration?: string;
+	size?: string;
+	inspectionDate?: string;
+	dimensions?: string;
+	material?: string;
+}
+
 // ============================================================================
 // Service Interface
 // ============================================================================
@@ -178,7 +227,6 @@ export interface AdminService {
 	}): Promise<PendingAction[]>;
 	getRecentUsers(limit?: number): Promise<User[]>;
 	getSystemHealth(): Promise<SystemHealth>;
-	// ✅ ADDED: New methods for dashboard components
 	getEquipmentStatus(): Promise<EquipmentStatus[]>;
 	getCrewAvailability(
 		viewMode: string,
@@ -190,10 +238,13 @@ export interface AdminService {
 	): Promise<ScheduleItem[]>;
 	getStockAlerts(): Promise<StockAlert[]>;
 	getCommunicationAlerts(): Promise<CommunicationAlert[]>;
+	getEquipmentCategories(): Promise<EquipmentCategory[]>;
+	getCrews(): Promise<Crew[]>;
+	addEquipment(equipment: Partial<Equipment>): Promise<Equipment>;
 }
 
 // ============================================================================
-// Service Implementation
+// Service Implementation - NO FALLBACKS, ONLY REAL DATA
 // ============================================================================
 
 export const adminService: AdminService = {
@@ -207,7 +258,7 @@ export const adminService: AdminService = {
 				employeesResult,
 				jobsResult,
 				paymentsResult,
-				quotesResult, // ✅ ADDED: Fetch quotes data
+				quotesResult,
 			] = await Promise.all([
 				sql`SELECT p.id, p.status, p.created_at FROM profiles p`,
 				sql`SELECT c.id, c.created_at FROM clients c`,
@@ -218,7 +269,7 @@ export const adminService: AdminService = {
             WHERE r.name IN ('employee', 'supervisor')`,
 				sql`SELECT j.id, j.status, j.created_at FROM jobs j`,
 				sql`SELECT py.id, py.amount_cents, py.status, py.updated_at as completed_at, py.created_at FROM payments py`,
-				sql`SELECT j.id, j.quoted_price_cents FROM jobs j WHERE j.status = 'quoted'`, // ✅ ADDED: Get pending quotes
+				sql`SELECT j.id, j.quoted_price_cents FROM jobs j WHERE j.status = 'quoted'`,
 			]);
 
 			const now = new Date();
@@ -226,13 +277,11 @@ export const adminService: AdminService = {
 			const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 			const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
-			// Calculate new clients this month
 			const newClientsThisMonth = clientsResult.filter((c: any) => {
 				const createdAt = new Date(c.created_at);
 				return createdAt >= thisMonth;
 			}).length;
 
-			// Calculate revenue change
 			const thisMonthPayments = paymentsResult.filter((p: any) => {
 				if (p.completed_at && p.status === PaymentStatus.COMPLETED) {
 					const completed = new Date(p.completed_at);
@@ -288,11 +337,7 @@ export const adminService: AdminService = {
 				(e: any) => e.status === EmployeeStatus.ACTIVE,
 			).length;
 
-			// ✅ ADDED: Calculate pending quotes
-			const pendingQuotes = quotesResult.filter(
-				(q: any) => q.status === 'quoted',
-			).length;
-
+			const pendingQuotes = quotesResult.length;
 			const pendingQuotesValue = quotesResult.reduce(
 				(sum: number, q: any) => sum + (q.quoted_price_cents || 0) / 100,
 				0,
@@ -328,7 +373,6 @@ export const adminService: AdminService = {
 				activeJobs,
 				pendingJobs,
 				completedJobs,
-				// ✅ ADDED: Include in stats
 				pendingQuotes,
 				pendingQuotesValue,
 			};
@@ -337,7 +381,7 @@ export const adminService: AdminService = {
 			return stats;
 		} catch (error) {
 			console.error('🔴 AdminService: Error fetching stats:', error);
-			throw error;
+			throw error; // Re-throw - no fallbacks
 		}
 	},
 
@@ -593,6 +637,7 @@ export const adminService: AdminService = {
 		try {
 			console.log('🔵 AdminService: Fetching system health...');
 
+			// Test database connection
 			await sql`SELECT 1`;
 
 			const connections = await sql`
@@ -603,6 +648,8 @@ export const adminService: AdminService = {
 
 			const activeConnections = connections[0]?.count || 0;
 
+			// Check if we can get real service statuses
+			// This would need to be expanded with actual service checks
 			return {
 				status: 'healthy',
 				uptime: process.uptime ? process.uptime() : 0,
@@ -618,52 +665,14 @@ export const adminService: AdminService = {
 						status: 'healthy',
 						lastCheck: new Date().toISOString(),
 					},
-					{
-						name: 'Payment Gateway',
-						status: 'healthy',
-						lastCheck: new Date().toISOString(),
-					},
-					{
-						name: 'Email Service',
-						status: 'warning',
-						lastCheck: new Date(Date.now() - 300000).toISOString(),
-					},
 				],
 			};
 		} catch (error) {
 			console.error('🔴 AdminService: Database health check failed:', error);
-
-			return {
-				status: 'critical',
-				uptime: 0,
-				activeConnections: 0,
-				services: [
-					{
-						name: 'API Server',
-						status: 'warning',
-						lastCheck: new Date().toISOString(),
-					},
-					{
-						name: 'Database',
-						status: 'critical',
-						lastCheck: new Date().toISOString(),
-					},
-					{
-						name: 'Payment Gateway',
-						status: 'warning',
-						lastCheck: new Date().toISOString(),
-					},
-					{
-						name: 'Email Service',
-						status: 'warning',
-						lastCheck: new Date().toISOString(),
-					},
-				],
-			};
+			throw error; // No fallbacks - if DB is down, throw error
 		}
 	},
 
-	// ✅ NEW: Get equipment status for pie chart
 	getEquipmentStatus: async () => {
 		try {
 			console.log('🔵 AdminService: Fetching equipment status...');
@@ -674,11 +683,17 @@ export const adminService: AdminService = {
 				GROUP BY status
 			`;
 
+			if (!equipment || equipment.length === 0) {
+				return []; // Return empty array if no data, not fallback
+			}
+
 			const colorMap: Record<string, string> = {
-				available: '#22c55e',
-				in_use: '#3b82f6',
+				operational: '#22c55e',
 				maintenance: '#eab308',
-				retired: '#ef4444',
+				repair: '#ef4444',
+				idle: '#6b7280',
+				out_of_service: '#ef4444',
+				pending_purchase: '#3b82f6',
 			};
 
 			return equipment.map((e: any) => ({
@@ -688,17 +703,117 @@ export const adminService: AdminService = {
 			}));
 		} catch (error) {
 			console.error('🔴 AdminService: Error fetching equipment status:', error);
-			// Return fallback data
-			return [
-				{ name: 'available', value: 12, color: '#22c55e' },
-				{ name: 'in_use', value: 8, color: '#3b82f6' },
-				{ name: 'maintenance', value: 3, color: '#eab308' },
-				{ name: 'retired', value: 1, color: '#ef4444' },
-			];
+			throw error; // No fallbacks
 		}
 	},
 
-	// ✅ NEW: Get crew availability
+	getEquipmentCategories: async () => {
+		try {
+			console.log('🔵 AdminService: Fetching equipment categories...');
+
+			const categories = await sql`
+				SELECT id, name 
+				FROM equipment_categories 
+				ORDER BY name
+			`;
+
+			return categories.map((c: any) => ({
+				id: c.id,
+				name: c.name,
+			}));
+		} catch (error) {
+			console.error(
+				'🔴 AdminService: Error fetching equipment categories:',
+				error,
+			);
+			throw error;
+		}
+	},
+
+	getCrews: async () => {
+		try {
+			console.log('🔵 AdminService: Fetching crews...');
+
+			const crews = await sql`
+				SELECT id, name 
+				FROM crews 
+				ORDER BY name
+			`;
+
+			return crews.map((c: any) => ({
+				id: c.id,
+				name: c.name,
+			}));
+		} catch (error) {
+			console.error('🔴 AdminService: Error fetching crews:', error);
+			throw error;
+		}
+	},
+
+	addEquipment: async (equipment: Partial<Equipment>) => {
+		try {
+			console.log('🔵 AdminService: Adding new equipment...');
+
+			const result = await sql`
+				INSERT INTO equipment (
+					name,
+					type,
+					category,
+					status,
+					hours,
+					next_maintenance,
+					location,
+					last_service,
+					purchase_date,
+					purchase_price,
+					serial_number,
+					manufacturer,
+					model,
+					year,
+					fuel_type,
+					requires_license,
+					required_license_type,
+					requires_training,
+					insurance_expiration,
+					notes,
+					created_at
+				) VALUES (
+					${equipment.name},
+					${equipment.type || null},
+					${equipment.category || null},
+					${equipment.status || 'operational'},
+					${equipment.hours || 0},
+					${equipment.nextMaintenance || null},
+					${equipment.location || null},
+					${equipment.lastService || null},
+					${equipment.purchaseDate || null},
+					${equipment.purchasePrice || null},
+					${equipment.serialNumber || null},
+					${equipment.manufacturer || null},
+					${equipment.model || null},
+					${equipment.year || null},
+					${equipment.fuelType || null},
+					${equipment.requiresLicense || false},
+					${equipment.requiredLicenseType || null},
+					${equipment.requiresTraining || false},
+					${equipment.insuranceExpiration || null},
+					${equipment.notes || null},
+					NOW()
+				)
+				RETURNING *
+			`;
+
+			if (!result || result.length === 0) {
+				throw new Error('Failed to insert equipment');
+			}
+
+			return result[0];
+		} catch (error) {
+			console.error('🔴 AdminService: Error adding equipment:', error);
+			throw error;
+		}
+	},
+
 	getCrewAvailability: async (viewMode: string, selectedDate: Date) => {
 		try {
 			console.log('🔵 AdminService: Fetching crew availability...');
@@ -716,6 +831,15 @@ export const adminService: AdminService = {
 				LEFT JOIN profiles p2 ON cm.employee_id = p2.id
 				GROUP BY c.id, c.name, p.full_name
 			`;
+
+			if (!crews || crews.length === 0) {
+				return {
+					available: 0,
+					total: 0,
+					percentage: 0,
+					byCrew: [],
+				};
+			}
 
 			let totalAvailable = 0;
 			let totalMembers = 0;
@@ -748,42 +872,10 @@ export const adminService: AdminService = {
 				'🔴 AdminService: Error fetching crew availability:',
 				error,
 			);
-			// Return fallback data
-			return {
-				available: 15,
-				total: 24,
-				percentage: 62,
-				byCrew: [
-					{
-						crewName: 'Landscaping Team A',
-						available: 4,
-						total: 6,
-						supervisor: 'John Smith',
-					},
-					{
-						crewName: 'Landscaping Team B',
-						available: 3,
-						total: 5,
-						supervisor: 'Maria Garcia',
-					},
-					{
-						crewName: 'Maintenance Crew',
-						available: 5,
-						total: 8,
-						supervisor: 'Robert Johnson',
-					},
-					{
-						crewName: 'Installation Team',
-						available: 3,
-						total: 5,
-						supervisor: 'David Lee',
-					},
-				],
-			};
+			throw error;
 		}
 	},
 
-	// ✅ NEW: Get upcoming schedule
 	getUpcomingSchedule: async (days: number, selectedDate: Date) => {
 		try {
 			console.log('🔵 AdminService: Fetching upcoming schedule...');
@@ -791,25 +883,30 @@ export const adminService: AdminService = {
 			const endDate = new Date(selectedDate);
 			endDate.setDate(endDate.getDate() + days);
 
+			const startDateStr = selectedDate.toISOString().split('T')[0];
+			const endDateStr = endDate.toISOString().split('T')[0];
+
 			const schedule = await sql`
-				SELECT 
-					j.id,
-					j.title as job_title,
-					c.name as crew_name,
-					sj.date,
-					sj.estimated_start_time as start_time,
-					sj.estimated_end_time as end_time,
-					CONCAT(c2.street, ', ', c2.city) as location,
-					sj.status
-				FROM schedule_jobs sj
-				JOIN jobs j ON sj.job_id = j.id
-				LEFT JOIN crews c ON sj.crew_id = c.id
-				LEFT JOIN clients c2 ON j.client_id = c2.id
-				WHERE sj.date BETWEEN ${selectedDate.toISOString().split('T')[0]} 
-					AND ${endDate.toISOString().split('T')[0]}
-				ORDER BY sj.date, sj.estimated_start_time
-				LIMIT 20
-			`;
+	SELECT 
+		j.id,
+		j.title as job_title,
+		c.name as crew_name,
+		j.scheduled_start::date as date,
+		sj.estimated_start_time as start_time,
+		(sj.estimated_start_time + (sj.estimated_duration_minutes || ' minutes')::interval)::time as end_time,
+		CONCAT(j.street, ', ', j.city) as location,
+		sj.status
+	FROM schedule_jobs sj
+	JOIN jobs j ON sj.job_id = j.id
+	LEFT JOIN employee_jobs ej ON j.id = ej.job_id AND ej.status = 'active'
+	LEFT JOIN crew_members cm ON ej.employee_id = cm.employee_id
+	LEFT JOIN crews c ON cm.crew_id = c.id
+	WHERE j.scheduled_start::date BETWEEN ${startDateStr} AND ${endDateStr}
+	GROUP BY j.id, j.title, c.name, j.scheduled_start, sj.estimated_start_time, 
+			 sj.estimated_duration_minutes, j.street, j.city, sj.status
+	ORDER BY j.scheduled_start, sj.estimated_start_time
+	LIMIT 20
+`;
 
 			return schedule.map((item: any) => ({
 				id: item.id,
@@ -823,12 +920,10 @@ export const adminService: AdminService = {
 			}));
 		} catch (error) {
 			console.error('🔴 AdminService: Error fetching schedule:', error);
-			// Return empty array - no fallback needed
-			return [];
+			throw error;
 		}
 	},
 
-	// ✅ NEW: Get stock alerts
 	getStockAlerts: async () => {
 		try {
 			console.log('🔵 AdminService: Fetching stock alerts...');
@@ -859,12 +954,10 @@ export const adminService: AdminService = {
 			}));
 		} catch (error) {
 			console.error('🔴 AdminService: Error fetching stock alerts:', error);
-			// Return empty array
-			return [];
+			throw error;
 		}
 	},
 
-	// ✅ NEW: Get communication alerts
 	getCommunicationAlerts: async () => {
 		try {
 			console.log('🔵 AdminService: Fetching communication alerts...');
@@ -894,19 +987,13 @@ export const adminService: AdminService = {
 			}));
 		} catch (error) {
 			console.error('🔴 AdminService: Error fetching communications:', error);
-			// Return fallback data
-			return [
-				{ type: 'email', count: 24, unread: 8, latest: new Date() },
-				{ type: 'sms', count: 12, unread: 3, latest: new Date() },
-				{ type: 'call', count: 6, unread: 2, latest: new Date() },
-				{ type: 'chat', count: 18, unread: 7, latest: new Date() },
-			];
+			throw error;
 		}
 	},
 };
 
 // ============================================================================
-// Convenience Functions
+// Convenience Functions - All throw errors, no fallbacks
 // ============================================================================
 
 export const getAdminStats = () => adminService.getStats();
@@ -918,9 +1005,12 @@ export const getPendingActions = () => adminService.getPendingActions();
 export const getRecentUsers = (limit?: number) =>
 	adminService.getRecentUsers(limit);
 export const getSystemHealth = () => adminService.getSystemHealth();
-
-// ✅ NEW: Export convenience functions for new methods
 export const getEquipmentStatus = () => adminService.getEquipmentStatus();
+export const getEquipmentCategories = () =>
+	adminService.getEquipmentCategories();
+export const getCrews = () => adminService.getCrews();
+export const addEquipment = (equipment: Partial<Equipment>) =>
+	adminService.addEquipment(equipment);
 export const getCrewAvailability = (viewMode: string, selectedDate: Date) =>
 	adminService.getCrewAvailability(viewMode, selectedDate);
 export const getUpcomingSchedule = (days: number, selectedDate: Date) =>
