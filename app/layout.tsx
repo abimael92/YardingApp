@@ -34,7 +34,10 @@ export default function RootLayout({
       <head>
         <link rel="manifest" href="/site.webmanifest" />
       </head>
-      <body className="min-h-screen font-sans">
+      <body
+        className="min-h-screen font-sans"
+        suppressHydrationWarning={true}
+      >
         <NextAuthProvider>
           <ThemeToggle />
           {children}
