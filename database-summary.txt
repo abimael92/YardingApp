@@ -1,0 +1,38 @@
+📊 DATABASE SUMMARY
+==================
+
+RECORD COUNTS:
+👤 Users: 4
+📋 Profiles: 44
+🤝 Clients: 26
+🔧 Jobs: 140
+💰 Invoices: 43
+
+📋 SAMPLE DATA:
+===============
+
+👤 Recent Users:
+  - michael.smith@jjlandscaping.com (supervisor)
+  - emily.wilson@email.com (worker)
+  - john.jones@jjlandscaping.com (worker)
+  - josue.garcia@landscaping.com (admin)
+
+🤝 Recent Clients:
+  - Demo Client | Phoenix, AZ
+  - James Smith | Scottsdale, AZ
+  - Linda Miller | Mesa, AZ
+  - Michael Garcia | Scottsdale, AZ
+  - Mary Garcia | Glendale, AZ
+
+🔧 Recent Jobs:
+  - J-2025-001: Demo Job (draft)
+  - JOB-1134: Tree Trimming (draft)
+  - JOB-1133: Lawn Maintenance (in_progress)
+  - JOB-1136: Desert Landscape Installation (scheduled)
+  - JOB-1084: Xeriscape Design (in_progress)
+
+📦 Recent Materials:
+
+🚜 Recent Equipment:
+
+📝 Recent Contracts:

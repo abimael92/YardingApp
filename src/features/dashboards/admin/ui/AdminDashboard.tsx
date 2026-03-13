@@ -49,6 +49,7 @@ import {
   EnvelopeIcon,
   PhoneIcon,
   ChatBubbleLeftIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline"
 import {
   LineChart,
@@ -530,7 +531,7 @@ const DashboardHeader = ({
 }
 
 // ============================================================================
-// EQUIPMENT STATUS PIE CHART
+// EQUIPMENT STATUS PIE CHART WITH MODAL
 // ============================================================================
 
 const COLORS = ['#22c55e', '#eab308', '#ef4444', '#3b82f6', '#a855f7']
@@ -542,80 +543,262 @@ const EquipmentStatusCard = ({
   data: EquipmentStatus[]
   onViewAll: () => void
 }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const total = data.reduce((sum, item) => sum + item.value, 0)
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsModalOpen(true)
+  }
+
+  const handleViewAllEquipment = () => {
+    setIsModalOpen(false)
+    onViewAll()
+  }
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="card p-6 cursor-pointer hover:shadow-lg transition-shadow"
+        onClick={handleCardClick}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Equipment Status
+          </h2>
+          <TruckIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+        </div>
+
+        {data.length === 0 ? (
+          <div className="h-64 flex items-center justify-center text-gray-500">
+            No equipment data available
+          </div>
+        ) : (
+          <>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={data}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={2}
+                    dataKey="value"
+                    label={(props: any) => `${props.name} ${(props.percent * 100).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {data.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number) => [value, 'Units']}
+                    contentStyle={{
+                      backgroundColor: 'var(--color-background)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '8px',
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+              {data.map((item, index) => (
+                <div key={item.name} className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color || COLORS[index] }} />
+                  <span className="text-gray-600 dark:text-gray-400">{item.name}:</span>
+                  <span className="font-medium text-gray-900 dark:text-white ml-auto">{item.value}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600 dark:text-gray-400">Total Equipment:</span>
+                <span className="font-bold text-gray-900 dark:text-white">{total}</span>
+              </div>
+              <p className="text-xs text-green-600 mt-2 text-center">
+                Click for detailed equipment view
+              </p>
+            </div>
+          </>
+        )}
+      </motion.div>
+
+      {/* Equipment Details Modal */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <EquipmentModal
+            data={data}
+            onClose={() => setIsModalOpen(false)}
+            onViewAllEquipment={handleViewAllEquipment}
+          />
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
+
+// ============================================================================
+// EQUIPMENT DETAILS MODAL
+// ============================================================================
+
+const EquipmentModal = ({
+  data,
+  onClose,
+  onViewAllEquipment,
+}: {
+  data: EquipmentStatus[]
+  onClose: () => void
+  onViewAllEquipment: () => void
+}) => {
+  const total = data.reduce((sum, item) => sum + item.value, 0)
+
+  // Calculate percentages
+  const dataWithPercentages = data.map(item => ({
+    ...item,
+    percentage: ((item.value / total) * 100).toFixed(1)
+  }))
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="card p-6 cursor-pointer hover:shadow-lg transition-shadow"
-      onClick={onViewAll}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
     >
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Equipment Status
-        </h2>
-        <TruckIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-      </div>
-
-      {data.length === 0 ? (
-        <div className="h-64 flex items-center justify-center text-gray-500">
-          No equipment data available
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <TruckIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Equipment Status Details
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            aria-label="Close modal"
+          >
+            <XMarkIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          </button>
         </div>
-      ) : (
-        <>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={data}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  dataKey="value"
-                  label={(props: any) => `${props.name} ${(props.percent * 100).toFixed(0)}%`}
-                  labelLine={false}
-                >
-                  {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: number) => [value, 'Units']}
-                  contentStyle={{
-                    backgroundColor: 'var(--color-background)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: '8px',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+
+        {/* Modal Content */}
+        <div className="p-6">
+          {/* Summary Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Equipment</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{total}</p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Status Categories</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{data.length}</p>
+            </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-            {data.map((item, index) => (
-              <div key={item.name} className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color || COLORS[index] }} />
-                <span className="text-gray-600 dark:text-gray-400">{item.name}:</span>
-                <span className="font-medium text-gray-900 dark:text-white ml-auto">{item.value}</span>
+          {/* Equipment List with Progress Bars */}
+          <div className="space-y-4 mb-8">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              Equipment Breakdown
+            </h3>
+            {dataWithPercentages.map((item, index) => (
+              <div key={item.name} className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: item.color || COLORS[index % COLORS.length] }}
+                    />
+                    <span className="font-medium text-gray-700 dark:text-gray-300">
+                      {item.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {item.value} units
+                    </span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white w-16 text-right">
+                      {item.percentage}%
+                    </span>
+                  </div>
+                </div>
+                <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${item.percentage}%` }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: item.color || COLORS[index % COLORS.length] }}
+                  />
+                </div>
               </div>
             ))}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Total Equipment:</span>
-              <span className="font-bold text-gray-900 dark:text-white">{total}</span>
+          {/* Additional Equipment Info */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              Recent Equipment Activity
+            </h3>
+            <div className="space-y-3">
+              {data.map((item, index) => (
+                <div key={index} className="flex items-center justify-between py-2 text-sm border-b border-gray-100 dark:border-gray-700 last:border-0">
+                  <div>
+                    <span className="font-medium text-gray-900 dark:text-white">{item.name}</span>
+                    <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${item.name === 'Operational'
+                        ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300'
+                        : item.name === 'Maintenance'
+                          ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300'
+                          : 'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300'
+                      }`}>
+                      {item.name}
+                    </span>
+                  </div>
+                  <span className="text-gray-500 dark:text-gray-400 text-xs">
+                    {item.value} units
+                  </span>
+                </div>
+              ))}
             </div>
-            <p className="text-xs text-green-600 mt-2 text-center">
-              Click to manage equipment
-            </p>
           </div>
-        </>
-      )}
+        </div>
+
+        {/* Modal Footer */}
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 
+                       hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            Close
+          </button>
+          <button
+            onClick={onViewAllEquipment}
+            className="px-4 py-2 text-sm font-medium text-white bg-green-600 
+                       hover:bg-green-700 rounded-lg transition-colors flex items-center gap-2"
+          >
+            <TruckIcon className="w-4 h-4" />
+            Go to Equipment Page
+          </button>
+        </div>
+      </motion.div>
     </motion.div>
   )
 }
