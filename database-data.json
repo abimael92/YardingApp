@@ -1,0 +1,197 @@
+{
+  "users": [
+    {
+      "id": "b8d1f160-8332-4c05-8596-99f2825c5663",
+      "email": "michael.smith@jjlandscaping.com",
+      "role": "supervisor",
+      "email_verified": null
+    },
+    {
+      "id": "2ad5247a-daea-4a9f-b374-a63d8a3db60c",
+      "email": "emily.wilson@email.com",
+      "role": "worker",
+      "email_verified": null
+    },
+    {
+      "id": "fea32e0c-d053-46bb-a759-bea341b18ed6",
+      "email": "john.jones@jjlandscaping.com",
+      "role": "worker",
+      "email_verified": null
+    },
+    {
+      "id": "64789e7d-b405-4141-9310-2239607ddf7f",
+      "email": "josue.garcia@landscaping.com",
+      "role": "admin",
+      "email_verified": null
+    }
+  ],
+  "profiles": [
+    {
+      "id": "5337316c-0242-4999-960e-13dbd3705517",
+      "user_id": "b8d1f160-8332-4c05-8596-99f2825c5663",
+      "full_name": null,
+      "status": "active"
+    },
+    {
+      "id": "ed62dc88-7ee2-476c-a411-035a4ea85956",
+      "user_id": "2ad5247a-daea-4a9f-b374-a63d8a3db60c",
+      "full_name": null,
+      "status": "active"
+    },
+    {
+      "id": "2e4c5a16-a64a-4f5e-b2be-da79165bd87f",
+      "user_id": "4359afb7-6f8f-4503-8a5a-c8a85cee5874",
+      "full_name": "System Admin",
+      "status": "active"
+    },
+    {
+      "id": "a852ecac-bf2f-4744-8ad6-9b32b7367078",
+      "user_id": "b7b9fe44-28d9-4e01-b0e9-040edd5aeb65",
+      "full_name": "Michael Williams",
+      "status": "active"
+    },
+    {
+      "id": "31710434-515f-4f5a-8372-ccdcacf388d1",
+      "user_id": "61aa86b2-6ed4-42ac-9118-81637fb9f13f",
+      "full_name": "Mary Garcia",
+      "status": "active"
+    }
+  ],
+  "clients": [
+    {
+      "id": "c0000000-0000-0000-0000-000000000001",
+      "name": "Demo Client",
+      "email": "demo@example.com",
+      "city": "Phoenix",
+      "state": "AZ",
+      "phone": "+15550000001"
+    },
+    {
+      "id": "42147462-a911-4434-a056-bef1630258c6",
+      "name": "James Smith",
+      "email": "james.smith@example.com",
+      "city": "Scottsdale",
+      "state": "AZ",
+      "phone": "602-998-6670"
+    },
+    {
+      "id": "2f000cb3-0309-484a-8972-5678417eb3b8",
+      "name": "Linda Miller",
+      "email": "linda.miller@example.com",
+      "city": "Mesa",
+      "state": "AZ",
+      "phone": "602-773-2284"
+    },
+    {
+      "id": "4dc7ec64-aed7-4179-9696-6cdab8f9a428",
+      "name": "Michael Garcia",
+      "email": "michael.garcia@example.com",
+      "city": "Scottsdale",
+      "state": "AZ",
+      "phone": "602-216-1584"
+    },
+    {
+      "id": "8bfffb52-efac-4188-b9c2-bba0d1b0cb20",
+      "name": "Mary Garcia",
+      "email": "mary.garcia@example.com",
+      "city": "Glendale",
+      "state": "AZ",
+      "phone": "602-829-8955"
+    }
+  ],
+  "jobs": [
+    {
+      "id": "e0000000-0000-0000-0000-000000000001",
+      "job_number": "J-2025-001",
+      "title": "Demo Job",
+      "status": "draft",
+      "client_id": "c0000000-0000-0000-0000-000000000001",
+      "quoted_price_cents": "15000"
+    },
+    {
+      "id": "597ae15b-316c-452c-a844-cc965f471052",
+      "job_number": "JOB-1134",
+      "title": "Tree Trimming",
+      "status": "draft",
+      "client_id": "42147462-a911-4434-a056-bef1630258c6",
+      "quoted_price_cents": "3303900"
+    },
+    {
+      "id": "ab68f9ca-5a55-4f79-b1ce-0263d667779d",
+      "job_number": "JOB-1133",
+      "title": "Lawn Maintenance",
+      "status": "in_progress",
+      "client_id": "42147462-a911-4434-a056-bef1630258c6",
+      "quoted_price_cents": "2105800"
+    },
+    {
+      "id": "4c684b44-a897-4c32-97a5-d39287c86411",
+      "job_number": "JOB-1136",
+      "title": "Desert Landscape Installation",
+      "status": "scheduled",
+      "client_id": "42147462-a911-4434-a056-bef1630258c6",
+      "quoted_price_cents": "3574100"
+    },
+    {
+      "id": "0761f641-6e83-4ab0-a8da-8fdfd4e85bd0",
+      "job_number": "JOB-1084",
+      "title": "Xeriscape Design",
+      "status": "in_progress",
+      "client_id": "6a96b3d4-7569-4fe6-95a4-57c2731f5658",
+      "quoted_price_cents": "3611700"
+    }
+  ],
+  "invoices": [
+    {
+      "id": "22222222-0000-0000-0000-000000000001",
+      "invoice_number": "INV-2025-001",
+      "status": "draft",
+      "total_cents": "16200",
+      "due_date": "2026-03-02T06:00:00.000Z"
+    },
+    {
+      "id": "6b9ce620-81a7-4ca1-b2c9-1b6941ee587c",
+      "invoice_number": "INV-1134",
+      "status": "sent",
+      "total_cents": "2274264",
+      "due_date": "2026-02-06T06:00:00.000Z"
+    },
+    {
+      "id": "21d67ec3-ada1-4337-aeca-426b941ed848",
+      "invoice_number": "INV-1085",
+      "status": "sent",
+      "total_cents": "3900636",
+      "due_date": "2026-02-04T06:00:00.000Z"
+    },
+    {
+      "id": "dd180d9e-d94f-47ef-8966-d7e864ff71c8",
+      "invoice_number": "INV-1013",
+      "status": "sent",
+      "total_cents": "3008232",
+      "due_date": "2026-01-09T06:00:00.000Z"
+    },
+    {
+      "id": "3fa18849-6a5c-42e8-8637-9857b5e8b8fb",
+      "invoice_number": "INV-1016",
+      "status": "draft",
+      "total_cents": "3514104",
+      "due_date": "2025-12-30T06:00:00.000Z"
+    }
+  ],
+  "materials": [],
+  "equipment": [],
+  "crews": [],
+  "contracts": [],
+  "counts": {
+    "user_count": "4",
+    "profile_count": "44",
+    "client_count": "26",
+    "job_count": "140",
+    "invoice_count": "43",
+    "material_count": "0",
+    "equipment_count": "0",
+    "crew_count": "0",
+    "contract_count": "0",
+    "communication_count": "0"
+  }
+}
