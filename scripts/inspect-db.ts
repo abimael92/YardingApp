@@ -5,7 +5,7 @@ import * as path from 'path';
 
 dotenv.config({ path: '.env.local' });
 
-async function simplifiedInspect() {
+async function inspectSchema() {
 	const client = new Client({
 		connectionString: process.env.DATABASE_URL,
 	});
@@ -14,151 +14,164 @@ async function simplifiedInspect() {
 
 	try {
 		await client.connect();
-		console.log('🔍 Generating schema summary...');
 
-		const summaryStream = fs.createWriteStream(outputFile, { flags: 'w' });
+		const stream = fs.createWriteStream(outputFile, { flags: 'w' });
+		const write = (t: string) => stream.write(t + '\n');
 
-		interface SummaryWriteFn {
-			(text: string): boolean;
-		}
+		write('DATABASE SCHEMA OVERVIEW');
+		write('=========================');
 
-		const write: SummaryWriteFn = (text: string): boolean =>
-			summaryStream.write(text + '\n');
-
-		write('📊 DATABASE SCHEMA SUMMARY\n');
-		write('==========================\n');
-
-		// Get all tables with column counts
+		// -------------------------
+		// TABLES
+		// -------------------------
 		const tables = await client.query(`
-            SELECT 
-                table_name,
-                (SELECT COUNT(*) FROM information_schema.columns WHERE table_name = t.table_name) as column_count,
-                obj_description(c.oid) as table_description
-            FROM information_schema.tables t
-            LEFT JOIN pg_class c ON c.relname = t.table_name
-            WHERE table_schema = 'public' 
-                AND table_type = 'BASE TABLE'
-            ORDER BY table_name;
-        `);
-
-		write('\n📋 TABLES:\n');
-
-		const newTables = [
-			'suppliers',
-			'materials',
-			'stock_movements',
-			'job_materials',
-			'purchase_orders',
-			'purchase_order_items',
-			'equipment',
-			'equipment_assignments',
-			'equipment_maintenance_logs',
-			'equipment_fuel_logs',
-			'plant_catalog',
-			'plant_inventory',
-			'plant_usage',
-			'crews',
-			'crew_members',
-			'schedules',
-			'schedule_jobs',
-			'route_optimization',
-			'job_photos',
-			'job_milestones',
-			'job_notes',
-			'contract_templates',
-			'contracts',
-			'contract_amendments',
-			'communication_templates',
-			'client_communications',
-			'communication_reminders',
-			'client_preferences',
-			'report_definitions',
-			'saved_reports',
-			'dashboard_widgets',
-			'user_dashboards',
-			'dashboard_widget_assignments',
-		];
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema='public'
+      AND table_type='BASE TABLE'
+      ORDER BY table_name;
+    `);
 
 		for (const table of tables.rows) {
-			const isNew = newTables.includes(table.table_name);
-			const emoji = isNew ? '🆕' : '📌';
-			write(`${emoji} ${table.table_name} (${table.column_count} cols)`);
-		}
+			write(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+			write(`TABLE: ${table.table_name}`);
+			write(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
-		// Get enum types
-		const enums = await client.query(`
-            SELECT 
-                t.typname as enum_name,
-                COUNT(e.enumlabel) as value_count
-            FROM pg_type t
-            JOIN pg_enum e ON t.oid = e.enumtypid
-            JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
-            WHERE n.nspname = 'public'
-            GROUP BY t.typname
-            ORDER BY enum_name;
-        `);
+			// Columns
+			const columns = await client.query(
+				`
+        SELECT 
+          column_name,
+          data_type,
+          is_nullable,
+          column_default
+        FROM information_schema.columns
+        WHERE table_schema='public'
+        AND table_name=$1
+        ORDER BY ordinal_position;
+      `,
+				[table.table_name],
+			);
 
-		if (enums.rows.length > 0) {
-			write('\n🔤 ENUMS:\n');
-			enums.rows.forEach((e) => {
-				write(`  - ${e.enum_name} (${e.value_count} values)`);
+			write(`\nCOLUMNS`);
+			columns.rows.forEach((c) => {
+				write(
+					`  • ${c.column_name} : ${c.data_type} ${
+						c.is_nullable === 'NO' ? 'NOT NULL' : ''
+					} ${c.column_default ? `DEFAULT ${c.column_default}` : ''}`,
+				);
 			});
+
+			// Primary key
+			const pk = await client.query(
+				`
+        SELECT kcu.column_name
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+        ON tc.constraint_name = kcu.constraint_name
+        WHERE tc.table_name=$1
+        AND tc.constraint_type='PRIMARY KEY'
+      `,
+				[table.table_name],
+			);
+
+			if (pk.rows.length) {
+				write(`\nPRIMARY KEY`);
+				pk.rows.forEach((r) => write(`  • ${r.column_name}`));
+			}
+
+			// Foreign keys
+			const fks = await client.query(
+				`
+        SELECT
+          kcu.column_name,
+          ccu.table_name AS foreign_table,
+          ccu.column_name AS foreign_column
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+          ON tc.constraint_name = kcu.constraint_name
+        JOIN information_schema.constraint_column_usage ccu
+          ON ccu.constraint_name = tc.constraint_name
+        WHERE tc.constraint_type = 'FOREIGN KEY'
+        AND tc.table_name=$1;
+      `,
+				[table.table_name],
+			);
+
+			if (fks.rows.length) {
+				write(`\nFOREIGN KEYS`);
+				fks.rows.forEach((fk) =>
+					write(
+						`  • ${fk.column_name} → ${fk.foreign_table}.${fk.foreign_column}`,
+					),
+				);
+			}
 		}
 
-		// Get new tables summary
-		const newTablesResult = await client.query(
-			`
-            SELECT 
-                COUNT(*) as total_new,
-                SUM((SELECT COUNT(*) FROM information_schema.columns WHERE table_name = t.table_name)) as total_columns
-            FROM information_schema.tables t
-            WHERE table_schema = 'public' 
-                AND table_type = 'BASE TABLE'
-                AND table_name = ANY($1::text[]);
-        `,
-			[newTables],
-		);
+		// -------------------------
+		// ENUMS
+		// -------------------------
+		const enums = await client.query(`
+      SELECT 
+        t.typname AS enum_name,
+        e.enumlabel AS value
+      FROM pg_type t
+      JOIN pg_enum e ON t.oid = e.enumtypid
+      JOIN pg_namespace n ON n.oid = t.typnamespace
+      WHERE n.nspname = 'public'
+      ORDER BY enum_name, e.enumsortorder
+    `);
 
-		write('\n📊 SUMMARY:\n');
-		write(`  Total tables: ${tables.rows.length}`);
-		write(`  New tables added: ${newTablesResult.rows[0].total_new}`);
-		write(`  New columns added: ${newTablesResult.rows[0].total_columns}`);
+		const enumMap: Record<string, string[]> = {};
 
-		// Check if columns were added to existing tables
-		const clientColumns = await client.query(`
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'clients' 
-            ORDER BY ordinal_position;
-        `);
+		enums.rows.forEach((r) => {
+			if (!enumMap[r.enum_name]) enumMap[r.enum_name] = [];
+			enumMap[r.enum_name].push(r.value);
+		});
 
-		const jobColumns = await client.query(`
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'jobs' 
-            ORDER BY ordinal_position;
-        `);
+		write(`\n\nENUM TYPES`);
+		write(`===========`);
 
-		write('\n📋 CLIENTS TABLE:');
-		write(`  Total columns: ${clientColumns.rows.length}`);
+		Object.entries(enumMap).forEach(([name, values]) => {
+			write(`\n${name}`);
+			values.forEach((v) => write(`  • ${v}`));
+		});
 
-		write('\n📋 JOBS TABLE:');
-		write(`  Total columns: ${jobColumns.rows.length}`);
+		// -------------------------
+		// RELATIONSHIP GRAPH
+		// -------------------------
+		const relationships = await client.query(`
+      SELECT
+        tc.table_name AS source_table,
+        kcu.column_name AS source_column,
+        ccu.table_name AS target_table,
+        ccu.column_name AS target_column
+      FROM information_schema.table_constraints tc
+      JOIN information_schema.key_column_usage kcu
+        ON tc.constraint_name = kcu.constraint_name
+      JOIN information_schema.constraint_column_usage ccu
+        ON ccu.constraint_name = tc.constraint_name
+      WHERE tc.constraint_type='FOREIGN KEY'
+      ORDER BY source_table;
+    `);
 
-		summaryStream.end();
+		write(`\n\nTABLE RELATIONSHIPS`);
+		write(`===================`);
 
-		// Minimal terminal output
-		console.log('\n✅ Schema summary saved to:', outputFile);
-		console.log(
-			`   📊 Tables: ${tables.rows.length} total (${newTablesResult.rows[0].total_new} new)`,
-		);
-		console.log(`   🔤 Enums: ${enums.rows.length}`);
-	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error);
-		console.error('❌ Error:', errorMessage);
+		relationships.rows.forEach((r) => {
+			write(
+				`${r.source_table}.${r.source_column} → ${r.target_table}.${r.target_column}`,
+			);
+		});
+
+		stream.end();
+
+		console.log(`Schema report written to ${outputFile}`);
+	} catch (e) {
+		console.error(e);
 	} finally {
 		await client.end();
 	}
 }
 
-simplifiedInspect();
+inspectSchema();

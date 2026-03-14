@@ -1,100 +1,1884 @@
-📊 DATABASE SCHEMA SUMMARY
+DATABASE SCHEMA OVERVIEW
+=========================
 
-==========================
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: User
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • email : text NOT NULL 
+  • password : text  
+  • role : text NOT NULL DEFAULT 'worker'::text
+  • email_verified : timestamp without time zone  
+  • image : text  
+  • name : text  
+  • created_at : timestamp without time zone  DEFAULT now()
+  • updated_at : timestamp without time zone  DEFAULT now()
+  • created_by : uuid  
+  • updated_by : uuid  
+
+PRIMARY KEY
+  • id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: admin_notifications
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • type : text NOT NULL 
+  • entity_id : uuid NOT NULL 
+  • read : boolean NOT NULL DEFAULT false
+  • quote_request_id : uuid  
+  • created_at : timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • quote_request_id → quote_requests.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: audit_logs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • entity_type : character varying NOT NULL 
+  • entity_id : uuid NOT NULL 
+  • action : character varying NOT NULL 
+  • actor_id : uuid  
+  • old_values : jsonb  
+  • new_values : jsonb  
+  • created_at : timestamp with time zone NOT NULL DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • actor_id → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: client_addresses
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • client_id : uuid  
+  • address_type : character varying  DEFAULT 'primary'::character varying
+  • street : character varying NOT NULL 
+  • city : character varying NOT NULL 
+  • state : character varying NOT NULL 
+  • zip_code : character varying NOT NULL 
+  • is_primary : boolean  DEFAULT false
+  • created_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • client_id → clients.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: client_communications
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • client_id : uuid NOT NULL 
+  • job_id : uuid  
+  • communication_type : character varying NOT NULL 
+  • direction : character varying  DEFAULT 'outgoing'::character varying
+  • subject : character varying  
+  • content : text  
+  • sent_by : uuid  
+  • sent_to : character varying  
+  • sent_at : timestamp with time zone  DEFAULT now()
+  • status : character varying  DEFAULT 'sent'::character varying
+  • delivered_at : timestamp with time zone  
+  • read_at : timestamp with time zone  
+  • requires_response : boolean  DEFAULT false
+  • responded_at : timestamp with time zone  
+  • responded_by : uuid  
+  • parent_communication_id : uuid  
+  • attachments : jsonb  
+  • metadata : jsonb  
+  • created_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • client_id → clients.id
+  • job_id → jobs.id
+  • sent_by → profiles.id
+  • responded_by → profiles.id
+  • parent_communication_id → client_communications.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: client_preferences
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • client_id : uuid NOT NULL 
+  • preferred_contact_method : character varying  
+  • do_not_email : boolean  DEFAULT false
+  • do_not_call : boolean  DEFAULT false
+  • do_not_text : boolean  DEFAULT false
+  • newsletter_subscribed : boolean  DEFAULT true
+  • marketing_consent : boolean  DEFAULT false
+  • preferred_language : character varying  DEFAULT 'en'::character varying
+  • notes : text  
+  • updated_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • client_id
+
+FOREIGN KEYS
+  • client_id → clients.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: clients
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • name : character varying NOT NULL 
+  • email : character varying NOT NULL 
+  • phone : character varying NOT NULL 
+  • street : character varying NOT NULL 
+  • city : character varying NOT NULL 
+  • state : character varying NOT NULL 
+  • zip_code : character varying NOT NULL 
+  • country : character  DEFAULT 'US'::bpchar
+  • created_at : timestamp with time zone NOT NULL DEFAULT now()
+  • updated_at : timestamp with time zone NOT NULL DEFAULT now()
+  • created_by : uuid  
+  • deleted_at : timestamp with time zone  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: communication_reminders
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • communication_id : uuid  
+  • reminder_date : timestamp with time zone NOT NULL 
+  • reminder_type : character varying  
+  • assigned_to : uuid  
+  • completed : boolean  DEFAULT false
+  • completed_at : timestamp with time zone  
+  • notes : text  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • communication_id → client_communications.id
+  • assigned_to → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: communication_templates
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • name : character varying NOT NULL 
+  • type : character varying  
+  • subject : character varying  
+  • content : text NOT NULL 
+  • variables : jsonb  
+  • is_active : boolean  DEFAULT true
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: contract_amendments
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • contract_id : uuid  
+  • amendment_number : character varying  
+  • description : text  
+  • changes : text  
+  • amount_change_cents : bigint  
+  • signed_date : date  
+  • document_url : text  
+  • created_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • contract_id → contracts.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: contract_templates
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • name : character varying NOT NULL 
+  • template_type : character varying  
+  • content : text NOT NULL 
+  • version : character varying  
+  • is_active : boolean  DEFAULT true
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+  • created_by : uuid  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: contracts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • contract_number : character varying NOT NULL 
+  • job_id : uuid  
+  • client_id : uuid NOT NULL 
+  • template_id : uuid  
+  • title : character varying NOT NULL 
+  • description : text  
+  • contract_date : date  DEFAULT CURRENT_DATE
+  • start_date : date  
+  • end_date : date  
+  • status : character varying  DEFAULT 'draft'::character varying
+  • content : text  
+  • terms : text  
+  • deposit_required_cents : bigint  
+  • deposit_received : boolean  DEFAULT false
+  • deposit_received_date : date  
+  • total_value_cents : bigint  
+  • payment_terms : character varying  
+  • cancellation_terms : text  
+  • special_conditions : text  
+  • document_url : text  
+  • signed_by_client : boolean  DEFAULT false
+  • client_signed_at : timestamp with time zone  
+  • client_ip_address : character varying  
+  • signed_by_company : uuid  
+  • company_signed_at : timestamp with time zone  
+  • created_by : uuid  
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • job_id → jobs.id
+  • client_id → clients.id
+  • template_id → contract_templates.id
+  • signed_by_company → profiles.id
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: crew_jobs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • crew_id : uuid NOT NULL 
+  • job_id : uuid NOT NULL 
+  • assigned_at : timestamp without time zone  DEFAULT now()
+  • status : character varying  DEFAULT 'assigned'::character varying
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • crew_id → crews.id
+  • job_id → jobs.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: crew_members
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • crew_id : uuid  
+  • employee_id : uuid  
+  • role : character varying  DEFAULT 'member'::character varying
+  • joined_date : date  DEFAULT CURRENT_DATE
+  • left_date : date  
+  • is_active : boolean  DEFAULT true
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • crew_id → crews.id
+  • employee_id → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: crews
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • name : character varying NOT NULL 
+  • supervisor_id : uuid  
+  • description : text  
+  • vehicle_id : uuid  
+  • region : character varying  
+  • is_active : boolean  DEFAULT true
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • supervisor_id → profiles.id
+  • vehicle_id → equipment.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: dashboard_widget_assignments
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • dashboard_id : uuid NOT NULL 
+  • widget_id : uuid NOT NULL 
+  • widget_order : integer  
+  • widget_size : character varying  
+  • widget_position : jsonb  
+
+PRIMARY KEY
+  • dashboard_id
+  • widget_id
+
+FOREIGN KEYS
+  • dashboard_id → user_dashboards.id
+  • widget_id → dashboard_widgets.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: dashboard_widgets
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • name : character varying NOT NULL 
+  • widget_type : character varying NOT NULL 
+  • data_source : character varying  
+  • configuration : jsonb  
+  • refresh_interval : integer  
+  • is_active : boolean  DEFAULT true
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: employee_details
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • profile_id : uuid  
+  • employee_number : character varying  
+  • hire_date : date  
+  • status : character varying  DEFAULT 'active'::character varying
+  • department : character varying  
+  • position : character varying  
+  • hourly_rate_cents : integer  
+  • created_at : timestamp without time zone  DEFAULT now()
+  • updated_at : timestamp without time zone  DEFAULT now()
+  • created_by : uuid  
+  • updated_by : uuid  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • profile_id → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: employee_equipment_certifications
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • employee_id : uuid  
+  • equipment_id : uuid  
+  • certification_date : date  
+  • expiration_date : date  
+  • certified_by : uuid  
+  • document_path : text  
+  • status : character varying  DEFAULT 'active'::character varying
+  • created_at : timestamp without time zone  DEFAULT CURRENT_TIMESTAMP
+  • updated_at : timestamp without time zone  DEFAULT CURRENT_TIMESTAMP
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • employee_id → employee_details.id
+  • equipment_id → equipment.id
+  • certified_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: employee_jobs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • employee_id : uuid  
+  • job_id : uuid  
+  • assigned_at : timestamp without time zone  DEFAULT now()
+  • status : character varying  DEFAULT 'assigned'::character varying
+  • role_in_job : text  DEFAULT 'worker'::text
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • employee_id → profiles.id
+  • job_id → jobs.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: employee_skills
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • employee_id : uuid  
+  • skill_name : character varying NOT NULL 
+  • years_experience : integer  
+  • certified : boolean  DEFAULT false
+  • created_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • employee_id → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: equipment
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • name : character varying NOT NULL 
+  • type : character varying NOT NULL 
+  • manufacturer : character varying  
+  • model : character varying  
+  • year : integer  
+  • serial_number : character varying  
+  • plate_number : character varying  
+  • identification_number : character varying  
+  • purchase_date : date  
+  • purchase_price_cents : bigint  
+  • current_value_cents : bigint  
+  • status : character varying  DEFAULT 'available'::character varying
+  • condition : character varying  
+  • location : character varying  
+  • hourly_rate_cents : bigint  
+  • daily_rate_cents : bigint  
+  • weekly_rate_cents : bigint  
+  • fuel_type : character varying  
+  • hours_meter : numeric  
+  • last_maintenance_date : date  
+  • next_maintenance_date : date  
+  • maintenance_interval_hours : integer  
+  • notes : text  
+  • image_url : text  
+  • is_active : boolean  DEFAULT true
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+  • created_by : uuid  
+  • purchase_price : numeric  
+  • warranty_expiration : date  
+  • power_source : character varying  
+  • requires_license : boolean  DEFAULT false
+  • required_license_type : character varying  
+  • requires_training : boolean  DEFAULT false
+  • training_required : character varying  
+  • current_location_id : uuid  
+  • storage_location : character varying  
+  • current_crew_id : uuid  
+  • current_job_id : uuid  
+  • last_inspection_date : date  
+  • next_inspection_date : date  
+  • insurance_required : boolean  DEFAULT false
+  • insurance_policy_number : character varying  
+  • insurance_expiration : date  
+  • depreciation_rate : numeric  
+  • current_value : numeric  
+  • updated_by : uuid  
+  • category_id : uuid  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • created_by → profiles.id
+  • current_location_id → locations.id
+  • current_crew_id → crews.id
+  • current_job_id → jobs.id
+  • updated_by → profiles.id
+  • category_id → equipment_categories.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: equipment_assignments
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • equipment_id : uuid NOT NULL 
+  • job_id : uuid  
+  • employee_id : uuid  
+  • assigned_by : uuid  
+  • assigned_at : timestamp with time zone  DEFAULT now()
+  • returned_at : timestamp with time zone  
+  • start_hours : numeric  
+  • end_hours : numeric  
+  • hours_used : numeric  
+  • status : character varying  DEFAULT 'assigned'::character varying
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • equipment_id → equipment.id
+  • job_id → jobs.id
+  • employee_id → profiles.id
+  • assigned_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: equipment_categories
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • name : character varying NOT NULL 
+  • description : text  
+  • parent_id : uuid  
+  • created_at : timestamp without time zone  DEFAULT CURRENT_TIMESTAMP
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • parent_id → equipment_categories.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: equipment_documents
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • equipment_id : uuid  
+  • document_type : character varying  
+  • document_name : character varying  
+  • file_path : text  
+  • upload_date : timestamp without time zone  DEFAULT CURRENT_TIMESTAMP
+  • expiration_date : date  
+  • uploaded_by : uuid  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • equipment_id → equipment.id
+  • uploaded_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: equipment_fuel_logs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • equipment_id : uuid NOT NULL 
+  • filled_by : uuid  
+  • fill_date : date  DEFAULT CURRENT_DATE
+  • gallons : numeric NOT NULL 
+  • cost_per_gallon_cents : bigint  
+  • total_cost_cents : bigint  
+  • hours_meter : numeric  
+  • location : character varying  
+  • notes : text  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • equipment_id → equipment.id
+  • filled_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: equipment_maintenance_logs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • equipment_id : uuid NOT NULL 
+  • maintenance_date : date NOT NULL 
+  • type : character varying NOT NULL 
+  • description : text  
+  • performed_by : character varying  
+  • cost_cents : bigint  
+  • hours_at_service : numeric  
+  • next_due_date : date  
+  • next_due_hours : numeric  
+  • parts_used : jsonb  
+  • notes : text  
+  • created_by : uuid  
+  • created_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • equipment_id → equipment.id
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: equipment_maintenance_schedules
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • equipment_id : uuid  
+  • maintenance_type : character varying  
+  • frequency_type : character varying  
+  • frequency_value : integer  
+  • last_performed_date : date  
+  • last_performed_hours : integer  
+  • next_due_date : date  
+  • next_due_hours : integer  
+  • estimated_duration_minutes : integer  
+  • assigned_to : uuid  
+  • notes : text  
+  • is_active : boolean  DEFAULT true
+  • created_at : timestamp without time zone  DEFAULT CURRENT_TIMESTAMP
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • equipment_id → equipment.id
+  • assigned_to → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: equipment_purchase_plans
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • equipment_name : character varying NOT NULL 
+  • category_id : uuid  
+  • quantity : integer  DEFAULT 1
+  • estimated_cost : numeric  
+  • priority : character varying  
+  • justification : text  
+  • requested_by : uuid  
+  • approved_by : uuid  
+  • approval_date : date  
+  • status : character varying  DEFAULT 'pending'::character varying
+  • purchase_order_id : uuid  
+  • expected_delivery_date : date  
+  • actual_delivery_date : date  
+  • notes : text  
+  • created_at : timestamp without time zone  DEFAULT CURRENT_TIMESTAMP
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • category_id → equipment_categories.id
+  • requested_by → profiles.id
+  • approved_by → profiles.id
+  • purchase_order_id → purchase_orders.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: equipment_training_requirements
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • equipment_id : uuid  
+  • training_name : character varying NOT NULL 
+  • description : text  
+  • certification_required : boolean  DEFAULT false
+  • validity_period_days : integer  
+  • created_at : timestamp without time zone  DEFAULT CURRENT_TIMESTAMP
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • equipment_id → equipment.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: invoices
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • invoice_number : character varying NOT NULL 
+  • client_id : uuid NOT NULL 
+  • job_id : uuid  
+  • status : USER-DEFINED NOT NULL DEFAULT 'draft'::invoice_status
+  • amount_cents : bigint NOT NULL 
+  • tax_cents : bigint NOT NULL 
+  • total_cents : bigint NOT NULL 
+  • currency : character NOT NULL DEFAULT 'USD'::bpchar
+  • due_date : date NOT NULL 
+  • created_at : timestamp with time zone NOT NULL DEFAULT now()
+  • updated_at : timestamp with time zone NOT NULL DEFAULT now()
+  • created_by : uuid  
+  • deleted_at : timestamp with time zone  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • client_id → clients.id
+  • job_id → jobs.id
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: job_items
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • job_id : uuid NOT NULL 
+  • service_id : uuid  
+  • description : character varying NOT NULL 
+  • quantity : integer NOT NULL DEFAULT 1
+  • unit_price_cents : bigint NOT NULL 
+  • total_cents : bigint NOT NULL 
+  • sort_order : integer NOT NULL DEFAULT 0
+  • created_at : timestamp with time zone NOT NULL DEFAULT now()
+  • updated_at : timestamp with time zone NOT NULL DEFAULT now()
+  • created_by : uuid  
+  • deleted_at : timestamp with time zone  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • job_id → jobs.id
+  • service_id → services.id
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: job_materials
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • job_id : uuid NOT NULL 
+  • material_id : uuid NOT NULL 
+  • quantity_used : numeric NOT NULL 
+  • unit : character varying NOT NULL 
+  • unit_cost_cents : bigint  
+  • total_cost_cents : bigint  
+  • billed_to_client : boolean  DEFAULT true
+  • markup_percentage : numeric  DEFAULT 0
+  • notes : text  
+  • used_by : uuid  
+  • used_date : date  DEFAULT CURRENT_DATE
+  • created_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • job_id → jobs.id
+  • material_id → materials.id
+  • used_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: job_milestones
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • job_id : uuid NOT NULL 
+  • milestone_name : character varying NOT NULL 
+  • description : text  
+  • scheduled_date : date  
+  • completed_date : date  
+  • status : character varying  DEFAULT 'pending'::character varying
+  • percent_complete : integer  DEFAULT 0
+  • notes : text  
+  • completed_by : uuid  
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • job_id → jobs.id
+  • completed_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: job_notes
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • job_id : uuid NOT NULL 
+  • note_type : character varying  
+  • note : text NOT NULL 
+  • created_by : uuid  
+  • is_private : boolean  DEFAULT false
+  • is_archived : boolean  DEFAULT false
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • job_id → jobs.id
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: job_photos
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • job_id : uuid NOT NULL 
+  • photo_url : text NOT NULL 
+  • thumbnail_url : text  
+  • photo_type : character varying NOT NULL 
+  • title : character varying  
+  • description : text  
+  • taken_by : uuid  
+  • taken_at : timestamp with time zone  
+  • latitude : numeric  
+  • longitude : numeric  
+  • weather_conditions : character varying  
+  • is_public : boolean  DEFAULT false
+  • is_approved : boolean  DEFAULT false
+  • approved_by : uuid  
+  • approved_at : timestamp with time zone  
+  • created_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • job_id → jobs.id
+  • taken_by → profiles.id
+  • approved_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: job_tasks
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • job_id : uuid NOT NULL 
+  • title : text NOT NULL 
+  • description : text  
+  • status : text  DEFAULT 'pending'::text
+  • priority : USER-DEFINED  DEFAULT 'medium'::job_priority
+  • estimated_duration : integer  
+  • actual_duration : integer  
+  • order : integer NOT NULL 
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • job_id → jobs.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: jobs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • job_number : character varying NOT NULL 
+  • client_id : uuid NOT NULL 
+  • status : USER-DEFINED NOT NULL DEFAULT 'draft'::job_status
+  • title : character varying NOT NULL 
+  • description : text  
+  • street : character varying NOT NULL 
+  • city : character varying NOT NULL 
+  • state : character varying NOT NULL 
+  • zip_code : character varying NOT NULL 
+  • country : character  DEFAULT 'US'::bpchar
+  • quoted_price_cents : bigint NOT NULL 
+  • currency : character NOT NULL DEFAULT 'USD'::bpchar
+  • created_at : timestamp with time zone NOT NULL DEFAULT now()
+  • updated_at : timestamp with time zone NOT NULL DEFAULT now()
+  • created_by : uuid  
+  • deleted_at : timestamp with time zone  
+  • approved_by : uuid  
+  • approved_at : timestamp without time zone  
+  • completed_by : uuid  
+  • completed_at : timestamp without time zone  
+  • quote_request_id : uuid  
+  • priority : USER-DEFINED  DEFAULT 'medium'::job_priority
+  • estimated_duration : integer  
+  • actual_duration : integer  
+  • scheduled_start : timestamp without time zone  
+  • scheduled_end : timestamp without time zone  
+  • actual_start : timestamp without time zone  
+  • actual_end : timestamp without time zone  
+  • supervisor_id : uuid  
+  • invoice_id : uuid  
+  • contract_id : uuid  
+  • notes : text  
+  • internal_notes : text  
+  • photos : text  
+  • completion_notes : text  
+  • cancellation_reason : text  
+  • progress_percentage : integer  DEFAULT 0
+  • cancelled_at : timestamp without time zone  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • client_id → clients.id
+  • created_by → profiles.id
+  • approved_by → profiles.id
+  • completed_by → profiles.id
+  • quote_request_id → quote_requests.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: locations
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • name : character varying NOT NULL 
+  • type : character varying  
+  • address : text  
+  • city : character varying  
+  • state : character varying  
+  • zip_code : character varying  
+  • capacity : integer  
+  • created_at : timestamp without time zone  DEFAULT CURRENT_TIMESTAMP
+  • updated_at : timestamp without time zone  DEFAULT CURRENT_TIMESTAMP
+
+PRIMARY KEY
+  • id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: materials
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • name : character varying NOT NULL 
+  • category : character varying NOT NULL 
+  • subcategory : character varying  
+  • sku : character varying  
+  • description : text  
+  • unit : character varying NOT NULL 
+  • unit_size : numeric  
+  • cost_per_unit_cents : bigint  
+  • retail_price_cents : bigint  
+  • supplier_id : uuid  
+  • minimum_stock : integer  DEFAULT 0
+  • current_stock : integer  DEFAULT 0
+  • reorder_level : integer  
+  • reorder_quantity : integer  
+  • storage_location : character varying  
+  • image_url : text  
+  • is_active : boolean  DEFAULT true
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+  • created_by : uuid  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • supplier_id → suppliers.id
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: metadata
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • key : character varying NOT NULL 
+  • value : jsonb NOT NULL DEFAULT '{}'::jsonb
+  • updated_at : timestamp with time zone NOT NULL DEFAULT now()
+
+PRIMARY KEY
+  • key
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: payment_intents
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • client_id : uuid NOT NULL 
+  • invoice_id : uuid  
+  • amount_cents : bigint NOT NULL 
+  • currency : character NOT NULL DEFAULT 'USD'::bpchar
+  • status : USER-DEFINED NOT NULL DEFAULT 'requires_payment_method'::payment_intent_status
+  • method : USER-DEFINED  
+  • processor : character varying  
+  • processor_intent_id : character varying  
+  • metadata : jsonb  
+  • created_at : timestamp with time zone NOT NULL DEFAULT now()
+  • updated_at : timestamp with time zone NOT NULL DEFAULT now()
+  • created_by : uuid  
+  • deleted_at : timestamp with time zone  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • client_id → clients.id
+  • invoice_id → invoices.id
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: payments
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • payment_number : character varying NOT NULL 
+  • payment_intent_id : uuid  
+  • client_id : uuid NOT NULL 
+  • invoice_id : uuid  
+  • job_id : uuid  
+  • status : USER-DEFINED NOT NULL DEFAULT 'pending'::payment_status
+  • method : USER-DEFINED NOT NULL 
+  • amount_cents : bigint NOT NULL 
+  • currency : character NOT NULL DEFAULT 'USD'::bpchar
+  • transaction_id : character varying  
+  • processor : character varying  
+  • processor_response : jsonb  
+  • created_at : timestamp with time zone NOT NULL DEFAULT now()
+  • updated_at : timestamp with time zone NOT NULL DEFAULT now()
+  • created_by : uuid  
+  • deleted_at : timestamp with time zone  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • payment_intent_id → payment_intents.id
+  • client_id → clients.id
+  • invoice_id → invoices.id
+  • job_id → jobs.id
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: payouts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • payee_id : uuid NOT NULL 
+  • amount_cents : bigint NOT NULL 
+  • currency : character NOT NULL DEFAULT 'USD'::bpchar
+  • status : USER-DEFINED NOT NULL DEFAULT 'pending'::payout_status
+  • method : character varying  
+  • reference_job_id : uuid  
+  • metadata : jsonb  
+  • created_at : timestamp with time zone NOT NULL DEFAULT now()
+  • updated_at : timestamp with time zone NOT NULL DEFAULT now()
+  • created_by : uuid  
+  • deleted_at : timestamp with time zone  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • reference_job_id → jobs.id
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: permissions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • code : character varying NOT NULL 
+  • description : text  
+  • created_at : timestamp with time zone NOT NULL DEFAULT now()
+  • updated_at : timestamp with time zone NOT NULL DEFAULT now()
+  • created_by : uuid  
+  • deleted_at : timestamp with time zone  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: plant_catalog
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • name : character varying NOT NULL 
+  • botanical_name : character varying  
+  • common_name : character varying  
+  • plant_type : character varying  
+  • evergreen : boolean  DEFAULT false
+  • native_region : character varying  
+  • mature_height_inches : integer  
+  • mature_width_inches : integer  
+  • growth_rate : character varying  
+  • sun_requirements : character varying  
+  • water_requirements : character varying  
+  • bloom_color : character varying  
+  • bloom_season : character varying  
+  • special_features : text  
+  • hardiness_zones : character varying  
+  • image_url : text  
+  • is_active : boolean  DEFAULT true
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+  • created_by : uuid  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: plant_inventory
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • plant_id : uuid  
+  • size : character varying NOT NULL 
+  • container_type : character varying  
+  • quantity : integer  DEFAULT 0
+  • minimum_quantity : integer  DEFAULT 0
+  • cost_cents : bigint  
+  • retail_price_cents : bigint  
+  • supplier_id : uuid  
+  • location : character varying  
+  • date_received : date  
+  • health_status : character varying  DEFAULT 'good'::character varying
+  • notes : text  
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+  • last_counted_date : date  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • plant_id → plant_catalog.id
+  • supplier_id → suppliers.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: plant_usage
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • plant_inventory_id : uuid  
+  • job_id : uuid  
+  • quantity_used : integer NOT NULL 
+  • unit_price_cents : bigint  
+  • total_price_cents : bigint  
+  • used_by : uuid  
+  • used_date : date  DEFAULT CURRENT_DATE
+  • notes : text  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • plant_inventory_id → plant_inventory.id
+  • job_id → jobs.id
+  • used_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: profiles
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • user_id : uuid  
+  • full_name : character varying  
+  • avatar_url : character varying  
+  • created_at : timestamp with time zone NOT NULL DEFAULT now()
+  • updated_at : timestamp with time zone NOT NULL DEFAULT now()
+  • created_by : uuid  
+  • deleted_at : timestamp with time zone  
+  • status : USER-DEFINED  DEFAULT 'active'::user_status
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: purchase_order_items
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • po_id : uuid  
+  • material_id : uuid  
+  • quantity_ordered : numeric NOT NULL 
+  • quantity_received : numeric  DEFAULT 0
+  • unit : character varying NOT NULL 
+  • unit_price_cents : bigint  
+  • total_price_cents : bigint  
+  • notes : text  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • po_id → purchase_orders.id
+  • material_id → materials.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: purchase_orders
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • po_number : character varying NOT NULL 
+  • supplier_id : uuid  
+  • status : character varying  DEFAULT 'draft'::character varying
+  • order_date : date  DEFAULT CURRENT_DATE
+  • expected_delivery : date  
+  • delivered_date : date  
+  • subtotal_cents : bigint  
+  • tax_cents : bigint  
+  • shipping_cents : bigint  
+  • total_cents : bigint  
+  • notes : text  
+  • created_by : uuid  
+  • approved_by : uuid  
+  • approved_at : timestamp with time zone  
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • supplier_id → suppliers.id
+  • created_by → profiles.id
+  • approved_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: quote_requests
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • client_name : text NOT NULL 
+  • client_email : text NOT NULL 
+  • client_phone : text  
+  • service_name : text NOT NULL 
+  • project_type : text NOT NULL 
+  • zone : text NOT NULL 
+  • hours : double precision NOT NULL 
+  • sqft : integer NOT NULL 
+  • visits : integer NOT NULL 
+  • extras : text  
+  • min_cents : bigint NOT NULL 
+  • max_cents : bigint NOT NULL 
+  • breakdown_metadata : jsonb NOT NULL DEFAULT '{}'::jsonb
+  • status : USER-DEFINED NOT NULL DEFAULT 'pending'::quote_request_status
+  • message_to_client : text  
+  • approved_min_cents : bigint  
+  • approved_max_cents : bigint  
+  • created_at : timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
+  • updated_at : timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
+  • sent_at : timestamp with time zone  
+
+PRIMARY KEY
+  • id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: refunds
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • payment_id : uuid NOT NULL 
+  • amount_cents : bigint NOT NULL 
+  • currency : character NOT NULL DEFAULT 'USD'::bpchar
+  • status : USER-DEFINED NOT NULL DEFAULT 'pending'::refund_status
+  • reason : text  
+  • processor_refund_id : character varying  
+  • metadata : jsonb  
+  • created_at : timestamp with time zone NOT NULL DEFAULT now()
+  • updated_at : timestamp with time zone NOT NULL DEFAULT now()
+  • created_by : uuid  
+  • deleted_at : timestamp with time zone  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • payment_id → payments.id
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: report_definitions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • name : character varying NOT NULL 
+  • description : text  
+  • report_type : character varying  
+  • query_definition : jsonb  
+  • parameters : jsonb  
+  • is_system : boolean  DEFAULT false
+  • is_active : boolean  DEFAULT true
+  • created_by : uuid  
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: role_permission
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • role_id : uuid NOT NULL 
+  • permission_id : uuid NOT NULL 
+  • created_at : timestamp with time zone NOT NULL DEFAULT now()
+
+PRIMARY KEY
+  • role_id
+  • permission_id
+
+FOREIGN KEYS
+  • role_id → roles.id
+  • permission_id → permissions.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: roles
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • name : character varying NOT NULL 
+  • description : text  
+  • created_at : timestamp with time zone NOT NULL DEFAULT now()
+  • updated_at : timestamp with time zone NOT NULL DEFAULT now()
+  • created_by : uuid  
+  • deleted_at : timestamp with time zone  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: route_optimization
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • schedule_id : uuid  
+  • optimized_route : jsonb  
+  • total_distance_miles : numeric  
+  • total_drive_time_minutes : integer  
+  • total_job_time_minutes : integer  
+  • optimized_by : uuid  
+  • optimized_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • schedule_id → schedules.id
+  • optimized_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: saved_reports
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • report_definition_id : uuid  
+  • name : character varying NOT NULL 
+  • description : text  
+  • parameter_values : jsonb  
+  • result_data : jsonb  
+  • file_url : text  
+  • format : character varying  
+  • scheduled : boolean  DEFAULT false
+  • schedule_frequency : character varying  
+  • last_run : timestamp with time zone  
+  • next_run : timestamp with time zone  
+  • recipients : jsonb  
+  • created_by : uuid  
+  • created_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • report_definition_id → report_definitions.id
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: schedule_jobs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • schedule_id : uuid  
+  • job_id : uuid  
+  • route_order : integer NOT NULL 
+  • estimated_start_time : time without time zone  
+  • estimated_duration_minutes : integer  
+  • actual_start_time : timestamp with time zone  
+  • actual_end_time : timestamp with time zone  
+  • travel_time_minutes : integer  
+  • travel_distance_miles : numeric  
+  • status : character varying  DEFAULT 'pending'::character varying
+  • notes : text  
+  • completed_by : uuid  
+  • completed_at : timestamp with time zone  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • schedule_id → schedules.id
+  • job_id → jobs.id
+  • completed_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: schedules
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • crew_id : uuid  
+  • date : date NOT NULL 
+  • status : character varying  DEFAULT 'scheduled'::character varying
+  • notes : text  
+  • created_by : uuid  
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • crew_id → crews.id
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: services
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • name : character varying NOT NULL 
+  • description : text  
+  • category : character varying NOT NULL 
+  • price_display : character varying NOT NULL 
+  • duration : character varying  
+  • features : jsonb  
+  • created_at : timestamp with time zone NOT NULL DEFAULT now()
+  • updated_at : timestamp with time zone NOT NULL DEFAULT now()
+  • created_by : uuid  
+  • deleted_at : timestamp with time zone  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: stock_movements
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • material_id : uuid  
+  • job_id : uuid  
+  • quantity_change : integer NOT NULL 
+  • movement_type : character varying NOT NULL 
+  • unit_cost_cents : bigint  
+  • total_cost_cents : bigint  
+  • notes : text  
+  • moved_by : uuid  
+  • moved_at : timestamp with time zone  DEFAULT now()
+  • reference_document : character varying  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • material_id → materials.id
+  • job_id → jobs.id
+  • moved_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: suppliers
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • name : character varying NOT NULL 
+  • contact_name : character varying  
+  • email : character varying  
+  • phone : character varying  
+  • address : text  
+  • payment_terms : character varying  
+  • tax_id : character varying  
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+  • created_by : uuid  
+  • is_active : boolean  DEFAULT true
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • created_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: time_entries
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • employee_id : uuid  
+  • job_id : uuid  
+  • start_time : timestamp without time zone NOT NULL 
+  • end_time : timestamp without time zone  
+  • duration_minutes : integer  
+  • created_at : timestamp without time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • employee_id → profiles.id
+  • job_id → jobs.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: transactions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • type : USER-DEFINED NOT NULL 
+  • amount_cents : bigint NOT NULL 
+  • currency : character NOT NULL DEFAULT 'USD'::bpchar
+  • payment_id : uuid  
+  • refund_id : uuid  
+  • payout_id : uuid  
+  • client_id : uuid  
+  • created_at : timestamp with time zone NOT NULL DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • payment_id → payments.id
+  • refund_id → refunds.id
+  • payout_id → payouts.id
+  • client_id → clients.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: user_dashboards
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • user_id : uuid  
+  • name : character varying NOT NULL 
+  • layout : jsonb  
+  • is_default : boolean  DEFAULT false
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • user_id → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: user_roles
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • profile_id : uuid NOT NULL 
+  • role_id : uuid NOT NULL 
+  • created_at : timestamp with time zone NOT NULL DEFAULT now()
+
+PRIMARY KEY
+  • profile_id
+  • role_id
+
+FOREIGN KEYS
+  • profile_id → profiles.id
+  • role_id → roles.id
 
 
-📋 TABLES:
+ENUM TYPES
+===========
 
-📌 User (11 cols)
-📌 admin_notifications (6 cols)
-📌 audit_logs (8 cols)
-📌 client_addresses (9 cols)
-🆕 client_communications (20 cols)
-🆕 client_preferences (10 cols)
-📌 clients (13 cols)
-🆕 communication_reminders (8 cols)
-🆕 communication_templates (9 cols)
-🆕 contract_amendments (9 cols)
-🆕 contract_templates (9 cols)
-🆕 contracts (29 cols)
-🆕 crew_members (7 cols)
-🆕 crews (9 cols)
-🆕 dashboard_widget_assignments (5 cols)
-🆕 dashboard_widgets (9 cols)
-📌 employee_details (12 cols)
-📌 employee_equipment_certifications (10 cols)
-📌 employee_jobs (5 cols)
-📌 employee_skills (6 cols)
-🆕 equipment (49 cols)
-🆕 equipment_assignments (11 cols)
-📌 equipment_categories (5 cols)
-📌 equipment_documents (8 cols)
-🆕 equipment_fuel_logs (10 cols)
-🆕 equipment_maintenance_logs (14 cols)
-📌 equipment_maintenance_schedules (14 cols)
-📌 equipment_purchase_plans (16 cols)
-📌 equipment_training_requirements (7 cols)
-📌 invoices (14 cols)
-📌 job_items (12 cols)
-🆕 job_materials (13 cols)
-🆕 job_milestones (12 cols)
-🆕 job_notes (9 cols)
-🆕 job_photos (17 cols)
-📌 job_tasks (11 cols)
-📌 jobs (39 cols)
-📌 locations (10 cols)
-🆕 materials (21 cols)
-📌 metadata (3 cols)
-📌 payment_intents (14 cols)
-📌 payments (17 cols)
-📌 payouts (12 cols)
-📌 permissions (7 cols)
-🆕 plant_catalog (21 cols)
-🆕 plant_inventory (16 cols)
-🆕 plant_usage (9 cols)
-📌 profiles (9 cols)
-🆕 purchase_order_items (9 cols)
-🆕 purchase_orders (17 cols)
-📌 quote_requests (21 cols)
-📌 refunds (12 cols)
-🆕 report_definitions (11 cols)
-📌 role_permission (3 cols)
-📌 roles (7 cols)
-🆕 route_optimization (8 cols)
-🆕 saved_reports (15 cols)
-🆕 schedule_jobs (14 cols)
-🆕 schedules (8 cols)
-📌 services (11 cols)
-🆕 stock_movements (11 cols)
-🆕 suppliers (12 cols)
-📌 time_entries (7 cols)
-📌 transactions (9 cols)
-🆕 user_dashboards (7 cols)
-📌 user_roles (3 cols)
+QuoteRequestStatus
+  • pending
+  • reviewed
+  • sent
 
-🔤 ENUMS:
+invoice_status
+  • draft
+  • sent
+  • paid
+  • overdue
+  • cancelled
 
-  - QuoteRequestStatus (3 values)
-  - invoice_status (5 values)
-  - job_priority (4 values)
-  - job_status (7 values)
-  - payment_intent_status (6 values)
-  - payment_method_type (6 values)
-  - payment_status (4 values)
-  - payout_status (5 values)
-  - quote_request_status (3 values)
-  - refund_status (4 values)
-  - transaction_type (3 values)
-  - user_status (3 values)
+job_priority
+  • low
+  • medium
+  • high
+  • urgent
 
-📊 SUMMARY:
+job_status
+  • draft
+  • quoted
+  • scheduled
+  • in_progress
+  • completed
+  • cancelled
+  • on_hold
 
-  Total tables: 66
-  New tables added: 33
-  New columns added: 438
+payment_intent_status
+  • requires_payment_method
+  • requires_confirmation
+  • requires_action
+  • processing
+  • succeeded
+  • cancelled
 
-📋 CLIENTS TABLE:
-  Total columns: 13
+payment_method_type
+  • credit_card
+  • debit_card
+  • ach
+  • check
+  • cash
+  • other
 
-📋 JOBS TABLE:
-  Total columns: 39
+payment_status
+  • pending
+  • processing
+  • completed
+  • failed
+
+payout_status
+  • pending
+  • processing
+  • completed
+  • failed
+  • cancelled
+
+quote_request_status
+  • pending
+  • reviewed
+  • sent
+
+refund_status
+  • pending
+  • succeeded
+  • failed
+  • cancelled
+
+transaction_type
+  • payment
+  • refund
+  • payout
+
+user_status
+  • active
+  • pending
+  • inactive
+
+
+TABLE RELATIONSHIPS
+===================
+account.userId → user.id
+admin_notifications.quote_request_id → quote_requests.id
+audit_logs.actor_id → profiles.id
+client_addresses.client_id → clients.id
+client_communications.job_id → jobs.id
+client_communications.client_id → clients.id
+client_communications.parent_communication_id → client_communications.id
+client_communications.responded_by → profiles.id
+client_communications.sent_by → profiles.id
+client_preferences.client_id → clients.id
+clients.created_by → profiles.id
+communication_reminders.communication_id → client_communications.id
+communication_reminders.assigned_to → profiles.id
+contract_amendments.contract_id → contracts.id
+contract_templates.created_by → profiles.id
+contracts.client_id → clients.id
+contracts.created_by → profiles.id
+contracts.template_id → contract_templates.id
+contracts.job_id → jobs.id
+contracts.signed_by_company → profiles.id
+crew_jobs.job_id → jobs.id
+crew_jobs.crew_id → crews.id
+crew_members.employee_id → profiles.id
+crew_members.crew_id → crews.id
+crews.vehicle_id → equipment.id
+crews.supervisor_id → profiles.id
+dashboard_widget_assignments.widget_id → dashboard_widgets.id
+dashboard_widget_assignments.dashboard_id → user_dashboards.id
+employee_details.profile_id → profiles.id
+employee_equipment_certifications.equipment_id → equipment.id
+employee_equipment_certifications.employee_id → employee_details.id
+employee_equipment_certifications.certified_by → profiles.id
+employee_jobs.employee_id → profiles.id
+employee_jobs.job_id → jobs.id
+employee_skills.employee_id → profiles.id
+equipment.current_job_id → jobs.id
+equipment.current_crew_id → crews.id
+equipment.created_by → profiles.id
+equipment.category_id → equipment_categories.id
+equipment.updated_by → profiles.id
+equipment.current_location_id → locations.id
+equipment_assignments.equipment_id → equipment.id
+equipment_assignments.job_id → jobs.id
+equipment_assignments.employee_id → profiles.id
+equipment_assignments.assigned_by → profiles.id
+equipment_categories.parent_id → equipment_categories.id
+equipment_documents.equipment_id → equipment.id
+equipment_documents.uploaded_by → profiles.id
+equipment_fuel_logs.filled_by → profiles.id
+equipment_fuel_logs.equipment_id → equipment.id
+equipment_maintenance_logs.created_by → profiles.id
+equipment_maintenance_logs.equipment_id → equipment.id
+equipment_maintenance_schedules.assigned_to → profiles.id
+equipment_maintenance_schedules.equipment_id → equipment.id
+equipment_purchase_plans.approved_by → profiles.id
+equipment_purchase_plans.purchase_order_id → purchase_orders.id
+equipment_purchase_plans.category_id → equipment_categories.id
+equipment_purchase_plans.requested_by → profiles.id
+equipment_training_requirements.equipment_id → equipment.id
+invitation.organizationId → organization.id
+invitation.inviterId → user.id
+invoices.created_by → profiles.id
+invoices.job_id → jobs.id
+invoices.client_id → clients.id
+job_items.created_by → profiles.id
+job_items.service_id → services.id
+job_items.job_id → jobs.id
+job_materials.job_id → jobs.id
+job_materials.used_by → profiles.id
+job_materials.material_id → materials.id
+job_milestones.completed_by → profiles.id
+job_milestones.job_id → jobs.id
+job_notes.job_id → jobs.id
+job_notes.created_by → profiles.id
+job_photos.approved_by → profiles.id
+job_photos.job_id → jobs.id
+job_photos.taken_by → profiles.id
+job_tasks.job_id → jobs.id
+jobs.created_by → profiles.id
+jobs.client_id → clients.id
+jobs.approved_by → profiles.id
+jobs.completed_by → profiles.id
+jobs.quote_request_id → quote_requests.id
+materials.created_by → profiles.id
+materials.supplier_id → suppliers.id
+member.userId → user.id
+member.organizationId → organization.id
+payment_intents.created_by → profiles.id
+payment_intents.client_id → clients.id
+payment_intents.invoice_id → invoices.id
+payments.created_by → profiles.id
+payments.payment_intent_id → payment_intents.id
+payments.client_id → clients.id
+payments.invoice_id → invoices.id
+payments.job_id → jobs.id
+payouts.reference_job_id → jobs.id
+payouts.created_by → profiles.id
+permissions.created_by → profiles.id
+plant_catalog.created_by → profiles.id
+plant_inventory.supplier_id → suppliers.id
+plant_inventory.plant_id → plant_catalog.id
+plant_usage.used_by → profiles.id
+plant_usage.job_id → jobs.id
+plant_usage.plant_inventory_id → plant_inventory.id
+profiles.created_by → profiles.id
+purchase_order_items.po_id → purchase_orders.id
+purchase_order_items.material_id → materials.id
+purchase_orders.created_by → profiles.id
+purchase_orders.approved_by → profiles.id
+purchase_orders.supplier_id → suppliers.id
+refunds.created_by → profiles.id
+refunds.payment_id → payments.id
+report_definitions.created_by → profiles.id
+role_permission.role_id → roles.id
+role_permission.permission_id → permissions.id
+roles.created_by → profiles.id
+route_optimization.optimized_by → profiles.id
+route_optimization.schedule_id → schedules.id
+saved_reports.report_definition_id → report_definitions.id
+saved_reports.created_by → profiles.id
+schedule_jobs.schedule_id → schedules.id
+schedule_jobs.job_id → jobs.id
+schedule_jobs.completed_by → profiles.id
+schedules.crew_id → crews.id
+schedules.created_by → profiles.id
+services.created_by → profiles.id
+session.userId → user.id
+stock_movements.moved_by → profiles.id
+stock_movements.material_id → materials.id
+stock_movements.job_id → jobs.id
+suppliers.created_by → profiles.id
+time_entries.employee_id → profiles.id
+time_entries.job_id → jobs.id
+transactions.payment_id → payments.id
+transactions.payout_id → payouts.id
+transactions.client_id → clients.id
+transactions.refund_id → refunds.id
+user_dashboards.user_id → profiles.id
+user_roles.profile_id → profiles.id
+user_roles.role_id → roles.id
