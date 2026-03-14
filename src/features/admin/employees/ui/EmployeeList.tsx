@@ -17,8 +17,8 @@ import { useMediaQuery } from "@/src/hooks/useMediaQuery"
 import { useFormPersistence } from "@/src/hooks/useFormPersistence"
 import EmployeeForm from "./EmployeeForm"
 import EmployeeDetail from "./EmployeeDetail"
-import AssignJobModal from "./AssignJobModal"
 import TimeTrackingModal from "./TimeTrackingModal"
+import Link from "next/link"
 import {
   getAllEmployees,
   getEmployeeAssignments,
@@ -40,7 +40,9 @@ import {
   ClockIcon,
   UsersIcon,
   ChevronDownIcon,
-  ChevronUpIcon
+  ChevronUpIcon,
+  UserIcon,
+  EyeIcon
 } from "@heroicons/react/24/outline"
 
 // Types for crew management
@@ -95,15 +97,6 @@ interface ApiEmployee {
   role?: string
   department?: string
   avatar?: string
-}
-
-interface ApiJob {
-  id: string
-  jobNumber: string
-  title: string
-  status: string
-  clientName?: string
-  scheduledDate?: string
 }
 
 interface EmployeeFilters {
@@ -331,7 +324,6 @@ export const EmployeeList = () => {
   const [showEditModal, setShowEditModal] = useState(false)
   const [showHireModal, setShowHireModal] = useState(false)
   const [showDetailModal, setShowDetailModal] = useState(false)
-  const [showAssignJobModal, setShowAssignJobModal] = useState(false)
   const [showTimeTrackingModal, setShowTimeTrackingModal] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
@@ -348,12 +340,14 @@ export const EmployeeList = () => {
   const [editingCrew, setEditingCrew] = useState<CrewCardData | null>(null)
   const [showCrewDetail, setShowCrewDetail] = useState(false)
   const [showAddMemberModal, setShowAddMemberModal] = useState(false)
-  const [showAssignJobsModal, setShowAssignJobsModal] = useState(false)
   const [availableEmployees, setAvailableEmployees] = useState<ApiEmployee[]>([])
-  const [availableJobs, setAvailableJobs] = useState<ApiJob[]>([])
   const [editingCrewDetail, setEditingCrewDetail] = useState<CrewDetailData | null>(null)
   const [crewFilterStatus, setCrewFilterStatus] = useState<string>("all")
   const [crewSortBy, setCrewSortBy] = useState<string>("name")
+  const [crewSearchQuery, setCrewSearchQuery] = useState("")
+  const [assignmentCounts, setAssignmentCounts] = useState<Record<string, number>>({})
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null)
+  const [expandedRowAssignments, setExpandedRowAssignments] = useState<JobAssignment[]>([])
 
   const isMobile = useMediaQuery('(max-width: 767px)')
   const isTablet = useMediaQuery('(min-width: 768px) and (max-width: 1024px)')
@@ -523,8 +517,50 @@ export const EmployeeList = () => {
     if (activeTab === "crews") fetchCrews()
   }, [activeTab, fetchCrews, crewFilterStatus, crewSortBy])
 
+  const [employeeCrewMap, setEmployeeCrewMap] = useState<Record<string, string>>({})
+
+  // When on employees tab: load assignment counts and crew map for Crew/Current Job columns
+  useEffect(() => {
+    if (activeTab !== "employees") return
+    const load = async () => {
+      try {
+        const [countsRes, crewsRes] = await Promise.all([
+          fetch("/api/employees/assignment-counts"),
+          fetch("/api/crews").then((r) => (r.ok ? r.json() : [])),
+        ])
+        if (countsRes.ok) {
+          const data = await countsRes.json()
+          setAssignmentCounts(data.counts ?? {})
+        }
+        if (Array.isArray(crewsRes) && crewsRes.length > 0) {
+          const withMembers = await Promise.all(
+            crewsRes.map((c: { id: string }) =>
+              fetch(`/api/crews/${c.id}/members`).then((r) => (r.ok ? r.json() : []))
+            )
+          )
+          const map: Record<string, string> = {}
+          crewsRes.forEach((c: { id: string; name: string }, i: number) => {
+            const members = withMembers[i] || []
+            members.forEach((m: { employeeId: string }) => {
+              if (m.employeeId) map[m.employeeId] = c.name
+            })
+          })
+          setEmployeeCrewMap(map)
+        }
+      } catch (e) {
+        console.error("Failed to load assignment counts / crew map:", e)
+      }
+    }
+    load()
+  }, [activeTab])
+
   // Crew CRUD operations
-  const handleCreateCrew = async (name: string, description?: string, supervisorId?: string) => {
+  const handleCreateCrew = async (
+    name: string,
+    description?: string,
+    supervisorId?: string,
+    memberIds?: string[]
+  ) => {
     try {
       const res = await fetch("/api/crews", {
         method: "POST",
@@ -532,6 +568,16 @@ export const EmployeeList = () => {
         body: JSON.stringify({ name, description: description || null, supervisorId: supervisorId || null }),
       })
       if (!res.ok) throw new Error((await res.json()).error || "Failed to create crew")
+      const created = (await res.json()) as { id: string }
+      if (created?.id && Array.isArray(memberIds) && memberIds.length > 0) {
+        for (const empId of memberIds) {
+          await fetch(`/api/crews/${created.id}/members`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ employeeId: empId }),
+          })
+        }
+      }
       setShowCrewForm(false)
       await fetchCrews()
     } catch (e) {
@@ -597,36 +643,6 @@ export const EmployeeList = () => {
       await fetchCrews()
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed to remove member")
-    }
-  }
-
-  const handleAssignJobsToCrew = async (crewId: string, jobIds: string[]) => {
-    try {
-      const res = await fetch(`/api/crews/${crewId}/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobIds }),
-      })
-      if (!res.ok) throw new Error((await res.json()).error || "Failed to assign jobs")
-      setShowAssignJobsModal(false)
-      await loadCrewDetail(crewId)
-      await fetchCrews()
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to assign jobs")
-    }
-  }
-
-  const handleRemoveJobFromCrew = async (crewId: string, jobId: string) => {
-    if (!confirm("Remove this job assignment?")) return
-    try {
-      const res = await fetch(`/api/crews/${crewId}/jobs?jobId=${encodeURIComponent(jobId)}`, {
-        method: "DELETE"
-      })
-      if (!res.ok) throw new Error((await res.json()).error || "Failed to remove job")
-      await loadCrewDetail(crewId)
-      await fetchCrews()
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to remove job")
     }
   }
 
@@ -718,14 +734,32 @@ export const EmployeeList = () => {
     setShowEditModal(true)
   }
 
-  const handleViewDetail = (user: User) => {
+  const [detailModalAssignments, setDetailModalAssignments] = useState<JobAssignment[]>([])
+
+  const handleViewDetail = async (user: User) => {
     setSelectedEmployee(user)
     setShowDetailModal(true)
+    try {
+      const a = await getEmployeeAssignments(user.id)
+      setDetailModalAssignments((a as JobAssignment[]) ?? [])
+    } catch {
+      setDetailModalAssignments([])
+    }
   }
 
-  const handleAssignJob = (user: User) => {
-    setSelectedEmployee(user)
-    setShowAssignJobModal(true)
+  const handleExpandRow = async (user: User) => {
+    if (expandedRowId === user.id) {
+      setExpandedRowId(null)
+      setExpandedRowAssignments([])
+      return
+    }
+    setExpandedRowId(user.id)
+    try {
+      const a = await getEmployeeAssignments(user.id)
+      setExpandedRowAssignments(a as JobAssignment[])
+    } catch {
+      setExpandedRowAssignments([])
+    }
   }
 
   const handleTimeTracking = (user: User) => {
@@ -738,6 +772,37 @@ export const EmployeeList = () => {
     setShowHireModal(false)
     loadData()
   }
+
+  // Derived stats for dashboard cards (employees tab)
+  const employeeStats = useMemo(() => {
+    const total = employees.length
+    const inCrews = Object.keys(employeeCrewMap).length
+    const withoutCrew = total - inCrews
+    const withActiveJobs = Object.keys(assignmentCounts).filter((id) => (assignmentCounts[id] ?? 0) > 0).length
+    const withoutJobs = total - withActiveJobs
+    return { total, inCrews, withoutCrew, withActiveJobs, withoutJobs }
+  }, [employees.length, employeeCrewMap, assignmentCounts])
+
+  // Crew stats for Crews tab (same structure as employee stats for consistent layout)
+  const crewStats = useMemo(() => {
+    const totalCrews = crews.length
+    const totalMembers = crews.reduce((sum, c) => sum + c.total, 0)
+    const available = crews.reduce((sum, c) => sum + c.available, 0)
+    const onJobs = crews.reduce((sum, c) => sum + c.onJob, 0)
+    const emptyCrews = crews.filter((c) => c.total === 0).length
+    return { totalCrews, totalMembers, available, onJobs, emptyCrews }
+  }, [crews])
+
+  // Filter crews by search (name or supervisor)
+  const filteredCrews = useMemo(() => {
+    if (!crewSearchQuery.trim()) return crews
+    const q = crewSearchQuery.toLowerCase()
+    return crews.filter(
+      (c) =>
+        c.crewName.toLowerCase().includes(q) ||
+        (c.supervisor && c.supervisor.toLowerCase().includes(q))
+    )
+  }, [crews, crewSearchQuery])
 
   // Filter employees
   const filteredEmployees = useMemo(() => {
@@ -813,30 +878,45 @@ export const EmployeeList = () => {
       key: "name",
       header: "Employee",
       render: (user: User) => (
-        <button
-          onClick={() => handleViewDetail(user)}
-          className="flex items-center space-x-3 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#2e8b57] focus:ring-offset-2 rounded-lg p-1 group"
-          aria-label={`View details for ${user.name}`}
-        >
-          <div className="relative dropdown-container">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2e8b57] to-[#8b4513] flex items-center justify-center text-white font-bold text-sm ring-2 ring-transparent group-hover:ring-[#2e8b57] transition-all">
-              {user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
-            </div>
-            <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 ${user.status === "Active" ? "bg-[#2e8b57]" :
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); handleExpandRow(user); }}
+            className="p-1 rounded hover:bg-[#d4a574]/20 text-[#8b4513] dark:text-[#d4a574]"
+            aria-expanded={expandedRowId === user.id}
+            aria-label={expandedRowId === user.id ? "Collapse row" : "Expand row"}
+          >
+            {expandedRowId === user.id ? (
+              <ChevronUpIcon className="w-4 h-4" />
+            ) : (
+              <ChevronDownIcon className="w-4 h-4" />
+            )}
+          </button>
+          <button
+            onClick={() => handleViewDetail(user)}
+            className="flex items-center space-x-3 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#2e8b57] focus:ring-offset-2 rounded-lg p-1 group"
+            aria-label={`View details for ${user.name}`}
+          >
+            <div className="relative dropdown-container">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2e8b57] to-[#8b4513] flex items-center justify-center text-white font-bold text-sm ring-2 ring-transparent group-hover:ring-[#2e8b57] transition-all">
+                {user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
+              </div>
+              <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 ${user.status === "Active" ? "bg-[#2e8b57]" :
                 user.status === "Pending" ? "bg-[#d88c4a]" : "bg-[#8b4513]"
-              }`} />
-          </div>
-          <div className="text-left">
-            <div className="font-medium text-[#8b4513] dark:text-[#d4a574]">{user.name}</div>
-            <div className="flex items-center gap-2 text-xs">
-              {user.employeeNumber && (
-                <span className="text-[#b85e1a]/70 dark:text-gray-400">ID: {user.employeeNumber}</span>
-              )}
-              <span className="text-[#b85e1a]/50 dark:text-gray-600">•</span>
-              <span className="text-[#b85e1a]/70 dark:text-gray-400">{user.email}</span>
+                }`} />
             </div>
-          </div>
-        </button>
+            <div className="text-left">
+              <div className="font-medium text-[#8b4513] dark:text-[#d4a574]">{user.name}</div>
+              <div className="flex items-center gap-2 text-xs">
+                {user.employeeNumber && (
+                  <span className="text-[#b85e1a]/70 dark:text-gray-400">ID: {user.employeeNumber}</span>
+                )}
+                <span className="text-[#b85e1a]/50 dark:text-gray-600">•</span>
+                <span className="text-[#b85e1a]/70 dark:text-gray-400">{user.email}</span>
+              </div>
+            </div>
+          </button>
+        </div>
       ),
       hideOnMobile: false,
       hideOnTablet: false,
@@ -849,6 +929,31 @@ export const EmployeeList = () => {
       ),
       hideOnMobile: false,
       hideOnTablet: false,
+    },
+    {
+      key: "crew",
+      header: "Crew",
+      render: (user: User) => (
+        <span className="text-[#8b4513] dark:text-[#d4a574]">
+          {employeeCrewMap[user.id] ?? "Unassigned"}
+        </span>
+      ),
+      hideOnMobile: true,
+      hideOnTablet: false,
+    },
+    {
+      key: "currentJob",
+      header: "Current Job",
+      render: (user: User) => {
+        const count = assignmentCounts[user.id] ?? 0
+        return (
+          <span className="text-[#8b4513] dark:text-[#d4a574]">
+            {count > 0 ? `${count} job${count !== 1 ? "s" : ""}` : "—"}
+          </span>
+        )
+      },
+      hideOnMobile: true,
+      hideOnTablet: true,
     },
     {
       key: "status",
@@ -921,12 +1026,6 @@ export const EmployeeList = () => {
                   className="w-full px-4 py-2 text-left text-sm text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                 >
                   View Jobs
-                </button>
-                <button
-                  onClick={() => { handleAssignJob(user); setOpenDropdownId(null); }}
-                  className="w-full px-4 py-2 text-left text-sm text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
-                >
-                  Assign to Job
                 </button>
                 <button
                   onClick={() => { handleTimeTracking(user); setOpenDropdownId(null); }}
@@ -1027,12 +1126,6 @@ export const EmployeeList = () => {
                   View Jobs
                 </button>
                 <button
-                  onClick={() => { handleAssignJob(user); setIsOpen(false); }}
-                  className="w-full px-4 py-2 text-left text-sm text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
-                >
-                  Assign to Job
-                </button>
-                <button
                   onClick={() => { handleTimeTracking(user); setIsOpen(false); }}
                   className="w-full px-4 py-2 text-left text-sm text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 transition-colors"
                 >
@@ -1115,12 +1208,14 @@ export const EmployeeList = () => {
     )
   }
 
+  const statCardBase = "rounded-xl border p-5 transition-shadow hover:shadow-md flex flex-col gap-2 min-h-[100px] justify-center"
+
   return (
-    <div className="space-y-6">
-      {/* Header with Tabs and Stats */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-8">
+      {/* Header: Title + Tabs only */}
+      <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#8b4513] dark:text-[#d4a574] sm:text-3xl">
+          <h1 className="text-2xl font-bold text-[#8b4513] dark:text-[#d4a574] sm:text-3xl tracking-tight">
             {activeTab === "employees" ? "Employees" : "Crews"}
           </h1>
           <p className="text-sm text-[#b85e1a]/80 dark:text-gray-400 mt-1">
@@ -1129,123 +1224,179 @@ export const EmployeeList = () => {
               : "View and manage your crews and team assignments"}
           </p>
         </div>
-
-        <div className="mt-4 sm:mt-0 flex items-center gap-3">
-          {/* Tabs */}
-          <div className="flex gap-1 bg-[#f5f1e6] dark:bg-gray-800 p-1 rounded-lg border border-[#d4a574]/30">
-            <button
-              onClick={() => router.push("/admin/employees?tab=employees")}
-              className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-all
-                ${activeTab === "employees"
-                  ? "bg-[#2e8b57] text-white shadow-md"
-                  : "text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20"
-                }`}
-            >
-              <UserGroupIcon className="w-4 h-4" />
-              Employees
-            </button>
-            <button
-              onClick={() => router.push("/admin/employees?tab=crews")}
-              className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-all
-                ${activeTab === "crews"
-                  ? "bg-[#2e8b57] text-white shadow-md"
-                  : "text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20"
-                }`}
-            >
-              <BriefcaseIcon className="w-4 h-4" />
-              Crews
-            </button>
-          </div>
-
-          {/* Stats Cards - Only show for employees tab */}
-          {activeTab === "employees" && (
-            <>
-              <Card className="p-3 bg-[#2e8b57]/10 border border-[#2e8b57]/30 dark:border-[#4a7c5c]/50">
-                <div className="text-xs text-[#2e8b57] dark:text-[#4a7c5c]">Active</div>
-                <div className="text-xl font-bold text-[#2e8b57] dark:text-[#4a7c5c]">{stats.active}</div>
-              </Card>
-              <Card className="p-3 bg-[#d88c4a]/10 border border-[#d88c4a]/30 dark:border-[#d88c4a]/50">
-                <div className="text-xs text-[#b85e1a] dark:text-[#d88c4a]">Pending</div>
-                <div className="text-xl font-bold text-[#b85e1a] dark:text-[#d88c4a]">{stats.pending}</div>
-              </Card>
-              <Card className="p-3 bg-[#8b4513]/10 border border-[#8b4513]/30 dark:border-[#d4a574]/50">
-                <div className="text-xs text-[#8b4513] dark:text-[#d4a574]">Inactive</div>
-                <div className="text-xl font-bold text-[#8b4513] dark:text-[#d4a574]">{stats.inactive}</div>
-              </Card>
-              <Button
-                variant="primary"
-                onClick={() => setShowHireModal(true)}
-                className="ml-2 bg-[#2e8b57] hover:bg-[#1f6b41] text-white transition-all hover:shadow-lg hover:shadow-[#2e8b57]/20 transform hover:-translate-y-0.5"
-                aria-label="Hire new employee"
-              >
-                + Hire
-              </Button>
-            </>
-          )}
+        <div className="flex gap-1 bg-[#f5f1e6] dark:bg-gray-800 p-1.5 rounded-lg border border-[#d4a574]/30 w-fit">
+          <button
+            onClick={() => router.push("/admin/employees?tab=employees")}
+            className={`px-4 py-2.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all
+              ${activeTab === "employees"
+                ? "bg-[#2e8b57] text-white shadow-md"
+                : "text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20"
+              }`}
+          >
+            <UserGroupIcon className="w-4 h-4" />
+            Employees
+          </button>
+          <button
+            onClick={() => router.push("/admin/employees?tab=crews")}
+            className={`px-4 py-2.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all
+              ${activeTab === "crews"
+                ? "bg-[#2e8b57] text-white shadow-md"
+                : "text-[#8b4513] dark:text-[#d4a574] hover:bg-[#d4a574]/20"
+              }`}
+          >
+            <BriefcaseIcon className="w-4 h-4" />
+            Crews
+          </button>
         </div>
       </div>
 
-      {/* Filters */}
-      {activeTab === "employees" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="relative">
-            <Input
-              type="search"
-              placeholder="Search by name, email, or ID..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] placeholder-[#b85e1a]/50 dark:placeholder-gray-500 focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent"
-              aria-label="Search employees"
-            />
-            <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#b85e1a]/60 dark:text-[#d4a574]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+      {/* Top section: Stats cards (same structure for both tabs) */}
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-[#8b4513] dark:text-[#d4a574] uppercase tracking-wider">
+          Overview
+        </h2>
+        {activeTab === "employees" ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <Card className={`${statCardBase} bg-white dark:bg-gray-800 border-[#d4a574]/30`}>
+              <div className="flex items-center gap-2 text-[#b85e1a]/80 dark:text-gray-400">
+                <UsersIcon className="w-5 h-5 shrink-0" />
+                <span className="text-xs font-medium uppercase tracking-wide">Total Employees</span>
+              </div>
+              <div className="text-2xl font-bold text-[#8b4513] dark:text-[#d4a574]">{employeeStats.total}</div>
+            </Card>
+            <Card className={`${statCardBase} bg-[#2e8b57]/5 dark:bg-[#2e8b57]/10 border-[#2e8b57]/30`}>
+              <div className="flex items-center gap-2 text-[#2e8b57] dark:text-[#4a7c5c]">
+                <UserGroupIcon className="w-5 h-5 shrink-0" />
+                <span className="text-xs font-medium uppercase tracking-wide">In Crews</span>
+              </div>
+              <div className="text-2xl font-bold text-[#2e8b57] dark:text-[#4a7c5c]">{employeeStats.inCrews}</div>
+            </Card>
+            <Card className={`${statCardBase} bg-[#8b4513]/5 dark:bg-[#8b4513]/10 border-[#8b4513]/30`}>
+              <div className="flex items-center gap-2 text-[#8b4513] dark:text-[#d4a574]">
+                <UserIcon className="w-5 h-5 shrink-0" />
+                <span className="text-xs font-medium uppercase tracking-wide">Without Crew</span>
+              </div>
+              <div className="text-2xl font-bold text-[#8b4513] dark:text-[#d4a574]">{employeeStats.withoutCrew}</div>
+            </Card>
+            <Card className={`${statCardBase} bg-[#2e8b57]/5 dark:bg-[#2e8b57]/10 border-[#2e8b57]/30`}>
+              <div className="flex items-center gap-2 text-[#2e8b57] dark:text-[#4a7c5c]">
+                <BriefcaseIcon className="w-5 h-5 shrink-0" />
+                <span className="text-xs font-medium uppercase tracking-wide">With Active Jobs</span>
+              </div>
+              <div className="text-2xl font-bold text-[#2e8b57] dark:text-[#4a7c5c]">{employeeStats.withActiveJobs}</div>
+            </Card>
+            <Card className={`${statCardBase} bg-[#d88c4a]/5 dark:bg-[#d88c4a]/10 border-[#d88c4a]/30`}>
+              <div className="flex items-center gap-2 text-[#b85e1a] dark:text-[#d88c4a]">
+                <ClockIcon className="w-5 h-5 shrink-0" />
+                <span className="text-xs font-medium uppercase tracking-wide">Without Assignments</span>
+              </div>
+              <div className="text-2xl font-bold text-[#b85e1a] dark:text-[#d88c4a]">{employeeStats.withoutJobs}</div>
+            </Card>
           </div>
-          <FilterSelect
-            value={filterStatus}
-            onChange={setFilterStatus}
-            options={statusOptions}
-            label="Filter by status"
-            icon={<UserGroupIcon className="w-4 h-4" />}
-          />
-          <FilterSelect
-            value={filterRole}
-            onChange={setFilterRole}
-            options={roleOptions}
-            label="Filter by role"
-            icon={<BriefcaseIcon className="w-4 h-4" />}
-          />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <FilterSelect
-            value={crewFilterStatus}
-            onChange={setCrewFilterStatus}
-            options={crewFilterOptions}
-            label="Filter crews"
-            icon={<UsersIcon className="w-4 h-4" />}
-          />
-          <FilterSelect
-            value={crewSortBy}
-            onChange={setCrewSortBy}
-            options={crewSortOptions}
-            label="Sort crews"
-            icon={<ChevronDownIcon className="w-4 h-4" />}
-          />
-          <div className="flex justify-end">
-            <Button
-              variant="primary"
-              onClick={() => { setEditingCrew(null); setEditingCrewDetail(null); setShowCrewForm(true); }}
-              className="bg-[#2e8b57] hover:bg-[#1f6b41] text-white w-full sm:w-auto"
-            >
-              <PlusIcon className="w-5 h-5 mr-2 inline" />
-              Add Crew
-            </Button>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <Card className={`${statCardBase} bg-white dark:bg-gray-800 border-[#d4a574]/30`}>
+              <div className="flex items-center gap-2 text-[#b85e1a]/80 dark:text-gray-400">
+                <BriefcaseIcon className="w-5 h-5 shrink-0" />
+                <span className="text-xs font-medium uppercase tracking-wide">Total Crews</span>
+              </div>
+              <div className="text-2xl font-bold text-[#8b4513] dark:text-[#d4a574]">{crewStats.totalCrews}</div>
+            </Card>
+            <Card className={`${statCardBase} bg-[#2e8b57]/5 dark:bg-[#2e8b57]/10 border-[#2e8b57]/30`}>
+              <div className="flex items-center gap-2 text-[#2e8b57] dark:text-[#4a7c5c]">
+                <UsersIcon className="w-5 h-5 shrink-0" />
+                <span className="text-xs font-medium uppercase tracking-wide">Total Members</span>
+              </div>
+              <div className="text-2xl font-bold text-[#2e8b57] dark:text-[#4a7c5c]">{crewStats.totalMembers}</div>
+            </Card>
+            <Card className={`${statCardBase} bg-[#2e8b57]/5 dark:bg-[#2e8b57]/10 border-[#2e8b57]/30`}>
+              <div className="flex items-center gap-2 text-[#2e8b57] dark:text-[#4a7c5c]">
+                <CheckCircleIcon className="w-5 h-5 shrink-0" />
+                <span className="text-xs font-medium uppercase tracking-wide">Available</span>
+              </div>
+              <div className="text-2xl font-bold text-[#2e8b57] dark:text-[#4a7c5c]">{crewStats.available}</div>
+            </Card>
+            <Card className={`${statCardBase} bg-[#d88c4a]/5 dark:bg-[#d88c4a]/10 border-[#d88c4a]/30`}>
+              <div className="flex items-center gap-2 text-[#b85e1a] dark:text-[#d88c4a]">
+                <ClockIcon className="w-5 h-5 shrink-0" />
+                <span className="text-xs font-medium uppercase tracking-wide">On Jobs</span>
+              </div>
+              <div className="text-2xl font-bold text-[#b85e1a] dark:text-[#d88c4a]">{crewStats.onJobs}</div>
+            </Card>
+            <Card className={`${statCardBase} bg-[#8b4513]/5 dark:bg-[#8b4513]/10 border-[#8b4513]/30`}>
+              <div className="flex items-center gap-2 text-[#8b4513] dark:text-[#d4a574]">
+                <UserGroupIcon className="w-5 h-5 shrink-0" />
+                <span className="text-xs font-medium uppercase tracking-wide">Empty Crews</span>
+              </div>
+              <div className="text-2xl font-bold text-[#8b4513] dark:text-[#d4a574]">{crewStats.emptyCrews}</div>
+            </Card>
           </div>
-        </div>
-      )}
+        )}
+      </section>
 
-      {/* Content */}
+      {/* Filters + Search + Actions (same layout for both tabs) */}
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-[#8b4513] dark:text-[#d4a574] uppercase tracking-wider">
+          Filters &amp; actions
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {activeTab === "employees" ? (
+            <>
+              <div className="relative lg:col-span-1">
+                <Input
+                  type="search"
+                  placeholder="Search by name, email, or ID..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-full border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] placeholder-[#b85e1a]/50 focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent rounded-lg"
+                  aria-label="Search employees"
+                />
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#b85e1a]/60 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <FilterSelect value={filterStatus} onChange={setFilterStatus} options={statusOptions} label="Status" icon={<UserGroupIcon className="w-4 h-4" />} />
+              <FilterSelect value={filterRole} onChange={setFilterRole} options={roleOptions} label="Role" icon={<BriefcaseIcon className="w-4 h-4" />} />
+              <div className="flex items-end">
+                <Button variant="primary" onClick={() => setShowHireModal(true)} className="w-full sm:w-auto bg-[#2e8b57] hover:bg-[#1f6b41] text-white" aria-label="Hire new employee">
+                  <PlusIcon className="w-5 h-5 mr-2 inline" />
+                  Hire Employee
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="relative lg:col-span-1">
+                <Input
+                  type="search"
+                  placeholder="Search crews by name or supervisor..."
+                  value={crewSearchQuery}
+                  onChange={(e) => setCrewSearchQuery(e.target.value)}
+                  className="pl-10 w-full border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] placeholder-[#b85e1a]/50 focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent rounded-lg"
+                  aria-label="Search crews"
+                />
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#b85e1a]/60 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <FilterSelect value={crewFilterStatus} onChange={setCrewFilterStatus} options={crewFilterOptions} label="Filter crews" icon={<UsersIcon className="w-4 h-4" />} />
+              <FilterSelect value={crewSortBy} onChange={setCrewSortBy} options={crewSortOptions} label="Sort by" icon={<ChevronDownIcon className="w-4 h-4" />} />
+              <div className="flex items-end">
+                <Button variant="primary" onClick={() => { setEditingCrew(null); setEditingCrewDetail(null); setShowCrewForm(true); }} className="w-full sm:w-auto bg-[#2e8b57] hover:bg-[#1f6b41] text-white">
+                  <PlusIcon className="w-5 h-5 mr-2 inline" />
+                  Add Crew
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Content: Table or list */}
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-[#8b4513] dark:text-[#d4a574] uppercase tracking-wider">
+          {activeTab === "employees" ? "Employee list" : "Crew list"}
+        </h2>
       {activeTab === "employees" ? (
         <>
           {filteredEmployees.length === 0 ? (
@@ -1269,16 +1420,69 @@ export const EmployeeList = () => {
             </div>
           ) : (
             <div className="card overflow-hidden border-[#d4a574]/30 dark:border-[#8b4513]/50">
-              <DataTable
-                data={filteredEmployees}
-                columns={columns.filter(col => {
-                  if (isTablet && col.hideOnTablet) return false
-                  if (isMobile && col.hideOnMobile) return false
-                  return true
-                })}
-                keyExtractor={(user: User) => user.id}
-                emptyMessage="No employees found."
-              />
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-[#d4a574]/20 dark:divide-[#8b4513]/20">
+                  <thead className="bg-[#f5f1e6] dark:bg-gray-800">
+                    <tr>
+                      {columns.filter(col => {
+                        if (isTablet && col.hideOnTablet) return false
+                        if (isMobile && col.hideOnMobile) return false
+                        return true
+                      }).map((col) => (
+                        <th key={col.key} className="px-4 py-3 text-left text-xs font-medium text-[#8b4513] dark:text-[#d4a574] uppercase tracking-wider">
+                          {col.header}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-[#d4a574]/20 dark:divide-[#8b4513]/20">
+                    {filteredEmployees.map((user) => (
+                      <React.Fragment key={user.id}>
+                        <tr className="hover:bg-[#f5f1e6]/50 dark:hover:bg-gray-800/50 transition-colors">
+                          {columns.filter(col => {
+                            if (isTablet && col.hideOnTablet) return false
+                            if (isMobile && col.hideOnMobile) return false
+                            return true
+                          }).map((col) => (
+                            <td key={col.key} className="px-4 py-3 text-sm">
+                              {col.render(user)}
+                            </td>
+                          ))}
+                        </tr>
+                        {expandedRowId === user.id && (
+                          <tr className="bg-[#f5f1e6]/30 dark:bg-gray-800/30">
+                            <td colSpan={columns.filter(c => !(isTablet && c.hideOnTablet) && !(isMobile && c.hideOnMobile)).length} className="px-4 py-3">
+                              <div className="text-sm">
+                                <h4 className="font-medium text-[#8b4513] dark:text-[#d4a574] mb-2">Assigned jobs</h4>
+                                {expandedRowAssignments.length === 0 ? (
+                                  <p className="text-[#b85e1a]/70 dark:text-gray-400">No job assignments. Manage jobs on the Jobs page.</p>
+                                ) : (
+                                  <ul className="space-y-1">
+                                    {expandedRowAssignments.map((a) => (
+                                      <li key={a.jobId} className="flex items-center justify-between py-1.5 px-2 rounded bg-white dark:bg-gray-800 border border-[#d4a574]/20">
+                                        <span className="font-mono text-[#b85e1a]">{a.jobNumber}</span>
+                                        <span className="text-[#8b4513] dark:text-[#d4a574]">{a.jobTitle}</span>
+                                        <StatusBadge type="job" value={a.status} />
+                                        <Link
+                                          href={`/admin/jobs/${a.jobId}`}
+                                          className="inline-flex items-center gap-1 text-xs text-[#2e8b57] hover:underline"
+                                        >
+                                          <EyeIcon className="w-4 h-4" />
+                                          View Job
+                                        </Link>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </>
@@ -1290,24 +1494,26 @@ export const EmployeeList = () => {
                 <Skeleton key={i} className="h-96 rounded-lg" />
               ))}
             </div>
-          ) : crews.length === 0 ? (
+          ) : filteredCrews.length === 0 ? (
             <EmptyState
-              title="No crews found"
-              description="Create your first crew to start organizing your team"
+              title={crewSearchQuery.trim() ? "No crews match your search" : "No crews found"}
+              description={crewSearchQuery.trim() ? "Try a different search or filter." : "Create your first crew to start organizing your team."}
               action={
-                <Button
-                  variant="primary"
-                  onClick={() => { setEditingCrew(null); setEditingCrewDetail(null); setShowCrewForm(true); }}
-                  className="bg-[#2e8b57] hover:bg-[#1f6b41] text-white"
-                >
-                  <PlusIcon className="w-5 h-5 mr-2 inline" />
-                  Create Crew
-                </Button>
+                !crewSearchQuery.trim() ? (
+                  <Button
+                    variant="primary"
+                    onClick={() => { setEditingCrew(null); setEditingCrewDetail(null); setShowCrewForm(true); }}
+                    className="bg-[#2e8b57] hover:bg-[#1f6b41] text-white"
+                  >
+                    <PlusIcon className="w-5 h-5 mr-2 inline" />
+                    Create Crew
+                  </Button>
+                ) : undefined
               }
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {crews.map((crew) => (
+              {filteredCrews.map((crew) => (
                 <CrewCard
                   key={crew.id}
                   crew={crew}
@@ -1344,6 +1550,7 @@ export const EmployeeList = () => {
           )}
         </div>
       )}
+      </section>
 
       {/* Employee Modals */}
       <Modal isOpen={showHireModal} onClose={() => setShowHireModal(false)} title="Hire New Employee">
@@ -1371,18 +1578,9 @@ export const EmployeeList = () => {
             isOpen={showDetailModal}
             employee={selectedEmployee as any}
             onClose={() => setShowDetailModal(false)}
-          />
-        )}
-      </Modal>
-
-      <Modal isOpen={showAssignJobModal} onClose={() => setShowAssignJobModal(false)} title="Assign Job">
-        {selectedEmployee && (
-          <AssignJobModal
-            isOpen={showAssignJobModal}
-            onClose={() => setShowAssignJobModal(false)}
-            employeeId={selectedEmployee.id}
-            employeeName={selectedEmployee.name}
-            onSuccess={loadData}
+            crewName={employeeCrewMap[selectedEmployee.id] ?? null}
+            assignedJobs={detailModalAssignments}
+            jobDetailUrl={(jobId) => `/admin/jobs/${jobId}`}
           />
         )}
       </Modal>
@@ -1400,7 +1598,17 @@ export const EmployeeList = () => {
 
       <Modal isOpen={showAssignments} onClose={() => setShowAssignments(false)} title={`${selectedEmployee?.name}'s Jobs`} size="lg">
         {assignments.length === 0 ? (
-          <EmptyState title="No job assignments" description="This employee hasn't been assigned to any jobs yet." />
+          <EmptyState
+            title="No job assignments"
+            description="This employee hasn't been assigned to any jobs yet. Assign jobs from the Jobs page."
+            action={
+              <Link href="/admin/jobs">
+                <Button variant="primary" className="bg-[#2e8b57] hover:bg-[#1f6b41] text-white">
+                  Go to Jobs
+                </Button>
+              </Link>
+            }
+          />
         ) : (
           <div className="space-y-3">
             {assignments.map((assignment) => (
@@ -1409,7 +1617,16 @@ export const EmployeeList = () => {
                   <span className="font-medium text-[#8b4513] dark:text-[#d4a574]">
                     {assignment.jobNumber}
                   </span>
-                  <StatusBadge type="job" value={assignment.status} />
+                  <div className="flex items-center gap-2">
+                    <StatusBadge type="job" value={assignment.status} />
+                    <Link
+                      href={`/admin/jobs/${assignment.jobId}`}
+                      className="inline-flex items-center gap-1 text-sm text-[#2e8b57] hover:underline"
+                    >
+                      <EyeIcon className="w-4 h-4" />
+                      View Job
+                    </Link>
+                  </div>
                 </div>
                 <p className="text-sm text-[#b85e1a]/80 dark:text-gray-400 mb-2">
                   {assignment.jobTitle}
@@ -1435,15 +1652,15 @@ export const EmployeeList = () => {
             initialName={editingCrewDetail?.name ?? editingCrew?.crewName ?? ""}
             initialDescription={editingCrewDetail?.description ?? ""}
             initialSupervisorId={editingCrewDetail?.supervisorId ?? editingCrew?.supervisorId}
-            employees={employees.filter(e => e.role === "Supervisor").map(e => ({
-              id: e.id,
-              name: e.name
-            }))}
+            initialMemberIds={editingCrewDetail?.members?.map((m) => m.employeeId) ?? editingCrew?.members?.map((m) => m.employeeId) ?? []}
+            isEdit={!!(editingCrewDetail ?? editingCrew)}
+            supervisorOptions={employees.filter((e) => e.role === "Supervisor").map((e) => ({ id: e.id, name: e.name }))}
+            memberOptions={employees.map((e) => ({ id: e.id, name: e.name }))}
             onCancel={() => { setShowCrewForm(false); setEditingCrew(null); setEditingCrewDetail(null); }}
-            onSubmit={async (name, description, supervisorId) => {
+            onSubmit={async (name, description, supervisorId, memberIds) => {
               const id = editingCrewDetail?.id ?? editingCrew?.id;
               if (id) await handleUpdateCrew(id, name, description, supervisorId);
-              else await handleCreateCrew(name, description, supervisorId);
+              else await handleCreateCrew(name, description, supervisorId, memberIds);
             }}
           />
         </Modal>
@@ -1473,12 +1690,6 @@ export const EmployeeList = () => {
               setShowAddMemberModal(true)
             }}
             onRemoveMember={(employeeId) => handleRemoveMember(selectedCrew.id, employeeId)}
-            onAssignJobs={async () => {
-              const res = await fetch("/api/jobs/available?limit=200")
-              if (res.ok) setAvailableJobs(await res.json())
-              setShowAssignJobsModal(true)
-            }}
-            onRemoveJob={(jobId) => handleRemoveJobFromCrew(selectedCrew.id, jobId)}
           />
         </Modal>
       )}
@@ -1503,25 +1714,6 @@ export const EmployeeList = () => {
         </Modal>
       )}
 
-      {/* Assign Jobs Modal */}
-      {showAssignJobsModal && selectedCrew && (
-        <Modal
-          isOpen={true}
-          onClose={() => setShowAssignJobsModal(false)}
-          title={`Assign Jobs to ${selectedCrew.name}`}
-          size="lg"
-        >
-          <AssignJobsModalInner
-            jobs={availableJobs}
-            existingJobIds={new Set(selectedCrew.jobs.map(j => j.jobId))}
-            onSelect={async (jobIds) => {
-              await handleAssignJobsToCrew(selectedCrew.id, jobIds)
-              setShowAssignJobsModal(false)
-            }}
-            onClose={() => setShowAssignJobsModal(false)}
-          />
-        </Modal>
-      )}
     </div>
   )
 }
@@ -1532,27 +1724,44 @@ function CrewFormModalInner({
   initialName,
   initialDescription,
   initialSupervisorId,
-  employees,
+  initialMemberIds,
+  isEdit,
+  supervisorOptions,
+  memberOptions,
   onCancel,
   onSubmit,
 }: {
   initialName: string
   initialDescription: string
   initialSupervisorId?: string | null
-  employees: Array<{ id: string; name: string }>
+  initialMemberIds?: string[]
+  isEdit: boolean
+  supervisorOptions: Array<{ id: string; name: string }>
+  memberOptions: Array<{ id: string; name: string }>
   onCancel: () => void
-  onSubmit: (name: string, description?: string, supervisorId?: string) => Promise<void>
+  onSubmit: (name: string, description?: string, supervisorId?: string, memberIds?: string[]) => Promise<void>
 }) {
   const [name, setName] = useState(initialName)
   const [description, setDescription] = useState(initialDescription)
   const [supervisorId, setSupervisorId] = useState(initialSupervisorId || "")
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set(initialMemberIds || []))
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     setName(initialName)
     setDescription(initialDescription)
     setSupervisorId(initialSupervisorId || "")
-  }, [initialName, initialDescription, initialSupervisorId])
+    setSelectedMemberIds(new Set(initialMemberIds || []))
+  }, [initialName, initialDescription, initialSupervisorId, initialMemberIds])
+
+  const toggleMember = (id: string) => {
+    setSelectedMemberIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   return (
     <div className="space-y-4">
@@ -1572,19 +1781,48 @@ function CrewFormModalInner({
 
       <div>
         <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
-          Supervisor (Optional)
+          Crew Leader (Supervisor)
         </label>
         <select
           value={supervisorId}
           onChange={(e) => setSupervisorId(e.target.value)}
           className="w-full rounded-lg border border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800 px-3 py-2 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent"
         >
-          <option value="">-- No supervisor --</option>
-          {employees.map(emp => (
+          <option value="">— No crew leader —</option>
+          {supervisorOptions.map((emp) => (
             <option key={emp.id} value={emp.id}>{emp.name}</option>
           ))}
         </select>
       </div>
+
+      {!isEdit && (
+        <div>
+          <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-2">
+            Add members now (optional)
+          </label>
+          <div className="max-h-48 overflow-y-auto rounded-lg border border-[#d4a574]/50 dark:border-[#8b4513]/50 divide-y divide-[#d4a574]/20 dark:divide-[#8b4513]/20">
+            {memberOptions.map((emp) => (
+              <label
+                key={emp.id}
+                className="flex items-center gap-3 px-3 py-2 hover:bg-[#f5f1e6] dark:hover:bg-gray-800 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedMemberIds.has(emp.id)}
+                  onChange={() => toggleMember(emp.id)}
+                  className="rounded text-[#2e8b57] border-[#d4a574]"
+                />
+                <span className="text-[#8b4513] dark:text-[#d4a574]">{emp.name}</span>
+              </label>
+            ))}
+          </div>
+          {selectedMemberIds.size > 0 && (
+            <p className="text-xs text-[#b85e1a]/80 dark:text-gray-400 mt-1">
+              {selectedMemberIds.size} member{selectedMemberIds.size !== 1 ? "s" : ""} selected
+            </p>
+          )}
+        </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
@@ -1610,7 +1848,12 @@ function CrewFormModalInner({
               return
             }
             setSubmitting(true)
-            await onSubmit(name.trim(), description.trim() || undefined, supervisorId || undefined)
+            await onSubmit(
+              name.trim(),
+              description.trim() || undefined,
+              supervisorId || undefined,
+              isEdit ? undefined : Array.from(selectedMemberIds)
+            )
             setSubmitting(false)
           }}
           disabled={!name.trim() || submitting}
@@ -1630,8 +1873,6 @@ function CrewDetailModalInner({
   onDelete,
   onAddMember,
   onRemoveMember,
-  onAssignJobs,
-  onRemoveJob,
 }: {
   crew: CrewDetailData
   onClose: () => void
@@ -1639,8 +1880,6 @@ function CrewDetailModalInner({
   onDelete: () => void
   onAddMember: () => void
   onRemoveMember: (employeeId: string) => void
-  onAssignJobs: () => void
-  onRemoveJob: (jobId: string) => void
 }) {
   const [activeSection, setActiveSection] = useState<'members' | 'jobs'>('members')
 
@@ -1751,31 +1990,12 @@ function CrewDetailModalInner({
         </div>
       )}
 
-      {/* Jobs section */}
+      {/* Jobs section - display only; manage assignments on Jobs page */}
       {activeSection === 'jobs' && (
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="font-medium text-[#8b4513] dark:text-[#d4a574]">Assigned Jobs</h4>
-            <Button
-              size="sm"
-              onClick={onAssignJobs}
-              className="bg-[#2e8b57] hover:bg-[#1f6b41] text-white"
-            >
-              <PlusIcon className="w-4 h-4 mr-1" />
-              Assign Jobs
-            </Button>
-          </div>
-
+          <h4 className="font-medium text-[#8b4513] dark:text-[#d4a574] mb-4">Assigned Jobs</h4>
           {crew.jobs.length === 0 ? (
-            <EmptyState
-              title="No jobs assigned"
-              description="Assign jobs to this crew to get them working"
-              action={
-                <Button size="sm" onClick={onAssignJobs} className="bg-[#2e8b57] text-white">
-                  Assign Jobs
-                </Button>
-              }
-            />
+            <p className="text-sm text-[#b85e1a]/80 dark:text-gray-400">No jobs assigned. Assign jobs from the Jobs page.</p>
           ) : (
             <ul className="space-y-2 max-h-96 overflow-y-auto pr-2">
               {crew.jobs.map((job) => (
@@ -1802,13 +2022,13 @@ function CrewDetailModalInner({
                       Assigned {new Date(job.assignedAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <button
-                    onClick={() => onRemoveJob(job.jobId)}
-                    className="p-1.5 rounded-lg hover:bg-red-500/10 text-red-600 transition-colors ml-2"
-                    title="Remove job assignment"
+                  <Link
+                    href={`/admin/jobs/${job.jobId}`}
+                    className="inline-flex items-center gap-1 text-sm text-[#2e8b57] hover:underline shrink-0 ml-2"
                   >
-                    <XCircleIcon className="w-5 h-5" />
-                  </button>
+                    <EyeIcon className="w-4 h-4" />
+                    View Job
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -1905,146 +2125,6 @@ function AddMemberModalInner({
           Cancel
         </Button>
       </div>
-    </div>
-  )
-}
-
-function AssignJobsModalInner({
-  jobs,
-  existingJobIds,
-  onSelect,
-  onClose,
-}: {
-  jobs: ApiJob[]
-  existingJobIds: Set<string>
-  onSelect: (jobIds: string[]) => Promise<void>
-  onClose: () => void
-}) {
-  const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [search, setSearch] = useState("")
-  const [submitting, setSubmitting] = useState(false)
-
-  const filteredJobs = jobs
-    .filter(j => !existingJobIds.has(j.id))
-    .filter(j =>
-      j.jobNumber.toLowerCase().includes(search.toLowerCase()) ||
-      j.title.toLowerCase().includes(search.toLowerCase())
-    )
-
-  const toggle = (id: string) => {
-    setSelected(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  const selectAll = () => {
-    if (selected.size === filteredJobs.length) {
-      setSelected(new Set())
-    } else {
-      setSelected(new Set(filteredJobs.map(j => j.id)))
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
-          <Input
-            type="search"
-            placeholder="Search jobs..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800"
-          />
-          <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#b85e1a]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-        {filteredJobs.length > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={selectAll}
-            className="border-[#d4a574] text-[#8b4513] whitespace-nowrap"
-          >
-            {selected.size === filteredJobs.length ? 'Deselect All' : 'Select All'}
-          </Button>
-        )}
-      </div>
-
-      {filteredJobs.length === 0 ? (
-        <p className="text-center py-8 text-[#b85e1a]/70 dark:text-gray-400">
-          {search ? "No matching jobs found" : "No jobs available to assign"}
-        </p>
-      ) : (
-        <>
-          <ul className="max-h-96 overflow-y-auto space-y-1 pr-2 border border-[#d4a574]/30 rounded-lg divide-y divide-[#d4a574]/20">
-            {filteredJobs.slice(0, 100).map((j) => (
-              <li key={j.id} className="hover:bg-[#f5f1e6] dark:hover:bg-gray-800/50">
-                <label className="flex items-center gap-3 p-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selected.has(j.id)}
-                    onChange={() => toggle(j.id)}
-                    className="w-4 h-4 rounded text-[#2e8b57] border-[#d4a574] focus:ring-[#2e8b57]"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm text-[#b85e1a]">
-                        {j.jobNumber}
-                      </span>
-                      <span className={`px-2 py-0.5 rounded-full text-xs ${j.status === 'completed' ? 'bg-[#2e8b57]/20 text-[#2e8b57]' :
-                          j.status === 'in_progress' ? 'bg-[#d88c4a]/20 text-[#b85e1a]' :
-                            'bg-gray-100 text-gray-600'
-                        }`}>
-                        {j.status}
-                      </span>
-                    </div>
-                    <p className="font-medium text-[#8b4513] dark:text-[#d4a574]">
-                      {j.title}
-                    </p>
-                    {j.clientName && (
-                      <p className="text-xs text-[#b85e1a]/70 dark:text-gray-400 mt-1">
-                        Client: {j.clientName}
-                      </p>
-                    )}
-                  </div>
-                </label>
-              </li>
-            ))}
-            {filteredJobs.length > 100 && (
-              <li className="p-3 text-center text-sm text-[#b85e1a]/70">
-                Showing first 100 of {filteredJobs.length} jobs
-              </li>
-            )}
-          </ul>
-
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-sm text-[#b85e1a]/70">
-              {selected.size} job{selected.size !== 1 ? 's' : ''} selected
-            </p>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={onClose} className="border-[#d4a574] text-[#8b4513]">
-                Cancel
-              </Button>
-              <Button
-                onClick={async () => {
-                  setSubmitting(true)
-                  await onSelect(Array.from(selected))
-                  setSubmitting(false)
-                }}
-                disabled={selected.size === 0 || submitting}
-                className="bg-[#2e8b57] hover:bg-[#1f6b41] text-white min-w-[120px]"
-              >
-                {submitting ? "Assigning..." : `Assign ${selected.size} Job${selected.size !== 1 ? 's' : ''}`}
-              </Button>
-            </div>
-          </div>
-        </>
-      )}
     </div>
   )
 }
