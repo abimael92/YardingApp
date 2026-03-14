@@ -3,7 +3,7 @@ import React from 'react'
 import { cn } from '@/src/lib/utils'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'ghost'
+    variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'ghost' | 'outline'
     size?: 'sm' | 'md' | 'lg'
     loading?: boolean
     fullWidth?: boolean
@@ -17,6 +17,7 @@ const variantClasses = {
     warning: 'bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500',
     danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
     ghost: 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-gray-500',
+    outline: 'border border-gray-300 dark:border-gray-600 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-gray-500',
 }
 
 const sizeClasses = {
