@@ -22,12 +22,18 @@
 🆕 dashboard_widget_assignments (5 cols)
 🆕 dashboard_widgets (9 cols)
 📌 employee_details (12 cols)
+📌 employee_equipment_certifications (10 cols)
 📌 employee_jobs (5 cols)
 📌 employee_skills (6 cols)
-🆕 equipment (29 cols)
+🆕 equipment (49 cols)
 🆕 equipment_assignments (11 cols)
+📌 equipment_categories (5 cols)
+📌 equipment_documents (8 cols)
 🆕 equipment_fuel_logs (10 cols)
 🆕 equipment_maintenance_logs (14 cols)
+📌 equipment_maintenance_schedules (14 cols)
+📌 equipment_purchase_plans (16 cols)
+📌 equipment_training_requirements (7 cols)
 📌 invoices (14 cols)
 📌 job_items (12 cols)
 🆕 job_materials (13 cols)
@@ -36,6 +42,7 @@
 🆕 job_photos (17 cols)
 📌 job_tasks (11 cols)
 📌 jobs (39 cols)
+📌 locations (10 cols)
 🆕 materials (21 cols)
 📌 metadata (3 cols)
 📌 payment_intents (14 cols)
@@ -82,9 +89,9 @@
 
 📊 SUMMARY:
 
-  Total tables: 59
+  Total tables: 66
   New tables added: 33
-  New columns added: 418
+  New columns added: 438
 
 📋 CLIENTS TABLE:
   Total columns: 13

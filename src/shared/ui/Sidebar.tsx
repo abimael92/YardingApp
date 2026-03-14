@@ -311,6 +311,7 @@ const Sidebar = ({ isOpen, setIsOpen, userRole }: SidebarProps) => {
         icon: ClipboardDocumentListIcon,
         items: [
           { href: "/admin/jobs", label: "Jobs", icon: ClipboardDocumentListIcon, badge: activeJobsCount },
+          { href: "/admin/crews", label: "Crews", icon: UserGroupIcon },
           { href: "/admin/tasks", label: "Tasks", icon: ClockIcon },
           { href: "/admin/schedule", label: "Schedule", icon: CalendarIcon },
           { href: "/admin/quotes", label: "Quotes", icon: DocumentTextIcon, badge: unreadQuoteCount }
