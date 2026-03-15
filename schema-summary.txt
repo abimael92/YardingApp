@@ -60,6 +60,26 @@ FOREIGN KEYS
   • actor_id → profiles.id
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: billing_queue
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • job_id : uuid NOT NULL 
+  • status : text  DEFAULT 'pending'::text
+  • created_at : timestamp with time zone  DEFAULT now()
+  • processed_at : timestamp with time zone  
+  • invoice_id : uuid  
+  • error_message : text  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • job_id → jobs.id
+  • invoice_id → invoices.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TABLE: client_addresses
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -105,6 +125,7 @@ COLUMNS
   • attachments : jsonb  
   • metadata : jsonb  
   • created_at : timestamp with time zone  DEFAULT now()
+  • quote_id : uuid  
 
 PRIMARY KEY
   • id
@@ -115,6 +136,7 @@ FOREIGN KEYS
   • sent_by → profiles.id
   • responded_by → profiles.id
   • parent_communication_id → client_communications.id
+  • quote_id → quotes.id
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TABLE: client_preferences
@@ -131,6 +153,9 @@ COLUMNS
   • preferred_language : character varying  DEFAULT 'en'::character varying
   • notes : text  
   • updated_at : timestamp with time zone  DEFAULT now()
+  • notification_types : jsonb  DEFAULT '{"jobUpdates": true, "invoiceAlerts": true, "scheduleChanges": true, "promotionalEmails": false, "paymentConfirmations": true}'::jsonb
+  • do_not_disturb : jsonb  
+  • timezone : text  DEFAULT 'America/Phoenix'::text
 
 PRIMARY KEY
   • client_id
@@ -729,6 +754,27 @@ FOREIGN KEYS
   • equipment_id → equipment.id
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: invoice_line_items
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • invoice_id : uuid NOT NULL 
+  • description : text NOT NULL 
+  • quantity : integer NOT NULL DEFAULT 1
+  • unit_price_cents : bigint NOT NULL 
+  • total_cents : bigint NOT NULL 
+  • type : text NOT NULL 
+  • reference_id : uuid  
+  • created_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • invoice_id → invoices.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TABLE: invoices
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -747,6 +793,13 @@ COLUMNS
   • updated_at : timestamp with time zone NOT NULL DEFAULT now()
   • created_by : uuid  
   • deleted_at : timestamp with time zone  
+  • sent_at : timestamp with time zone  
+  • viewed_at : timestamp with time zone  
+  • last_reminder_sent : timestamp with time zone  
+  • line_items : jsonb  DEFAULT '[]'::jsonb
+  • payment_ids : ARRAY  DEFAULT '{}'::uuid[]
+  • notes : text  
+  • payment_terms : text  
 
 PRIMARY KEY
   • id
@@ -888,6 +941,31 @@ FOREIGN KEYS
   • approved_by → profiles.id
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: job_progress
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • job_id : uuid NOT NULL 
+  • milestone_name : text NOT NULL 
+  • description : text  
+  • scheduled_date : date  
+  • completed_date : date  
+  • status : text  DEFAULT 'pending'::text
+  • percent_complete : integer  DEFAULT 0
+  • notes : text  
+  • completed_by : uuid  
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • job_id → jobs.id
+  • completed_by → profiles.id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TABLE: job_tasks
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -954,6 +1032,8 @@ COLUMNS
   • cancellation_reason : text  
   • progress_percentage : integer  DEFAULT 0
   • cancelled_at : timestamp without time zone  
+  • quote_id : uuid  
+  • completion_percentage : integer  DEFAULT 0
 
 PRIMARY KEY
   • id
@@ -964,6 +1044,7 @@ FOREIGN KEYS
   • approved_by → profiles.id
   • completed_by → profiles.id
   • quote_request_id → quote_requests.id
+  • quote_id → quotes.id
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TABLE: locations
@@ -1323,6 +1404,46 @@ COLUMNS
 
 PRIMARY KEY
   • id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE: quotes
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLUMNS
+  • id : uuid NOT NULL DEFAULT gen_random_uuid()
+  • quote_number : text NOT NULL 
+  • client_id : uuid NOT NULL 
+  • quote_request_id : uuid  
+  • job_id : uuid  
+  • status : USER-DEFINED NOT NULL DEFAULT 'draft'::quote_status
+  • line_items : jsonb NOT NULL DEFAULT '[]'::jsonb
+  • subtotal_cents : bigint NOT NULL DEFAULT 0
+  • tax_cents : bigint NOT NULL DEFAULT 0
+  • discount_cents : bigint  DEFAULT 0
+  • total_cents : bigint NOT NULL DEFAULT 0
+  • valid_until : timestamp with time zone  
+  • notes : text  
+  • terms : text  
+  • revision_number : integer  DEFAULT 1
+  • parent_quote_id : uuid  
+  • created_by : uuid  
+  • created_at : timestamp with time zone  DEFAULT now()
+  • updated_at : timestamp with time zone  DEFAULT now()
+  • sent_at : timestamp with time zone  
+  • viewed_at : timestamp with time zone  
+  • accepted_at : timestamp with time zone  
+  • rejected_at : timestamp with time zone  
+  • rejection_reason : text  
+
+PRIMARY KEY
+  • id
+
+FOREIGN KEYS
+  • client_id → clients.id
+  • quote_request_id → quote_requests.id
+  • job_id → jobs.id
+  • parent_quote_id → quotes.id
+  • created_by → profiles.id
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TABLE: refunds
@@ -1723,6 +1844,15 @@ quote_request_status
   • reviewed
   • sent
 
+quote_status
+  • draft
+  • sent
+  • viewed
+  • accepted
+  • rejected
+  • expired
+  • revised
+
 refund_status
   • pending
   • succeeded
@@ -1745,12 +1875,15 @@ TABLE RELATIONSHIPS
 account.userId → user.id
 admin_notifications.quote_request_id → quote_requests.id
 audit_logs.actor_id → profiles.id
+billing_queue.invoice_id → invoices.id
+billing_queue.job_id → jobs.id
 client_addresses.client_id → clients.id
+client_communications.quote_id → quotes.id
+client_communications.responded_by → profiles.id
+client_communications.sent_by → profiles.id
 client_communications.job_id → jobs.id
 client_communications.client_id → clients.id
 client_communications.parent_communication_id → client_communications.id
-client_communications.responded_by → profiles.id
-client_communications.sent_by → profiles.id
 client_preferences.client_id → clients.id
 clients.created_by → profiles.id
 communication_reminders.communication_id → client_communications.id
@@ -1758,113 +1891,122 @@ communication_reminders.assigned_to → profiles.id
 contract_amendments.contract_id → contracts.id
 contract_templates.created_by → profiles.id
 contracts.client_id → clients.id
-contracts.created_by → profiles.id
-contracts.template_id → contract_templates.id
 contracts.job_id → jobs.id
+contracts.template_id → contract_templates.id
 contracts.signed_by_company → profiles.id
+contracts.created_by → profiles.id
 crew_jobs.job_id → jobs.id
 crew_jobs.crew_id → crews.id
-crew_members.employee_id → profiles.id
 crew_members.crew_id → crews.id
-crews.vehicle_id → equipment.id
+crew_members.employee_id → profiles.id
 crews.supervisor_id → profiles.id
-dashboard_widget_assignments.widget_id → dashboard_widgets.id
+crews.vehicle_id → equipment.id
 dashboard_widget_assignments.dashboard_id → user_dashboards.id
+dashboard_widget_assignments.widget_id → dashboard_widgets.id
 employee_details.profile_id → profiles.id
-employee_equipment_certifications.equipment_id → equipment.id
 employee_equipment_certifications.employee_id → employee_details.id
+employee_equipment_certifications.equipment_id → equipment.id
 employee_equipment_certifications.certified_by → profiles.id
 employee_jobs.employee_id → profiles.id
 employee_jobs.job_id → jobs.id
 employee_skills.employee_id → profiles.id
-equipment.current_job_id → jobs.id
-equipment.current_crew_id → crews.id
-equipment.created_by → profiles.id
-equipment.category_id → equipment_categories.id
 equipment.updated_by → profiles.id
 equipment.current_location_id → locations.id
+equipment.created_by → profiles.id
+equipment.category_id → equipment_categories.id
+equipment.current_job_id → jobs.id
+equipment.current_crew_id → crews.id
 equipment_assignments.equipment_id → equipment.id
-equipment_assignments.job_id → jobs.id
 equipment_assignments.employee_id → profiles.id
+equipment_assignments.job_id → jobs.id
 equipment_assignments.assigned_by → profiles.id
 equipment_categories.parent_id → equipment_categories.id
 equipment_documents.equipment_id → equipment.id
 equipment_documents.uploaded_by → profiles.id
-equipment_fuel_logs.filled_by → profiles.id
 equipment_fuel_logs.equipment_id → equipment.id
-equipment_maintenance_logs.created_by → profiles.id
+equipment_fuel_logs.filled_by → profiles.id
 equipment_maintenance_logs.equipment_id → equipment.id
-equipment_maintenance_schedules.assigned_to → profiles.id
+equipment_maintenance_logs.created_by → profiles.id
 equipment_maintenance_schedules.equipment_id → equipment.id
-equipment_purchase_plans.approved_by → profiles.id
+equipment_maintenance_schedules.assigned_to → profiles.id
 equipment_purchase_plans.purchase_order_id → purchase_orders.id
 equipment_purchase_plans.category_id → equipment_categories.id
 equipment_purchase_plans.requested_by → profiles.id
+equipment_purchase_plans.approved_by → profiles.id
 equipment_training_requirements.equipment_id → equipment.id
-invitation.organizationId → organization.id
 invitation.inviterId → user.id
-invoices.created_by → profiles.id
-invoices.job_id → jobs.id
+invitation.organizationId → organization.id
+invoice_line_items.invoice_id → invoices.id
 invoices.client_id → clients.id
-job_items.created_by → profiles.id
+invoices.job_id → jobs.id
+invoices.created_by → profiles.id
 job_items.service_id → services.id
+job_items.created_by → profiles.id
 job_items.job_id → jobs.id
 job_materials.job_id → jobs.id
-job_materials.used_by → profiles.id
 job_materials.material_id → materials.id
-job_milestones.completed_by → profiles.id
+job_materials.used_by → profiles.id
 job_milestones.job_id → jobs.id
-job_notes.job_id → jobs.id
+job_milestones.completed_by → profiles.id
 job_notes.created_by → profiles.id
-job_photos.approved_by → profiles.id
+job_notes.job_id → jobs.id
 job_photos.job_id → jobs.id
+job_photos.approved_by → profiles.id
 job_photos.taken_by → profiles.id
+job_progress.completed_by → profiles.id
+job_progress.job_id → jobs.id
 job_tasks.job_id → jobs.id
-jobs.created_by → profiles.id
-jobs.client_id → clients.id
 jobs.approved_by → profiles.id
+jobs.client_id → clients.id
+jobs.created_by → profiles.id
 jobs.completed_by → profiles.id
 jobs.quote_request_id → quote_requests.id
-materials.created_by → profiles.id
+jobs.quote_id → quotes.id
 materials.supplier_id → suppliers.id
-member.userId → user.id
+materials.created_by → profiles.id
 member.organizationId → organization.id
+member.userId → user.id
 payment_intents.created_by → profiles.id
 payment_intents.client_id → clients.id
 payment_intents.invoice_id → invoices.id
+payments.job_id → jobs.id
 payments.created_by → profiles.id
 payments.payment_intent_id → payment_intents.id
 payments.client_id → clients.id
 payments.invoice_id → invoices.id
-payments.job_id → jobs.id
 payouts.reference_job_id → jobs.id
 payouts.created_by → profiles.id
 permissions.created_by → profiles.id
 plant_catalog.created_by → profiles.id
 plant_inventory.supplier_id → suppliers.id
 plant_inventory.plant_id → plant_catalog.id
+plant_usage.plant_inventory_id → plant_inventory.id
 plant_usage.used_by → profiles.id
 plant_usage.job_id → jobs.id
-plant_usage.plant_inventory_id → plant_inventory.id
 profiles.created_by → profiles.id
 purchase_order_items.po_id → purchase_orders.id
 purchase_order_items.material_id → materials.id
+purchase_orders.supplier_id → suppliers.id
 purchase_orders.created_by → profiles.id
 purchase_orders.approved_by → profiles.id
-purchase_orders.supplier_id → suppliers.id
+quotes.quote_request_id → quote_requests.id
+quotes.client_id → clients.id
+quotes.created_by → profiles.id
+quotes.parent_quote_id → quotes.id
+quotes.job_id → jobs.id
 refunds.created_by → profiles.id
 refunds.payment_id → payments.id
 report_definitions.created_by → profiles.id
-role_permission.role_id → roles.id
 role_permission.permission_id → permissions.id
+role_permission.role_id → roles.id
 roles.created_by → profiles.id
 route_optimization.optimized_by → profiles.id
 route_optimization.schedule_id → schedules.id
 saved_reports.report_definition_id → report_definitions.id
 saved_reports.created_by → profiles.id
-schedule_jobs.schedule_id → schedules.id
-schedule_jobs.job_id → jobs.id
 schedule_jobs.completed_by → profiles.id
+schedule_jobs.job_id → jobs.id
+schedule_jobs.schedule_id → schedules.id
 schedules.crew_id → crews.id
 schedules.created_by → profiles.id
 services.created_by → profiles.id
@@ -1875,10 +2017,10 @@ stock_movements.job_id → jobs.id
 suppliers.created_by → profiles.id
 time_entries.employee_id → profiles.id
 time_entries.job_id → jobs.id
-transactions.payment_id → payments.id
-transactions.payout_id → payouts.id
-transactions.client_id → clients.id
 transactions.refund_id → refunds.id
+transactions.payment_id → payments.id
+transactions.client_id → clients.id
+transactions.payout_id → payouts.id
 user_dashboards.user_id → profiles.id
-user_roles.profile_id → profiles.id
 user_roles.role_id → roles.id
+user_roles.profile_id → profiles.id
