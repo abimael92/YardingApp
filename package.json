@@ -5,7 +5,7 @@
   "packageManager": "pnpm@9.0.0",
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "rm -rf .next node_modules/.cache && next dev",
     "lint": "next lint",
     "start": "next start",
     "test": "node --test",
