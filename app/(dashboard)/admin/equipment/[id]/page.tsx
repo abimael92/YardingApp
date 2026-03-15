@@ -235,16 +235,16 @@ export default function EquipmentPage(): React.ReactElement {
 
     const getStatusBadge = (status: string) => {
         const config: Record<string, { color: string; icon: React.ComponentType<{ className: string }> }> = {
-            operational: { color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: CheckCircleIcon },
-            maintenance: { color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400', icon: ClockIcon },
-            repair: { color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: ExclamationTriangleIcon },
-            idle: { color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400', icon: TruckIcon },
-            out_of_service: { color: 'bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300', icon: XMarkIcon },
-            pending_purchase: { color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: CurrencyDollarIcon }
+            operational: { color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 ring-1 ring-green-600/20', icon: CheckCircleIcon },
+            maintenance: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 ring-1 ring-yellow-600/20', icon: ClockIcon },
+            repair: { color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 ring-1 ring-red-600/20', icon: ExclamationTriangleIcon },
+            idle: { color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 ring-1 ring-gray-600/20', icon: TruckIcon },
+            out_of_service: { color: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300 ring-1 ring-red-600/30', icon: XMarkIcon },
+            pending_purchase: { color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 ring-1 ring-blue-600/20', icon: CurrencyDollarIcon }
         }
         const { color, icon: Icon } = config[status] || config.idle
         return (
-            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${color}`}>
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${color}`}>
                 <Icon className="w-3.5 h-3.5" />
                 {status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
             </span>
@@ -289,14 +289,14 @@ export default function EquipmentPage(): React.ReactElement {
     return (
         <div className="space-y-6">
             {/* Page Header */}
-            <div>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
                 <Breadcrumbs />
-                <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center justify-between mt-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                             Equipment Management
                         </h1>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                             Track and manage all equipment across your fleet
                         </p>
                     </div>
@@ -305,17 +305,18 @@ export default function EquipmentPage(): React.ReactElement {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => router.refresh()}
-                            className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 
-                                     dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 
-                                     dark:hover:bg-gray-800 transition-colors"
+                            className="p-2.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 
+                                     dark:hover:text-gray-200 rounded-xl hover:bg-gray-100 
+                                     dark:hover:bg-gray-700 transition-all duration-200"
                             title="Refresh"
                         >
                             <ArrowPathIcon className="w-5 h-5" />
                         </button>
                         <button
                             onClick={() => setIsAddModalOpen(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white 
-                                     rounded-lg hover:bg-green-700 transition-colors"
+                            className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white 
+                                     rounded-xl hover:bg-green-700 transition-all duration-200 
+                                     shadow-lg shadow-green-600/25 font-medium"
                         >
                             <PlusIcon className="w-5 h-5" />
                             Add Equipment
@@ -330,19 +331,19 @@ export default function EquipmentPage(): React.ReactElement {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05 }}
-                    className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 
-                             dark:border-gray-700 shadow-sm"
+                    className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 
+                             dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
                 >
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Total Equipment</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Total Equipment</p>
                             <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                                 {stats.total}
                             </p>
                         </div>
                         <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl 
-                                      flex items-center justify-center">
-                            <TruckIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                      flex items-center justify-center text-blue-600 dark:text-blue-400">
+                            <TruckIcon className="w-6 h-6" />
                         </div>
                     </div>
                 </motion.div>
@@ -351,19 +352,19 @@ export default function EquipmentPage(): React.ReactElement {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 
-                             dark:border-gray-700 shadow-sm"
+                    className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 
+                             dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
                 >
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Operational</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Operational</p>
                             <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
                                 {stats.operational}
                             </p>
                         </div>
                         <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl 
-                                      flex items-center justify-center">
-                            <CheckCircleIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
+                                      flex items-center justify-center text-green-600 dark:text-green-400">
+                            <CheckCircleIcon className="w-6 h-6" />
                         </div>
                     </div>
                 </motion.div>
@@ -372,19 +373,19 @@ export default function EquipmentPage(): React.ReactElement {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 }}
-                    className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 
-                             dark:border-gray-700 shadow-sm"
+                    className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 
+                             dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
                 >
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">In Maintenance</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">In Maintenance</p>
                             <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">
                                 {stats.maintenance}
                             </p>
                         </div>
                         <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl 
-                                      flex items-center justify-center">
-                            <ClockIcon className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                                      flex items-center justify-center text-yellow-600 dark:text-yellow-400">
+                            <ClockIcon className="w-6 h-6" />
                         </div>
                     </div>
                 </motion.div>
@@ -393,19 +394,19 @@ export default function EquipmentPage(): React.ReactElement {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 
-                             dark:border-gray-700 shadow-sm"
+                    className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 
+                             dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
                 >
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Needs Repair</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Needs Repair</p>
                             <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">
                                 {stats.repair}
                             </p>
                         </div>
                         <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-xl 
-                                      flex items-center justify-center">
-                            <ExclamationTriangleIcon className="w-6 h-6 text-red-600 dark:text-red-400" />
+                                      flex items-center justify-center text-red-600 dark:text-red-400">
+                            <ExclamationTriangleIcon className="w-6 h-6" />
                         </div>
                     </div>
                 </motion.div>
@@ -414,19 +415,19 @@ export default function EquipmentPage(): React.ReactElement {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.25 }}
-                    className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 
-                             dark:border-gray-700 shadow-sm"
+                    className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 
+                             dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
                 >
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Idle/Storage</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Idle/Storage</p>
                             <p className="text-2xl font-bold text-gray-600 dark:text-gray-400 mt-1">
                                 {stats.idle}
                             </p>
                         </div>
                         <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-xl 
-                                      flex items-center justify-center">
-                            <TruckIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                                      flex items-center justify-center text-gray-600 dark:text-gray-400">
+                            <TruckIcon className="w-6 h-6" />
                         </div>
                     </div>
                 </motion.div>
@@ -435,19 +436,19 @@ export default function EquipmentPage(): React.ReactElement {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
-                    className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 
-                             dark:border-gray-700 shadow-sm"
+                    className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 
+                             dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
                 >
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">To Purchase</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">To Purchase</p>
                             <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">
                                 {stats.pendingPurchase}
                             </p>
                         </div>
                         <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl 
-                                      flex items-center justify-center">
-                            <CurrencyDollarIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                      flex items-center justify-center text-blue-600 dark:text-blue-400">
+                            <CurrencyDollarIcon className="w-6 h-6" />
                         </div>
                     </div>
                 </motion.div>
@@ -458,8 +459,8 @@ export default function EquipmentPage(): React.ReactElement {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35 }}
-                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 
-                         dark:border-gray-700 shadow-sm p-4"
+                className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 
+                         dark:border-gray-700 shadow-sm p-5"
             >
                 <div className="flex flex-col sm:flex-row gap-4">
                     {/* Search */}
@@ -470,10 +471,10 @@ export default function EquipmentPage(): React.ReactElement {
                             placeholder="Search equipment by name, type, manufacturer, model..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 
-                                     rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 
+                                     rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                      placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 
-                                     focus:ring-green-500 focus:border-transparent"
+                                     focus:ring-green-500/50 focus:border-green-500 transition-all"
                         />
                     </div>
 
@@ -483,9 +484,9 @@ export default function EquipmentPage(): React.ReactElement {
                         <select
                             value={categoryFilter}
                             onChange={(e) => setCategoryFilter(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl 
                                      bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                     focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                     focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all"
                         >
                             <option value="all">All Categories</option>
                             {EQUIPMENT_CATEGORIES.map(cat => (
@@ -500,9 +501,9 @@ export default function EquipmentPage(): React.ReactElement {
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl 
                                      bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                     focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                     focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all"
                         >
                             <option value="all">All Status</option>
                             <option value="operational">Operational</option>
@@ -521,15 +522,16 @@ export default function EquipmentPage(): React.ReactElement {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 
+                className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 
                          dark:border-gray-700 shadow-sm overflow-hidden"
             >
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
                     <div className="flex items-center justify-between">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                             Equipment List
                         </h2>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="text-sm px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full 
+                                      text-gray-600 dark:text-gray-300 font-medium">
                             {filteredEquipment.length} items
                         </span>
                     </div>
@@ -541,7 +543,7 @@ export default function EquipmentPage(): React.ReactElement {
                             key: "name",
                             header: "Equipment",
                             render: (value: unknown, item?: Equipment) => (
-                                <div>
+                                <div className="py-1">
                                     <div className="font-medium text-gray-900 dark:text-white">
                                         {value as string}
                                     </div>
@@ -555,7 +557,8 @@ export default function EquipmentPage(): React.ReactElement {
                             key: "category",
                             header: "Category",
                             render: (value: unknown) => (
-                                <span className="text-sm text-gray-600 dark:text-gray-400">
+                                <span className="text-sm px-3 py-1 bg-gray-100 dark:bg-gray-700/50 
+                                               rounded-lg text-gray-600 dark:text-gray-300">
                                     {value as string || 'Uncategorized'}
                                 </span>
                             )
@@ -569,7 +572,7 @@ export default function EquipmentPage(): React.ReactElement {
                             key: "hours",
                             header: "Hours",
                             render: (value: unknown) => (
-                                <span className="font-mono text-sm text-gray-900 dark:text-white">
+                                <span className="font-mono text-sm font-medium text-gray-900 dark:text-white">
                                     {(value as number).toLocaleString()} hrs
                                 </span>
                             )
@@ -585,15 +588,15 @@ export default function EquipmentPage(): React.ReactElement {
 
                                 return (
                                     <div className="text-sm">
-                                        <div className="text-gray-900 dark:text-white">
+                                        <div className="text-gray-900 dark:text-white font-medium">
                                             {maintenanceDate.toLocaleDateString()}
                                         </div>
                                         {maintenanceDate < today ? (
-                                            <span className="text-xs text-red-600 dark:text-red-400">
+                                            <span className="text-xs text-red-600 dark:text-red-400 font-medium">
                                                 Overdue by {Math.abs(daysUntil)} days
                                             </span>
                                         ) : daysUntil <= 7 ? (
-                                            <span className="text-xs text-yellow-600 dark:text-yellow-400">
+                                            <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
                                                 Due in {daysUntil} days
                                             </span>
                                         ) : null}
@@ -605,7 +608,8 @@ export default function EquipmentPage(): React.ReactElement {
                             key: "location",
                             header: "Location",
                             render: (value: unknown) => (
-                                <span className="text-sm text-gray-600 dark:text-gray-400">
+                                <span className="text-sm flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                                    <MapPinIcon className="w-3.5 h-3.5" />
                                     {value as string || 'Not assigned'}
                                 </span>
                             )
@@ -619,8 +623,10 @@ export default function EquipmentPage(): React.ReactElement {
                                         e.stopPropagation()
                                         router.push(`/admin/equipment/${value as string}`)
                                     }}
-                                    className="text-sm text-green-600 hover:text-green-700 
-                                             dark:text-green-400 dark:hover:text-green-300"
+                                    className="text-sm font-medium text-green-600 hover:text-green-700 
+                                             dark:text-green-400 dark:hover:text-green-300 
+                                             px-3 py-1.5 rounded-lg hover:bg-green-50 
+                                             dark:hover:bg-green-500/10 transition-all"
                                 >
                                     View Details →
                                 </button>
@@ -652,7 +658,7 @@ export default function EquipmentPage(): React.ReactElement {
 }
 
 // ============================================================================
-// ADD EQUIPMENT MODAL
+// ADD EQUIPMENT MODAL - IMPROVED STYLING
 // ============================================================================
 
 interface AddEquipmentModalProps {
@@ -676,7 +682,7 @@ const AddEquipmentModal = ({
     licenseTypes,
     crews
 }: AddEquipmentModalProps) => {
-    const [activeTab, setActiveTab] = useState<'basic' | 'purchase' | 'maintenance' | 'training'>('basic')
+    const [activeTab, setActiveTab] = useState<'basic' | 'maintenance' | 'training'>('basic')
     const [isSaving, setIsSaving] = useState(false)
 
     const handleSave = async () => {
@@ -688,7 +694,7 @@ const AddEquipmentModal = ({
         }
     }
 
-    // Dynamic field sets based on category
+    // Dynamic field sets based on category (unchanged functionality)
     const getCategorySpecificFields = (category: string) => {
         switch (category) {
             case "Mowers":
@@ -696,101 +702,118 @@ const AddEquipmentModal = ({
             case "Blowers":
             case "Power Equipment":
                 return (
-                    <div className="space-y-4 mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Equipment Details</h3>
+                    <div className="space-y-4 mt-6 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                            <WrenchScrewdriverIcon className="w-4 h-4" />
+                            Equipment Details
+                        </h3>
 
-                        {/* Manufacturer/Model/Year for power equipment */}
                         <div className="grid grid-cols-3 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                     Manufacturer
                                 </label>
                                 <input
                                     type="text"
                                     value={newEquipment.manufacturer || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, manufacturer: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     placeholder="e.g., John Deere"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                     Model
                                 </label>
                                 <input
                                     type="text"
                                     value={newEquipment.model || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, model: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     placeholder="e.g., Z930M"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                     Year
                                 </label>
                                 <input
                                     type="number"
                                     value={newEquipment.year || new Date().getFullYear()}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, year: parseInt(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     min="1900"
                                     max={new Date().getFullYear() + 1}
                                 />
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Serial Number
-                            </label>
-                            <input
-                                type="text"
-                                value={newEquipment.serialNumber || ''}
-                                onChange={(e) => setNewEquipment({ ...newEquipment, serialNumber: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
-                                placeholder="Serial #"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Fuel Type
-                            </label>
-                            <select
-                                value={newEquipment.fuelType || 'gasoline'}
-                                onChange={(e) => setNewEquipment({ ...newEquipment, fuelType: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
-                            >
-                                {fuelTypes.map(type => (
-                                    <option key={type} value={type}>
-                                        {type.charAt(0).toUpperCase() + type.slice(1)}
-                                    </option>
-                                ))}
-                            </select>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                                    Serial Number
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newEquipment.serialNumber || ''}
+                                    onChange={(e) => setNewEquipment({ ...newEquipment, serialNumber: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    placeholder="Serial #"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                                    Fuel Type
+                                </label>
+                                <select
+                                    value={newEquipment.fuelType || 'gasoline'}
+                                    onChange={(e) => setNewEquipment({ ...newEquipment, fuelType: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                >
+                                    {fuelTypes.map(type => (
+                                        <option key={type} value={type}>
+                                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                     Hours Meter
                                 </label>
                                 <input
                                     type="number"
                                     value={newEquipment.hours || 0}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, hours: parseInt(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     placeholder="0"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                     Blade/Cutter Condition
                                 </label>
                                 <select
                                     value={newEquipment.bladeCondition || 'good'}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, bladeCondition: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
                                 >
                                     <option value="excellent">Excellent</option>
                                     <option value="good">Good</option>
@@ -804,81 +827,96 @@ const AddEquipmentModal = ({
 
             case "Trucks & Trailers":
                 return (
-                    <div className="space-y-4 mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Details</h3>
+                    <div className="space-y-4 mt-6 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                            <TruckIcon className="w-4 h-4" />
+                            Vehicle Details
+                        </h3>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                     License Plate
                                 </label>
                                 <input
                                     type="text"
                                     value={newEquipment.licensePlate || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, licensePlate: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     placeholder="ABC-1234"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                     VIN
                                 </label>
                                 <input
                                     type="text"
                                     value={newEquipment.vin || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, vin: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     placeholder="1HGCM82633A123456"
                                 />
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                     Odometer (miles)
                                 </label>
                                 <input
                                     type="number"
                                     value={newEquipment.odometer || 0}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, odometer: parseInt(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     placeholder="0"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                     Registration Expiration
                                 </label>
                                 <input
                                     type="date"
                                     value={newEquipment.registrationExpiration || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, registrationExpiration: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
                                 />
                             </div>
                         </div>
                         {category === "Trucks & Trailers" && (
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                         GVWR (lbs)
                                     </label>
                                     <input
                                         type="number"
                                         value={newEquipment.gvwr || ''}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, gvwr: parseInt(e.target.value) })}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                                 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
                                         placeholder="10000"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                         Axles
                                     </label>
                                     <select
                                         value={newEquipment.axles || '1'}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, axles: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                                 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     >
                                         <option value="1">Single Axle</option>
                                         <option value="2">Tandem Axle</option>
@@ -892,28 +930,35 @@ const AddEquipmentModal = ({
 
             case "Hand Tools":
                 return (
-                    <div className="space-y-4 mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Tool Details</h3>
+                    <div className="space-y-4 mt-6 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                            <WrenchScrewdriverIcon className="w-4 h-4" />
+                            Tool Details
+                        </h3>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                 Serial Number (optional)
                             </label>
                             <input
                                 type="text"
                                 value={newEquipment.serialNumber || ''}
                                 onChange={(e) => setNewEquipment({ ...newEquipment, serialNumber: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                         rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                         focus:ring-green-500/50 focus:border-green-500 transition-all"
                                 placeholder="Serial #"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                 Condition
                             </label>
                             <select
                                 value={newEquipment.condition || 'good'}
                                 onChange={(e) => setNewEquipment({ ...newEquipment, condition: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                         rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                         focus:ring-green-500/50 focus:border-green-500 transition-all"
                             >
                                 <option value="new">New</option>
                                 <option value="good">Good</option>
@@ -927,30 +972,37 @@ const AddEquipmentModal = ({
 
             case "Sprayers":
                 return (
-                    <div className="space-y-4 mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Sprayer Details</h3>
+                    <div className="space-y-4 mt-6 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                            <WrenchScrewdriverIcon className="w-4 h-4" />
+                            Sprayer Details
+                        </h3>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                     Tank Capacity (gal)
                                 </label>
                                 <input
                                     type="number"
                                     value={newEquipment.tankCapacity || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, tankCapacity: parseInt(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     placeholder="25"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                     Last Calibration
                                 </label>
                                 <input
                                     type="date"
                                     value={newEquipment.lastCalibration || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, lastCalibration: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
                                 />
                             </div>
                         </div>
@@ -959,30 +1011,37 @@ const AddEquipmentModal = ({
 
             case "Safety Equipment":
                 return (
-                    <div className="space-y-4 mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Safety Equipment Details</h3>
+                    <div className="space-y-4 mt-6 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                            <ShieldCheckIcon className="w-4 h-4" />
+                            Safety Equipment Details
+                        </h3>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                     Size
                                 </label>
                                 <input
                                     type="text"
                                     value={newEquipment.size || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, size: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     placeholder="M, L, XL, etc."
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                     Inspection Date
                                 </label>
                                 <input
                                     type="date"
                                     value={newEquipment.inspectionDate || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, inspectionDate: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
                                 />
                             </div>
                         </div>
@@ -991,30 +1050,37 @@ const AddEquipmentModal = ({
 
             case "Storage":
                 return (
-                    <div className="space-y-4 mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Storage Details</h3>
+                    <div className="space-y-4 mt-6 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                            <DocumentTextIcon className="w-4 h-4" />
+                            Storage Details
+                        </h3>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                     Dimensions
                                 </label>
                                 <input
                                     type="text"
                                     value={newEquipment.dimensions || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, dimensions: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     placeholder="10x10x8"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                                     Material
                                 </label>
                                 <input
                                     type="text"
                                     value={newEquipment.material || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, material: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     placeholder="Wood, Metal, etc."
                                 />
                             </div>
@@ -1032,7 +1098,7 @@ const AddEquipmentModal = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
         >
             <motion.div
@@ -1040,20 +1106,29 @@ const AddEquipmentModal = ({
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-4xl h-[750px] flex flex-col"
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl h-[750px] flex flex-col overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Modal Header */}
-                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
                     <div className="flex items-center gap-3">
-                        <TruckIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                            Add New Equipment
-                        </h2>
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 
+                                      flex items-center justify-center shadow-lg shadow-green-500/30">
+                            <TruckIcon className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                Add New Equipment
+                            </h2>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                Fill in the details below
+                            </p>
+                        </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all 
+                                 hover:rotate-90 duration-200"
                         aria-label="Close modal"
                     >
                         <XMarkIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -1061,39 +1136,30 @@ const AddEquipmentModal = ({
                 </div>
 
                 {/* Tabs */}
-                <div className="flex border-b border-gray-200 dark:border-gray-700 px-6">
+                <div className="flex gap-1 px-6 pt-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
                     <button
                         onClick={() => setActiveTab('basic')}
-                        className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'basic'
-                            ? 'border-green-500 text-green-600 dark:text-green-400'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                        className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all ${activeTab === 'basic'
+                                ? 'bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                             }`}
                     >
                         Basic Info
                     </button>
-                    {/* <button
-                        onClick={() => setActiveTab('purchase')}
-                        className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'purchase'
-                            ? 'border-green-500 text-green-600 dark:text-green-400'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                            }`}
-                    >
-                        Purchase Details
-                    </button> */}
                     <button
                         onClick={() => setActiveTab('maintenance')}
-                        className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'maintenance'
-                            ? 'border-green-500 text-green-600 dark:text-green-400'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                        className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all ${activeTab === 'maintenance'
+                                ? 'bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                             }`}
                     >
                         Purchase & Maintenance
                     </button>
                     <button
                         onClick={() => setActiveTab('training')}
-                        className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'training'
-                            ? 'border-green-500 text-green-600 dark:text-green-400'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                        className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all ${activeTab === 'training'
+                                ? 'bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                             }`}
                     >
                         Training & Requirements
@@ -1101,46 +1167,52 @@ const AddEquipmentModal = ({
                 </div>
 
                 {/* Modal Content */}
-                <div className="flex-1 p-6 overflow-y-auto min-h-0">
+                <div className="flex-1 p-6 overflow-y-auto">
                     {activeTab === 'basic' && (
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Equipment Name *
+                        <div className="space-y-5">
+                            <div className="grid grid-cols-2 gap-5">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Equipment Name <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
                                         value={newEquipment.name || ''}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, name: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
+                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
+                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
                                         placeholder="e.g., Zero-Turn Mower"
                                         required
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Type
                                     </label>
                                     <input
                                         type="text"
                                         value={newEquipment.type || ''}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, type: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
+                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
+                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
                                         placeholder="e.g., Mower"
                                     />
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Category *
+                            <div className="grid grid-cols-2 gap-5">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Category <span className="text-red-500">*</span>
                                     </label>
                                     <select
                                         value={newEquipment.category || ''}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, category: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
+                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
+                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
                                         required
                                     >
                                         <option value="">Select Category</option>
@@ -1149,14 +1221,16 @@ const AddEquipmentModal = ({
                                         ))}
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Status
                                     </label>
                                     <select
                                         value={newEquipment.status || 'operational'}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, status: e.target.value as Equipment['status'] })}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
+                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
+                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     >
                                         <option value="operational">Operational</option>
                                         <option value="maintenance">Maintenance</option>
@@ -1172,64 +1246,66 @@ const AddEquipmentModal = ({
                             {newEquipment.category && getCategorySpecificFields(newEquipment.category)}
                         </div>
                     )}
-                    {/* Purchase */}
 
                     {activeTab === 'maintenance' && (
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <div className="space-y-5">
+                            <div className="grid grid-cols-2 gap-5">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Purchase Date
                                     </label>
                                     <input
                                         type="date"
                                         value={newEquipment.purchaseDate || ''}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, purchaseDate: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                                 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                                 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
+                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
+                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Purchase Price ($)
                                     </label>
                                     <input
                                         type="number"
                                         value={newEquipment.purchasePrice || ''}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, purchasePrice: parseFloat(e.target.value) })}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                                 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                                 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
+                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
+                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
                                         min="0"
                                         step="0.01"
                                         placeholder="0.00"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-5">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Location/Storage
                                     </label>
                                     <input
                                         type="text"
                                         value={newEquipment.location || ''}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, location: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                                 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                                 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
+                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
+                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
                                         placeholder="e.g., Main Yard, Truck #3"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Assign to Crew
                                     </label>
                                     <select
                                         value={newEquipment.currentCrew || ''}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, currentCrew: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                                 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                                 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
+                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
+                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     >
                                         <option value="">Not Assigned</option>
                                         {crews.map(crew => (
@@ -1239,116 +1315,135 @@ const AddEquipmentModal = ({
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <div className="grid grid-cols-2 gap-5">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Last Service Date
                                     </label>
                                     <input
                                         type="date"
                                         value={newEquipment.lastService || ''}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, lastService: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                                 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                                 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
+                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
+                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Next Maintenance Date
                                     </label>
                                     <input
                                         type="date"
                                         value={newEquipment.nextMaintenance || ''}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, nextMaintenance: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                                 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                                 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
+                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
+                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
                                     />
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Insurance Expiration
                                 </label>
                                 <input
                                     type="date"
                                     value={newEquipment.insuranceExpiration || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, insuranceExpiration: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                             focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
+                                             rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
                                 />
                             </div>
                         </div>
                     )}
 
                     {activeTab === 'training' && (
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-4">
-                                <label className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={newEquipment.requiresLicense || false}
-                                        onChange={(e) => setNewEquipment({
-                                            ...newEquipment,
-                                            requiresLicense: e.target.checked,
-                                            requiredLicenseType: e.target.checked ? newEquipment.requiredLicenseType || '' : ''
-                                        })}
-                                        className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                                    />
-                                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                                        Requires License/Certification
-                                    </span>
-                                </label>
-                            </div>
-
-                            {newEquipment.requiresLicense && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        License Type Required
+                        <div className="space-y-5">
+                            <div className="p-5 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
+                                <div className="space-y-4">
+                                    <label className="flex items-start gap-3 p-4 bg-white dark:bg-gray-800 
+                                                    rounded-lg border border-gray-200 dark:border-gray-700
+                                                    hover:border-green-500/50 transition-colors cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={newEquipment.requiresLicense || false}
+                                            onChange={(e) => setNewEquipment({
+                                                ...newEquipment,
+                                                requiresLicense: e.target.checked,
+                                                requiredLicenseType: e.target.checked ? newEquipment.requiredLicenseType || '' : ''
+                                            })}
+                                            className="mt-1 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                        />
+                                        <div className="flex-1">
+                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Requires License/Certification
+                                            </span>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                Operator must have valid license to use this equipment
+                                            </p>
+                                        </div>
+                                        <ShieldCheckIcon className="w-5 h-5 text-gray-400" />
                                     </label>
-                                    <select
-                                        value={newEquipment.requiredLicenseType || ''}
-                                        onChange={(e) => setNewEquipment({ ...newEquipment, requiredLicenseType: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                                 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                                 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                    >
-                                        <option value="">Select License Type</option>
-                                        {licenseTypes.map(type => (
-                                            <option key={type} value={type}>{type}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
 
-                            <div className="flex items-center gap-4">
-                                <label className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={newEquipment.requiresTraining || false}
-                                        onChange={(e) => setNewEquipment({ ...newEquipment, requiresTraining: e.target.checked })}
-                                        className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                                    />
-                                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                                        Requires Special Training
-                                    </span>
-                                </label>
+                                    {newEquipment.requiresLicense && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="pl-8 pr-4"
+                                        >
+                                            <select
+                                                value={newEquipment.requiredLicenseType || ''}
+                                                onChange={(e) => setNewEquipment({ ...newEquipment, requiredLicenseType: e.target.value })}
+                                                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
+                                                         rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
+                                                         focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                            >
+                                                <option value="">Select License Type</option>
+                                                {licenseTypes.map(type => (
+                                                    <option key={type} value={type}>{type}</option>
+                                                ))}
+                                            </select>
+                                        </motion.div>
+                                    )}
+                                </div>
+
+                                <div className="mt-4">
+                                    <label className="flex items-start gap-3 p-4 bg-white dark:bg-gray-800 
+                                                    rounded-lg border border-gray-200 dark:border-gray-700
+                                                    hover:border-green-500/50 transition-colors cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={newEquipment.requiresTraining || false}
+                                            onChange={(e) => setNewEquipment({ ...newEquipment, requiresTraining: e.target.checked })}
+                                            className="mt-1 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                        />
+                                        <div className="flex-1">
+                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Requires Special Training
+                                            </span>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                Additional training required before operation
+                                            </p>
+                                        </div>
+                                        <AcademicCapIcon className="w-5 h-5 text-gray-400" />
+                                    </label>
+                                </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Notes / Special Requirements
                                 </label>
                                 <textarea
                                     value={newEquipment.notes || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, notes: e.target.value })}
                                     rows={4}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                             focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
+                                             rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
+                                             focus:ring-green-500/50 focus:border-green-500 transition-all resize-none"
                                     placeholder="Any additional notes about training requirements, safety considerations, etc."
                                 />
                             </div>
@@ -1357,11 +1452,13 @@ const AddEquipmentModal = ({
                 </div>
 
                 {/* Modal Footer */}
-                <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 
-                                 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 
+                                 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600
+                                 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 
+                                 transition-all duration-200 hover:scale-105 active:scale-95"
                         disabled={isSaving}
                     >
                         Cancel
@@ -1369,9 +1466,10 @@ const AddEquipmentModal = ({
                     <button
                         onClick={handleSave}
                         disabled={!newEquipment.name || !newEquipment.category || isSaving}
-                        className="px-4 py-2 text-sm font-medium text-white bg-green-600 
-                                 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50 
-                                 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="px-5 py-2.5 text-sm font-medium text-white bg-green-600 
+                                 rounded-xl hover:bg-green-700 transition-all duration-200 
+                                 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2
+                                 shadow-lg shadow-green-600/25 hover:shadow-xl hover:scale-105 active:scale-95"
                     >
                         {isSaving ? (
                             <>
