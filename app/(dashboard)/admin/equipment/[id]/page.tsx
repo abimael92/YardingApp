@@ -211,16 +211,16 @@ export default function EquipmentPage(): React.ReactElement {
 
     const getStatusBadge = (status: string) => {
         const config: Record<string, { color: string; icon: React.ComponentType<{ className: string }> }> = {
-            operational: { color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 ring-1 ring-green-600/20', icon: CheckCircleIcon },
-            maintenance: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 ring-1 ring-yellow-600/20', icon: ClockIcon },
-            repair: { color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 ring-1 ring-red-600/20', icon: ExclamationTriangleIcon },
-            idle: { color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 ring-1 ring-gray-600/20', icon: TruckIcon },
-            out_of_service: { color: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300 ring-1 ring-red-600/30', icon: XMarkIcon },
-            pending_purchase: { color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 ring-1 ring-blue-600/20', icon: CurrencyDollarIcon }
+            operational: { color: 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30', icon: CheckCircleIcon },
+            maintenance: { color: 'bg-gradient-to-r from-yellow-500 to-amber-500 text-white shadow-lg shadow-yellow-500/30', icon: ClockIcon },
+            repair: { color: 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/30', icon: ExclamationTriangleIcon },
+            idle: { color: 'bg-gradient-to-r from-gray-500 to-slate-500 text-white shadow-lg shadow-gray-500/30', icon: TruckIcon },
+            out_of_service: { color: 'bg-gradient-to-r from-purple-500 to-violet-500 text-white shadow-lg shadow-purple-500/30', icon: XMarkIcon },
+            pending_purchase: { color: 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/30', icon: CurrencyDollarIcon }
         }
         const { color, icon: Icon } = config[status] || config.idle
         return (
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${color}`}>
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${color}`}>
                 <Icon className="w-3.5 h-3.5" />
                 {status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
             </span>
@@ -264,179 +264,241 @@ export default function EquipmentPage(): React.ReactElement {
 
     return (
         <div className="space-y-6">
-            {/* Page Header */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                <Breadcrumbs />
-                <div className="flex items-center justify-between mt-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                            Equipment Management
-                        </h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            Track and manage all equipment across your fleet
-                        </p>
-                    </div>
+            {/* Page Header with Enhanced Gradient */}
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative overflow-hidden rounded-2xl"
+            >
+                <div className="absolute inset-0 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600" />
+                <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
 
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => router.refresh()}
-                            className="p-2.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 
-                                     dark:hover:text-gray-200 rounded-xl hover:bg-gray-100 
-                                     dark:hover:bg-gray-700 transition-all duration-200"
-                            title="Refresh"
-                        >
-                            <ArrowPathIcon className="w-5 h-5" />
-                        </button>
-                        <button
-                            onClick={() => setIsAddModalOpen(true)}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white 
-                                     rounded-xl hover:bg-green-700 transition-all duration-200 
-                                     shadow-lg shadow-green-600/25 font-medium"
-                        >
-                            <PlusIcon className="w-5 h-5" />
-                            Add Equipment
-                        </button>
+                <div className="relative bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
+                    <Breadcrumbs />
+                    <div className="flex items-center justify-between mt-4">
+                        <div>
+                            <h1 className="text-3xl font-bold text-white">
+                                Equipment Management
+                            </h1>
+                            <p className="text-white/80 mt-1 flex items-center gap-2">
+                                <SparklesIcon className="w-4 h-4" />
+                                Track and manage all equipment across your fleet
+                            </p>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-3">
+                            <motion.button
+                                whileHover={{ scale: 1.1, rotate: 180 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => router.refresh()}
+                                className="p-2.5 bg-white/20 text-white rounded-xl backdrop-blur-sm 
+                                         hover:bg-white/30 transition-all duration-300 border border-white/30"
+                                title="Refresh"
+                            >
+                                <ArrowPathIcon className="w-5 h-5" />
+                            </motion.button>
+
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setIsAddModalOpen(true)}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-white text-green-600 
+                                         rounded-xl hover:bg-gray-50 transition-all duration-200 
+                                         shadow-lg shadow-white/25 font-medium group"
+                            >
+                                <PlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+                                Add Equipment
+                            </motion.button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
-            {/* Stats Cards */}
+            {/* Stats Cards with Enhanced Styling */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05 }}
-                    className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 
-                             dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
+                    whileHover={{ y: -4, scale: 1.02 }}
+                    className="group relative bg-white dark:bg-gray-800 rounded-2xl p-6 
+                             border-2 border-transparent hover:border-blue-500/50
+                             shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
                 >
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent 
+                                  opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">Total Equipment</p>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                            <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 
+                                      bg-clip-text text-transparent mt-1">
                                 {stats.total}
                             </p>
                         </div>
-                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl 
-                                      flex items-center justify-center text-blue-600 dark:text-blue-400">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 
+                                      rounded-xl flex items-center justify-center text-white
+                                      shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
                             <TruckIcon className="w-6 h-6" />
                         </div>
                     </div>
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-600 
+                                  transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                 </motion.div>
 
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 
-                             dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
+                    whileHover={{ y: -4, scale: 1.02 }}
+                    className="group relative bg-white dark:bg-gray-800 rounded-2xl p-6 
+                             border-2 border-transparent hover:border-green-500/50
+                             shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
                 >
+                    <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent 
+                                  opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">Operational</p>
-                            <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
+                            <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 
+                                      bg-clip-text text-transparent mt-1">
                                 {stats.operational}
                             </p>
                         </div>
-                        <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl 
-                                      flex items-center justify-center text-green-600 dark:text-green-400">
+                        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 
+                                      rounded-xl flex items-center justify-center text-white
+                                      shadow-lg shadow-green-500/30 group-hover:scale-110 transition-transform">
                             <CheckCircleIcon className="w-6 h-6" />
                         </div>
                     </div>
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-emerald-600 
+                                  transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                 </motion.div>
 
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 }}
-                    className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 
-                             dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
+                    whileHover={{ y: -4, scale: 1.02 }}
+                    className="group relative bg-white dark:bg-gray-800 rounded-2xl p-6 
+                             border-2 border-transparent hover:border-yellow-500/50
+                             shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
                 >
+                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent 
+                                  opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">In Maintenance</p>
-                            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">
+                            <p className="text-2xl font-bold bg-gradient-to-r from-yellow-600 to-amber-600 
+                                      bg-clip-text text-transparent mt-1">
                                 {stats.maintenance}
                             </p>
                         </div>
-                        <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl 
-                                      flex items-center justify-center text-yellow-600 dark:text-yellow-400">
+                        <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-amber-600 
+                                      rounded-xl flex items-center justify-center text-white
+                                      shadow-lg shadow-yellow-500/30 group-hover:scale-110 transition-transform">
                             <ClockIcon className="w-6 h-6" />
                         </div>
                     </div>
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-yellow-500 to-amber-600 
+                                  transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                 </motion.div>
 
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 
-                             dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
+                    whileHover={{ y: -4, scale: 1.02 }}
+                    className="group relative bg-white dark:bg-gray-800 rounded-2xl p-6 
+                             border-2 border-transparent hover:border-red-500/50
+                             shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
                 >
+                    <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent 
+                                  opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">Needs Repair</p>
-                            <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">
+                            <p className="text-2xl font-bold bg-gradient-to-r from-red-600 to-rose-600 
+                                      bg-clip-text text-transparent mt-1">
                                 {stats.repair}
                             </p>
                         </div>
-                        <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-xl 
-                                      flex items-center justify-center text-red-600 dark:text-red-400">
+                        <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-600 
+                                      rounded-xl flex items-center justify-center text-white
+                                      shadow-lg shadow-red-500/30 group-hover:scale-110 transition-transform">
                             <ExclamationTriangleIcon className="w-6 h-6" />
                         </div>
                     </div>
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-rose-600 
+                                  transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                 </motion.div>
 
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.25 }}
-                    className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 
-                             dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
+                    whileHover={{ y: -4, scale: 1.02 }}
+                    className="group relative bg-white dark:bg-gray-800 rounded-2xl p-6 
+                             border-2 border-transparent hover:border-gray-500/50
+                             shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
                 >
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-500/5 to-transparent 
+                                  opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">Idle/Storage</p>
-                            <p className="text-2xl font-bold text-gray-600 dark:text-gray-400 mt-1">
+                            <p className="text-2xl font-bold bg-gradient-to-r from-gray-600 to-slate-600 
+                                      bg-clip-text text-transparent mt-1">
                                 {stats.idle}
                             </p>
                         </div>
-                        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-xl 
-                                      flex items-center justify-center text-gray-600 dark:text-gray-400">
+                        <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-slate-600 
+                                      rounded-xl flex items-center justify-center text-white
+                                      shadow-lg shadow-gray-500/30 group-hover:scale-110 transition-transform">
                             <TruckIcon className="w-6 h-6" />
                         </div>
                     </div>
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-gray-500 to-slate-600 
+                                  transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                 </motion.div>
 
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
-                    className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 
-                             dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
+                    whileHover={{ y: -4, scale: 1.02 }}
+                    className="group relative bg-white dark:bg-gray-800 rounded-2xl p-6 
+                             border-2 border-transparent hover:border-purple-500/50
+                             shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
                 >
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent 
+                                  opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">To Purchase</p>
-                            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">
+                            <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 
+                                      bg-clip-text text-transparent mt-1">
                                 {stats.pendingPurchase}
                             </p>
                         </div>
-                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl 
-                                      flex items-center justify-center text-blue-600 dark:text-blue-400">
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 
+                                      rounded-xl flex items-center justify-center text-white
+                                      shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform">
                             <CurrencyDollarIcon className="w-6 h-6" />
                         </div>
                     </div>
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-violet-600 
+                                  transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                 </motion.div>
             </div>
 
-            {/* Filters and Search - ENHANCED VERSION */}
+            {/* Filters and Search - Enhanced Version */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35 }}
-                className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 
-                         dark:border-gray-700 shadow-sm p-5"
+                className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-100 
+                         dark:border-gray-700 shadow-lg p-5"
             >
                 <div className="flex flex-col sm:flex-row gap-4">
                     {/* Search with Enhanced Styling */}
@@ -496,25 +558,64 @@ export default function EquipmentPage(): React.ReactElement {
                         </select>
                     </div>
                 </div>
+
+                {/* Active Filters Display */}
+                {(searchTerm || statusFilter !== 'all' || categoryFilter !== 'all') && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700"
+                    >
+                        {searchTerm && (
+                            <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 
+                                           text-blue-700 rounded-lg text-sm">
+                                Search: {searchTerm}
+                                <XMarkIcon className="w-4 h-4 cursor-pointer hover:text-blue-900"
+                                    onClick={() => setSearchTerm('')} />
+                            </span>
+                        )}
+                        {statusFilter !== 'all' && (
+                            <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 
+                                           text-green-700 rounded-lg text-sm">
+                                Status: {statusFilter.replace('_', ' ')}
+                                <XMarkIcon className="w-4 h-4 cursor-pointer hover:text-green-900"
+                                    onClick={() => setStatusFilter('all')} />
+                            </span>
+                        )}
+                        {categoryFilter !== 'all' && (
+                            <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-100 
+                                           text-purple-700 rounded-lg text-sm">
+                                Category: {categoryFilter}
+                                <XMarkIcon className="w-4 h-4 cursor-pointer hover:text-purple-900"
+                                    onClick={() => setCategoryFilter('all')} />
+                            </span>
+                        )}
+                    </motion.div>
+                )}
             </motion.div>
 
-            {/* Equipment Table */}
+            {/* Equipment Table with Enhanced Styling */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 
-                         dark:border-gray-700 shadow-sm overflow-hidden"
+                className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-100 
+                         dark:border-gray-700 shadow-lg overflow-hidden"
             >
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+                <div className="px-6 py-4 border-b-2 border-gray-100 dark:border-gray-700 
+                              bg-gradient-to-r from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-800">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <DocumentTextIcon className="w-5 h-5 text-green-500" />
                             Equipment List
                         </h2>
-                        <span className="text-sm px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full 
-                                      text-gray-600 dark:text-gray-300 font-medium">
+                        <motion.span
+                            whileHover={{ scale: 1.05 }}
+                            className="text-sm px-4 py-1.5 bg-gradient-to-r from-green-500 to-emerald-500 
+                                     text-white rounded-full font-medium shadow-lg shadow-green-500/30"
+                        >
                             {filteredEquipment.length} items
-                        </span>
+                        </motion.span>
                     </div>
                 </div>
 
@@ -530,6 +631,11 @@ export default function EquipmentPage(): React.ReactElement {
                                     </div>
                                     <div className="text-sm text-gray-500 dark:text-gray-400">
                                         {item?.manufacturer} {item?.model} • {item?.year}
+                                        {item?.serialNumber && (
+                                            <span className="ml-2 font-mono text-xs text-gray-400">
+                                                SN: {item.serialNumber}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             )
@@ -538,8 +644,10 @@ export default function EquipmentPage(): React.ReactElement {
                             key: "category",
                             header: "Category",
                             render: (value: unknown) => (
-                                <span className="text-sm px-3 py-1 bg-gray-100 dark:bg-gray-700/50 
-                                               rounded-lg text-gray-600 dark:text-gray-300">
+                                <span className="text-sm px-3 py-1.5 bg-gradient-to-r from-gray-100 to-gray-50 
+                                               dark:from-gray-700 dark:to-gray-800 rounded-lg 
+                                               text-gray-700 dark:text-gray-300 border border-gray-200 
+                                               dark:border-gray-600">
                                     {value as string || 'Uncategorized'}
                                 </span>
                             )
@@ -553,7 +661,8 @@ export default function EquipmentPage(): React.ReactElement {
                             key: "hours",
                             header: "Hours",
                             render: (value: unknown) => (
-                                <span className="font-mono text-sm font-medium text-gray-900 dark:text-white">
+                                <span className="font-mono text-sm font-medium text-gray-900 dark:text-white 
+                                               bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
                                     {(value as number).toLocaleString()} hrs
                                 </span>
                             )
@@ -567,20 +676,31 @@ export default function EquipmentPage(): React.ReactElement {
                                 const today = new Date();
                                 const daysUntil = Math.ceil((maintenanceDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
+                                let statusColor = 'text-gray-600 dark:text-gray-400'
+                                let statusText = ''
+
+                                if (maintenanceDate < today) {
+                                    statusColor = 'text-red-600 dark:text-red-400 font-semibold'
+                                    statusText = `Overdue by ${Math.abs(daysUntil)} days`
+                                } else if (daysUntil <= 7) {
+                                    statusColor = 'text-yellow-600 dark:text-yellow-400 font-semibold'
+                                    statusText = `Due in ${daysUntil} days`
+                                }
+
                                 return (
                                     <div className="text-sm">
                                         <div className="text-gray-900 dark:text-white font-medium">
-                                            {maintenanceDate.toLocaleDateString()}
+                                            {maintenanceDate.toLocaleDateString('en-US', {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric'
+                                            })}
                                         </div>
-                                        {maintenanceDate < today ? (
-                                            <span className="text-xs text-red-600 dark:text-red-400 font-medium">
-                                                Overdue by {Math.abs(daysUntil)} days
+                                        {statusText && (
+                                            <span className={`text-xs ${statusColor}`}>
+                                                {statusText}
                                             </span>
-                                        ) : daysUntil <= 7 ? (
-                                            <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
-                                                Due in {daysUntil} days
-                                            </span>
-                                        ) : null}
+                                        )}
                                     </div>
                                 );
                             }
@@ -589,7 +709,8 @@ export default function EquipmentPage(): React.ReactElement {
                             key: "location",
                             header: "Location",
                             render: (value: unknown) => (
-                                <span className="text-sm flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                                <span className="text-sm flex items-center gap-1.5 text-gray-600 dark:text-gray-400
+                                               bg-gray-50 dark:bg-gray-800/50 px-3 py-1.5 rounded-lg">
                                     <MapPinIcon className="w-3.5 h-3.5" />
                                     {value as string || 'Not assigned'}
                                 </span>
@@ -599,18 +720,21 @@ export default function EquipmentPage(): React.ReactElement {
                             key: "id",
                             header: "",
                             render: (value: unknown) => (
-                                <button
+                                <motion.button
+                                    whileHover={{ scale: 1.05, x: 4 }}
+                                    whileTap={{ scale: 0.95 }}
                                     onClick={(e) => {
                                         e.stopPropagation()
                                         router.push(`/admin/equipment/${value as string}`)
                                     }}
-                                    className="text-sm font-medium text-green-600 hover:text-green-700 
-                                             dark:text-green-400 dark:hover:text-green-300 
-                                             px-3 py-1.5 rounded-lg hover:bg-green-50 
-                                             dark:hover:bg-green-500/10 transition-all"
+                                    className="text-sm font-medium text-white bg-gradient-to-r 
+                                             from-green-500 to-emerald-600 px-4 py-2 
+                                             rounded-lg hover:from-green-600 hover:to-emerald-700 
+                                             shadow-lg shadow-green-500/30 hover:shadow-xl 
+                                             transition-all duration-300"
                                 >
                                     View Details →
-                                </button>
+                                </motion.button>
                             )
                         }
                     ]}
@@ -639,7 +763,7 @@ export default function EquipmentPage(): React.ReactElement {
 }
 
 // ============================================================================
-// ADD EQUIPMENT MODAL - ENHANCED STYLING WITH VIBRANT INPUTS
+// ADD EQUIPMENT MODAL - MATCHING EMPLOYEELIST STYLING
 // ============================================================================
 
 interface AddEquipmentModalProps {
@@ -681,26 +805,26 @@ const AddEquipmentModal = ({
         }
     }
 
-    // Enhanced input class with vibrant colors
+    // Input class matching EmployeeList styling
     const getInputClasses = (fieldName: string, isSelect: boolean = false) => {
-        const baseClasses = `w-full px-4 py-3 rounded-xl transition-all duration-300 
-            border-2 outline-none appearance-none
+        const baseClasses = `w-full px-4 py-3 rounded-lg transition-all duration-200 
+            border outline-none appearance-none
             ${isSelect ? 'cursor-pointer' : ''}`
 
         const focusedClasses = focusedField === fieldName
-            ? 'border-green-500 ring-4 ring-green-500/20 bg-green-50 dark:bg-green-900/10'
-            : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-green-300 dark:hover:border-green-700'
+            ? 'border-[#2e8b57] ring-2 ring-[#2e8b57]/20 bg-[#f5f1e6] dark:bg-gray-800'
+            : 'border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800 hover:border-[#2e8b57] dark:hover:border-[#2e8b57]'
 
-        const textClasses = 'text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500'
+        const textClasses = 'text-[#8b4513] dark:text-[#d4a574] placeholder-[#b85e1a]/50 dark:placeholder-gray-500'
 
         return `${baseClasses} ${focusedClasses} ${textClasses}`
     }
 
-    // Enhanced label class
-    const labelClasses = "block text-sm font-semibold mb-2 bg-gradient-to-r from-gray-700 to-gray-900 dark:from-gray-300 dark:to-gray-100 bg-clip-text text-transparent"
+    // Label class matching EmployeeList
+    const labelClasses = "block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1"
 
     // Required star
-    const requiredStar = <span className="text-transparent bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text">*</span>
+    const requiredStar = <span className="text-red-500">*</span>
 
     // Dynamic field sets based on category
     const getCategorySpecificFields = (category: string) => {
@@ -713,18 +837,14 @@ const AddEquipmentModal = ({
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="space-y-5 mt-6 p-6 bg-gradient-to-br from-green-50 to-emerald-50/50 
-                                 dark:from-green-950/30 dark:to-emerald-950/30 rounded-2xl 
-                                 border-2 border-green-200 dark:border-green-800"
+                        className="space-y-4 mt-6 p-5 bg-[#f5f1e6] dark:bg-gray-800/50 rounded-xl border border-[#d4a574] dark:border-[#8b4513]"
                     >
-                        <h3 className="text-sm font-bold text-transparent bg-gradient-to-r 
-                                     from-green-600 to-emerald-600 bg-clip-text flex items-center gap-2 
-                                     pb-2 border-b border-green-200 dark:border-green-800">
-                            <WrenchScrewdriverIcon className="w-4 h-4 text-green-500" />
+                        <h3 className="text-sm font-semibold text-[#8b4513] dark:text-[#d4a574] flex items-center gap-2 pb-2 border-b border-[#d4a574]/30">
+                            <WrenchScrewdriverIcon className="w-4 h-4 text-[#2e8b57]" />
                             Equipment Details
                         </h3>
 
-                        <div className="grid grid-cols-3 gap-5">
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="space-y-2">
                                 <label className={labelClasses}>
                                     Manufacturer
@@ -770,7 +890,7 @@ const AddEquipmentModal = ({
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-5">
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className={labelClasses}>
                                     Serial Number
@@ -805,7 +925,7 @@ const AddEquipmentModal = ({
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-5">
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className={labelClasses}>
                                     Hours Meter
@@ -846,18 +966,14 @@ const AddEquipmentModal = ({
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="space-y-5 mt-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50/50 
-                                 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-2xl 
-                                 border-2 border-blue-200 dark:border-blue-800"
+                        className="space-y-4 mt-6 p-5 bg-[#f5f1e6] dark:bg-gray-800/50 rounded-xl border border-[#d4a574] dark:border-[#8b4513]"
                     >
-                        <h3 className="text-sm font-bold text-transparent bg-gradient-to-r 
-                                     from-blue-600 to-indigo-600 bg-clip-text flex items-center gap-2 
-                                     pb-2 border-b border-blue-200 dark:border-blue-800">
-                            <TruckIcon className="w-4 h-4 text-blue-500" />
+                        <h3 className="text-sm font-semibold text-[#8b4513] dark:text-[#d4a574] flex items-center gap-2 pb-2 border-b border-[#d4a574]/30">
+                            <TruckIcon className="w-4 h-4 text-[#2e8b57]" />
                             Vehicle Details
                         </h3>
 
-                        <div className="grid grid-cols-2 gap-5">
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className={labelClasses}>
                                     License Plate
@@ -888,7 +1004,7 @@ const AddEquipmentModal = ({
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-5">
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className={labelClasses}>
                                     Odometer (miles)
@@ -919,7 +1035,7 @@ const AddEquipmentModal = ({
                         </div>
 
                         {category === "Trucks & Trailers" && (
-                            <div className="grid grid-cols-2 gap-5">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className={labelClasses}>
                                         GVWR (lbs)
@@ -960,14 +1076,10 @@ const AddEquipmentModal = ({
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="space-y-5 mt-6 p-6 bg-gradient-to-br from-amber-50 to-orange-50/50 
-                                 dark:from-amber-950/30 dark:to-orange-950/30 rounded-2xl 
-                                 border-2 border-amber-200 dark:border-amber-800"
+                        className="space-y-4 mt-6 p-5 bg-[#f5f1e6] dark:bg-gray-800/50 rounded-xl border border-[#d4a574] dark:border-[#8b4513]"
                     >
-                        <h3 className="text-sm font-bold text-transparent bg-gradient-to-r 
-                                     from-amber-600 to-orange-600 bg-clip-text flex items-center gap-2 
-                                     pb-2 border-b border-amber-200 dark:border-amber-800">
-                            <WrenchScrewdriverIcon className="w-4 h-4 text-amber-500" />
+                        <h3 className="text-sm font-semibold text-[#8b4513] dark:text-[#d4a574] flex items-center gap-2 pb-2 border-b border-[#d4a574]/30">
+                            <WrenchScrewdriverIcon className="w-4 h-4 text-[#2e8b57]" />
                             Tool Details
                         </h3>
 
@@ -1014,18 +1126,14 @@ const AddEquipmentModal = ({
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="space-y-5 mt-6 p-6 bg-gradient-to-br from-purple-50 to-violet-50/50 
-                                 dark:from-purple-950/30 dark:to-violet-950/30 rounded-2xl 
-                                 border-2 border-purple-200 dark:border-purple-800"
+                        className="space-y-4 mt-6 p-5 bg-[#f5f1e6] dark:bg-gray-800/50 rounded-xl border border-[#d4a574] dark:border-[#8b4513]"
                     >
-                        <h3 className="text-sm font-bold text-transparent bg-gradient-to-r 
-                                     from-purple-600 to-violet-600 bg-clip-text flex items-center gap-2 
-                                     pb-2 border-b border-purple-200 dark:border-purple-800">
-                            <PaintBrushIcon className="w-4 h-4 text-purple-500" />
+                        <h3 className="text-sm font-semibold text-[#8b4513] dark:text-[#d4a574] flex items-center gap-2 pb-2 border-b border-[#d4a574]/30">
+                            <PaintBrushIcon className="w-4 h-4 text-[#2e8b57]" />
                             Sprayer Details
                         </h3>
 
-                        <div className="grid grid-cols-2 gap-5">
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className={labelClasses}>
                                     Tank Capacity (gal)
@@ -1062,18 +1170,14 @@ const AddEquipmentModal = ({
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="space-y-5 mt-6 p-6 bg-gradient-to-br from-red-50 to-rose-50/50 
-                                 dark:from-red-950/30 dark:to-rose-950/30 rounded-2xl 
-                                 border-2 border-red-200 dark:border-red-800"
+                        className="space-y-4 mt-6 p-5 bg-[#f5f1e6] dark:bg-gray-800/50 rounded-xl border border-[#d4a574] dark:border-[#8b4513]"
                     >
-                        <h3 className="text-sm font-bold text-transparent bg-gradient-to-r 
-                                     from-red-600 to-rose-600 bg-clip-text flex items-center gap-2 
-                                     pb-2 border-b border-red-200 dark:border-red-800">
-                            <ShieldCheckIcon className="w-4 h-4 text-red-500" />
+                        <h3 className="text-sm font-semibold text-[#8b4513] dark:text-[#d4a574] flex items-center gap-2 pb-2 border-b border-[#d4a574]/30">
+                            <ShieldCheckIcon className="w-4 h-4 text-[#2e8b57]" />
                             Safety Equipment Details
                         </h3>
 
-                        <div className="grid grid-cols-2 gap-5">
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className={labelClasses}>
                                     Size
@@ -1110,18 +1214,14 @@ const AddEquipmentModal = ({
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="space-y-5 mt-6 p-6 bg-gradient-to-br from-teal-50 to-cyan-50/50 
-                                 dark:from-teal-950/30 dark:to-cyan-950/30 rounded-2xl 
-                                 border-2 border-teal-200 dark:border-teal-800"
+                        className="space-y-4 mt-6 p-5 bg-[#f5f1e6] dark:bg-gray-800/50 rounded-xl border border-[#d4a574] dark:border-[#8b4513]"
                     >
-                        <h3 className="text-sm font-bold text-transparent bg-gradient-to-r 
-                                     from-teal-600 to-cyan-600 bg-clip-text flex items-center gap-2 
-                                     pb-2 border-b border-teal-200 dark:border-teal-800">
-                            <DocumentTextIcon className="w-4 h-4 text-teal-500" />
+                        <h3 className="text-sm font-semibold text-[#8b4513] dark:text-[#d4a574] flex items-center gap-2 pb-2 border-b border-[#d4a574]/30">
+                            <DocumentTextIcon className="w-4 h-4 text-[#2e8b57]" />
                             Storage Details
                         </h3>
 
-                        <div className="grid grid-cols-2 gap-5">
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className={labelClasses}>
                                     Dimensions
@@ -1164,106 +1264,74 @@ const AddEquipmentModal = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-black/80 via-black/70 to-black/80 backdrop-blur-md"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
             onClick={onClose}
         >
             <motion.div
-                initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                transition={{ duration: 0.3, type: "spring", damping: 25 }}
-                className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-4xl h-[750px] flex flex-col overflow-hidden border-2 border-white/20"
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl h-[750px] flex flex-col overflow-hidden border border-[#d4a574] dark:border-[#8b4513]"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Modal Header with Vibrant Gradient */}
-                <div className="relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600" />
-                    <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-
-                    <div className="relative flex items-center justify-between px-8 py-6">
-                        <div className="flex items-center gap-4">
-                            <motion.div
-                                whileHover={{ rotate: 360, scale: 1.1 }}
-                                transition={{ duration: 0.5 }}
-                                className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm 
-                                         flex items-center justify-center border-2 border-white/30
-                                         shadow-xl"
-                            >
-                                <TruckIcon className="w-7 h-7 text-white" />
-                            </motion.div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-white">
-                                    Add New Equipment
-                                </h2>
-                                <p className="text-white/80 text-sm mt-1 flex items-center gap-2">
-                                    <SparklesIcon className="w-4 h-4" />
-                                    Fill in the details below
-                                </p>
-                            </div>
+                {/* Modal Header */}
+                <div className="flex items-center justify-between px-6 py-5 border-b border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-[#2e8b57] flex items-center justify-center shadow-md">
+                            <TruckIcon className="w-5 h-5 text-white" />
                         </div>
-
-                        <motion.button
-                            whileHover={{ scale: 1.1, rotate: 90 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={onClose}
-                            className="p-3 bg-white/20 backdrop-blur-sm rounded-xl 
-                                     hover:bg-white/30 transition-all duration-300
-                                     border-2 border-white/30 text-white"
-                            aria-label="Close modal"
-                        >
-                            <XMarkIcon className="w-5 h-5" />
-                        </motion.button>
+                        <div>
+                            <h2 className="text-xl font-semibold text-[#8b4513] dark:text-[#d4a574]">
+                                Add New Equipment
+                            </h2>
+                            <p className="text-xs text-[#b85e1a]/70 dark:text-gray-400 mt-0.5">
+                                Fill in the details below
+                            </p>
+                        </div>
                     </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 hover:bg-[#d4a574]/20 dark:hover:bg-gray-700 rounded-lg transition-all"
+                        aria-label="Close modal"
+                    >
+                        <XMarkIcon className="w-5 h-5 text-[#8b4513] dark:text-[#d4a574]" />
+                    </button>
                 </div>
 
-                {/* Tabs with Enhanced Styling */}
-                <div className="flex gap-1 px-8 pt-6 bg-gradient-to-b from-gray-50 to-white 
-                              dark:from-gray-800 dark:to-gray-800 border-b-2 border-gray-100 
-                              dark:border-gray-700">
-                    {[
-                        { id: 'basic', label: 'Basic Info', icon: DocumentTextIcon, color: 'green' },
-                        { id: 'maintenance', label: 'Purchase & Maintenance', icon: CalendarIcon, color: 'blue' },
-                        { id: 'training', label: 'Training & Requirements', icon: AcademicCapIcon, color: 'purple' }
-                    ].map((tab) => {
-                        const Icon = tab.icon
-                        const isActive = activeTab === tab.id
-                        const colorClasses = {
-                            green: 'from-green-600 to-emerald-600',
-                            blue: 'from-blue-600 to-indigo-600',
-                            purple: 'from-purple-600 to-violet-600'
-                        }[tab.color]
-
-                        return (
-                            <motion.button
-                                key={tab.id}
-                                whileHover={{ y: -2 }}
-                                whileTap={{ y: 0 }}
-                                onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                                className={`relative px-6 py-3 text-sm font-medium rounded-t-2xl 
-                                         transition-all duration-300 flex items-center gap-2
-                                         ${isActive
-                                        ? `bg-gradient-to-r ${colorClasses} text-white shadow-lg`
-                                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                                    }`}
-                            >
-                                <Icon className="w-4 h-4" />
-                                {tab.label}
-                                {isActive && (
-                                    <motion.div
-                                        layoutId="activeTab"
-                                        className="absolute bottom-0 left-0 right-0 h-0.5 
-                                                 bg-gradient-to-r from-green-500 to-emerald-600"
-                                        transition={{ type: "spring", damping: 25 }}
-                                    />
-                                )}
-                            </motion.button>
-                        )
-                    })}
+                {/* Tabs */}
+                <div className="flex gap-1 px-6 pt-4 border-b border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6]/50 dark:bg-gray-800/50">
+                    <button
+                        onClick={() => setActiveTab('basic')}
+                        className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all ${activeTab === 'basic'
+                            ? 'bg-white dark:bg-gray-700 text-[#2e8b57] border-b-2 border-[#2e8b57]'
+                            : 'text-[#8b4513] hover:text-[#2e8b57] dark:text-[#d4a574] dark:hover:text-[#2e8b57]'
+                            }`}
+                    >
+                        Basic Info
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('maintenance')}
+                        className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all ${activeTab === 'maintenance'
+                            ? 'bg-white dark:bg-gray-700 text-[#2e8b57] border-b-2 border-[#2e8b57]'
+                            : 'text-[#8b4513] hover:text-[#2e8b57] dark:text-[#d4a574] dark:hover:text-[#2e8b57]'
+                            }`}
+                    >
+                        Purchase & Maintenance
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('training')}
+                        className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all ${activeTab === 'training'
+                            ? 'bg-white dark:bg-gray-700 text-[#2e8b57] border-b-2 border-[#2e8b57]'
+                            : 'text-[#8b4513] hover:text-[#2e8b57] dark:text-[#d4a574] dark:hover:text-[#2e8b57]'
+                            }`}
+                    >
+                        Training & Requirements
+                    </button>
                 </div>
 
-                {/* Modal Content with Enhanced Inputs */}
-                <div className="flex-1 p-8 overflow-y-auto bg-gradient-to-b from-white to-gray-50 
-                              dark:from-gray-800 dark:to-gray-900">
+                {/* Modal Content */}
+                <div className="flex-1 p-6 overflow-y-auto bg-white dark:bg-gray-800">
                     <AnimatePresence mode="wait">
                         {activeTab === 'basic' && (
                             <motion.div
@@ -1271,10 +1339,10 @@ const AddEquipmentModal = ({
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: 20 }}
-                                transition={{ duration: 0.3 }}
-                                className="space-y-6"
+                                transition={{ duration: 0.2 }}
+                                className="space-y-5"
                             >
-                                <div className="grid grid-cols-2 gap-6">
+                                <div className="grid grid-cols-2 gap-5">
                                     <div className="space-y-2">
                                         <label className={labelClasses}>
                                             Equipment Name {requiredStar}
@@ -1306,7 +1374,7 @@ const AddEquipmentModal = ({
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-6">
+                                <div className="grid grid-cols-2 gap-5">
                                     <div className="space-y-2">
                                         <label className={labelClasses}>
                                             Category {requiredStar}
@@ -1357,10 +1425,10 @@ const AddEquipmentModal = ({
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: 20 }}
-                                transition={{ duration: 0.3 }}
-                                className="space-y-6"
+                                transition={{ duration: 0.2 }}
+                                className="space-y-5"
                             >
-                                <div className="grid grid-cols-2 gap-6">
+                                <div className="grid grid-cols-2 gap-5">
                                     <div className="space-y-2">
                                         <label className={labelClasses}>
                                             Purchase Date
@@ -1379,8 +1447,7 @@ const AddEquipmentModal = ({
                                             Purchase Price ($)
                                         </label>
                                         <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 
-                                                           text-gray-500 font-medium">$</span>
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8b4513] dark:text-[#d4a574]">$</span>
                                             <input
                                                 type="number"
                                                 value={newEquipment.purchasePrice || ''}
@@ -1396,14 +1463,14 @@ const AddEquipmentModal = ({
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-6">
+                                <div className="grid grid-cols-2 gap-5">
                                     <div className="space-y-2">
                                         <label className={labelClasses}>
                                             Location/Storage
                                         </label>
                                         <div className="relative">
                                             <MapPinIcon className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5
-                                                ${focusedField === 'location' ? 'text-green-500' : 'text-gray-400'}`} />
+                                                ${focusedField === 'location' ? 'text-[#2e8b57]' : 'text-[#b85e1a]/60'}`} />
                                             <input
                                                 type="text"
                                                 value={newEquipment.location || ''}
@@ -1421,7 +1488,7 @@ const AddEquipmentModal = ({
                                         </label>
                                         <div className="relative">
                                             <UserGroupIcon className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5
-                                                ${focusedField === 'currentCrew' ? 'text-green-500' : 'text-gray-400'}`} />
+                                                ${focusedField === 'currentCrew' ? 'text-[#2e8b57]' : 'text-[#b85e1a]/60'}`} />
                                             <select
                                                 value={newEquipment.currentCrew || ''}
                                                 onChange={(e) => setNewEquipment({ ...newEquipment, currentCrew: e.target.value })}
@@ -1438,7 +1505,7 @@ const AddEquipmentModal = ({
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-6">
+                                <div className="grid grid-cols-2 gap-5">
                                     <div className="space-y-2">
                                         <label className={labelClasses}>
                                             Last Service Date
@@ -1489,18 +1556,14 @@ const AddEquipmentModal = ({
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: 20 }}
-                                transition={{ duration: 0.3 }}
-                                className="space-y-6"
+                                transition={{ duration: 0.2 }}
+                                className="space-y-5"
                             >
-                                <div className="p-6 bg-gradient-to-br from-purple-50 to-violet-50/50 
-                                              dark:from-purple-950/30 dark:to-violet-950/30 rounded-2xl 
-                                              border-2 border-purple-200 dark:border-purple-800">
+                                <div className="p-5 bg-[#f5f1e6] dark:bg-gray-800/50 rounded-xl border border-[#d4a574] dark:border-[#8b4513]">
                                     <div className="space-y-4">
-                                        <label className={`flex items-start gap-4 p-5 bg-white dark:bg-gray-800 
-                                                        rounded-xl border-2 transition-all duration-300 cursor-pointer
-                                                        ${focusedField === 'requiresLicense'
-                                                ? 'border-purple-500 ring-4 ring-purple-500/20'
-                                                : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'}`}>
+                                        <label className="flex items-start gap-3 p-4 bg-white dark:bg-gray-800 
+                                                        rounded-lg border border-[#d4a574] dark:border-[#8b4513]
+                                                        hover:border-[#2e8b57] transition-colors cursor-pointer">
                                             <input
                                                 type="checkbox"
                                                 checked={newEquipment.requiresLicense || false}
@@ -1510,39 +1573,29 @@ const AddEquipmentModal = ({
                                                         requiresLicense: e.target.checked,
                                                         requiredLicenseType: e.target.checked ? newEquipment.requiredLicenseType || '' : ''
                                                     })
-                                                    setFocusedField('requiresLicense')
                                                 }}
-                                                onBlur={() => setFocusedField(null)}
-                                                className="mt-1 w-5 h-5 rounded border-gray-300 
-                                                         text-purple-600 focus:ring-purple-500"
+                                                className="mt-1 rounded border-[#d4a574] text-[#2e8b57] focus:ring-[#2e8b57]"
                                             />
                                             <div className="flex-1">
-                                                <span className="text-base font-semibold text-transparent 
-                                                               bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text">
+                                                <span className="text-sm font-medium text-[#8b4513] dark:text-[#d4a574]">
                                                     Requires License/Certification
                                                 </span>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                                <p className="text-xs text-[#b85e1a]/70 dark:text-gray-400 mt-1">
                                                     Operator must have valid license to use this equipment
                                                 </p>
                                             </div>
-                                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br 
-                                                          from-purple-500 to-violet-600 flex items-center 
-                                                          justify-center text-white shadow-lg">
-                                                <ShieldCheckIcon className="w-6 h-6" />
-                                            </div>
+                                            <ShieldCheckIcon className="w-5 h-5 text-[#2e8b57]" />
                                         </label>
 
                                         {newEquipment.requiresLicense && (
                                             <motion.div
                                                 initial={{ opacity: 0, y: -10 }}
                                                 animate={{ opacity: 1, y: 0 }}
-                                                className="pl-16 pr-4"
+                                                className="pl-8 pr-4"
                                             >
                                                 <select
                                                     value={newEquipment.requiredLicenseType || ''}
                                                     onChange={(e) => setNewEquipment({ ...newEquipment, requiredLicenseType: e.target.value })}
-                                                    onFocus={() => setFocusedField('requiredLicenseType')}
-                                                    onBlur={() => setFocusedField(null)}
                                                     className={getInputClasses('requiredLicenseType', true)}
                                                 >
                                                     <option value="">Select License Type</option>
@@ -1555,36 +1608,24 @@ const AddEquipmentModal = ({
                                     </div>
 
                                     <div className="mt-4">
-                                        <label className={`flex items-start gap-4 p-5 bg-white dark:bg-gray-800 
-                                                        rounded-xl border-2 transition-all duration-300 cursor-pointer
-                                                        ${focusedField === 'requiresTraining'
-                                                ? 'border-purple-500 ring-4 ring-purple-500/20'
-                                                : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'}`}>
+                                        <label className="flex items-start gap-3 p-4 bg-white dark:bg-gray-800 
+                                                        rounded-lg border border-[#d4a574] dark:border-[#8b4513]
+                                                        hover:border-[#2e8b57] transition-colors cursor-pointer">
                                             <input
                                                 type="checkbox"
                                                 checked={newEquipment.requiresTraining || false}
-                                                onChange={(e) => {
-                                                    setNewEquipment({ ...newEquipment, requiresTraining: e.target.checked })
-                                                    setFocusedField('requiresTraining')
-                                                }}
-                                                onBlur={() => setFocusedField(null)}
-                                                className="mt-1 w-5 h-5 rounded border-gray-300 
-                                                         text-purple-600 focus:ring-purple-500"
+                                                onChange={(e) => setNewEquipment({ ...newEquipment, requiresTraining: e.target.checked })}
+                                                className="mt-1 rounded border-[#d4a574] text-[#2e8b57] focus:ring-[#2e8b57]"
                                             />
                                             <div className="flex-1">
-                                                <span className="text-base font-semibold text-transparent 
-                                                               bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text">
+                                                <span className="text-sm font-medium text-[#8b4513] dark:text-[#d4a574]">
                                                     Requires Special Training
                                                 </span>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                                <p className="text-xs text-[#b85e1a]/70 dark:text-gray-400 mt-1">
                                                     Additional training required before operation
                                                 </p>
                                             </div>
-                                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br 
-                                                          from-purple-500 to-violet-600 flex items-center 
-                                                          justify-center text-white shadow-lg">
-                                                <AcademicCapIcon className="w-6 h-6" />
-                                            </div>
+                                            <AcademicCapIcon className="w-5 h-5 text-[#2e8b57]" />
                                         </label>
                                     </div>
                                 </div>
@@ -1596,9 +1637,7 @@ const AddEquipmentModal = ({
                                     <textarea
                                         value={newEquipment.notes || ''}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, notes: e.target.value })}
-                                        onFocus={() => setFocusedField('notes')}
-                                        onBlur={() => setFocusedField(null)}
-                                        rows={5}
+                                        rows={4}
                                         className={`${getInputClasses('notes')} resize-none`}
                                         placeholder="Any additional notes about training requirements, safety considerations, etc."
                                     />
@@ -1608,40 +1647,26 @@ const AddEquipmentModal = ({
                     </AnimatePresence>
                 </div>
 
-                {/* Modal Footer with Enhanced Buttons */}
-                <div className="flex items-center justify-end gap-4 px-8 py-5 border-t-2 
-                              border-gray-100 dark:border-gray-700 bg-gradient-to-r 
-                              from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                {/* Modal Footer */}
+                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800">
+                    <button
                         onClick={onClose}
-                        className="px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 
-                                 bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600
-                                 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 
-                                 transition-all duration-300 shadow-lg hover:shadow-xl"
+                        className="px-5 py-2.5 text-sm font-medium text-[#8b4513] dark:text-[#d4a574] 
+                                 bg-white dark:bg-gray-700 border border-[#d4a574] dark:border-[#8b4513]
+                                 rounded-lg hover:bg-[#f5f1e6] dark:hover:bg-gray-600 
+                                 transition-all duration-200"
                         disabled={isSaving}
                     >
                         Cancel
-                    </motion.button>
-
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                    </button>
+                    <button
                         onClick={handleSave}
                         disabled={!newEquipment.name || !newEquipment.category || isSaving}
-                        className="px-8 py-3 text-sm font-semibold text-white 
-                                 bg-gradient-to-r from-green-500 to-emerald-600 
-                                 rounded-xl hover:from-green-600 hover:to-emerald-700 
-                                 transition-all duration-300 disabled:opacity-50 
-                                 disabled:cursor-not-allowed flex items-center gap-3
-                                 shadow-xl shadow-green-500/30 relative overflow-hidden
-                                 group"
+                        className="px-5 py-2.5 text-sm font-medium text-white bg-[#2e8b57] 
+                                 rounded-lg hover:bg-[#1f6b41] transition-all duration-200 
+                                 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2
+                                 shadow-md hover:shadow-lg"
                     >
-                        <span className="absolute inset-0 bg-white/20 transform -skew-x-12 
-                                       -translate-x-full group-hover:translate-x-full 
-                                       transition-transform duration-700" />
-
                         {isSaving ? (
                             <>
                                 <ArrowPathIcon className="w-4 h-4 animate-spin" />
@@ -1649,11 +1674,11 @@ const AddEquipmentModal = ({
                             </>
                         ) : (
                             <>
-                                <PlusIcon className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+                                <PlusIcon className="w-4 h-4" />
                                 Add Equipment
                             </>
                         )}
-                    </motion.button>
+                    </button>
                 </div>
             </motion.div>
         </motion.div>
