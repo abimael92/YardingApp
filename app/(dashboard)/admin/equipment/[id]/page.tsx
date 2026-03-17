@@ -31,6 +31,8 @@ import {
     CurrencyDollarIcon,
     ShieldCheckIcon,
     AcademicCapIcon,
+    SparklesIcon,
+    PaintBrushIcon,
 } from "@heroicons/react/24/outline"
 import Breadcrumbs from "@/src/shared/ui/Breadcrumbs"
 import LoadingState from "@/src/shared/ui/LoadingState"
@@ -84,32 +86,6 @@ interface EquipmentStats {
     repair: number
     idle: number
     pendingPurchase: number
-}
-
-interface StatusConfig {
-    color: string
-    icon: React.ComponentType<{ className: string }>
-}
-
-interface ColumnDefinition {
-    key: string
-    header: string
-    render: (value: unknown, item?: Equipment) => React.ReactNode
-}
-
-interface FilterState {
-    searchTerm: string
-    statusFilter: string
-    categoryFilter: string
-}
-
-interface StatusConfigMap {
-    [key: string]: StatusConfig
-}
-
-interface EquipmentCategory {
-    id: string
-    name: string
 }
 
 interface Crew {
@@ -454,7 +430,7 @@ export default function EquipmentPage(): React.ReactElement {
                 </motion.div>
             </div>
 
-            {/* Filters and Search */}
+            {/* Filters and Search - ENHANCED VERSION */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -463,18 +439,21 @@ export default function EquipmentPage(): React.ReactElement {
                          dark:border-gray-700 shadow-sm p-5"
             >
                 <div className="flex flex-col sm:flex-row gap-4">
-                    {/* Search */}
-                    <div className="flex-1 relative">
-                        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    {/* Search with Enhanced Styling */}
+                    <div className="flex-1 relative group">
+                        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 
+                                                       text-gray-400 group-focus-within:text-green-500 
+                                                       transition-colors duration-300" />
                         <input
                             type="text"
                             placeholder="Search equipment by name, type, manufacturer, model..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 
+                            className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 dark:border-gray-600 
                                      rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                     placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 
-                                     focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                     placeholder-gray-500 dark:placeholder-gray-400 
+                                     focus:border-green-500 focus:ring-4 focus:ring-green-500/20 
+                                     transition-all duration-300 hover:border-green-300"
                         />
                     </div>
 
@@ -484,9 +463,10 @@ export default function EquipmentPage(): React.ReactElement {
                         <select
                             value={categoryFilter}
                             onChange={(e) => setCategoryFilter(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl 
-                                     bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                     focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all"
+                            className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 
+                                     rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                                     focus:border-green-500 focus:ring-4 focus:ring-green-500/20 
+                                     transition-all duration-300 hover:border-green-300 cursor-pointer"
                         >
                             <option value="all">All Categories</option>
                             {EQUIPMENT_CATEGORIES.map(cat => (
@@ -501,9 +481,10 @@ export default function EquipmentPage(): React.ReactElement {
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl 
-                                     bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                     focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all"
+                            className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 
+                                     rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                                     focus:border-green-500 focus:ring-4 focus:ring-green-500/20 
+                                     transition-all duration-300 hover:border-green-300 cursor-pointer"
                         >
                             <option value="all">All Status</option>
                             <option value="operational">Operational</option>
@@ -658,7 +639,7 @@ export default function EquipmentPage(): React.ReactElement {
 }
 
 // ============================================================================
-// ADD EQUIPMENT MODAL - IMPROVED STYLING
+// ADD EQUIPMENT MODAL - ENHANCED STYLING WITH VIBRANT INPUTS
 // ============================================================================
 
 interface AddEquipmentModalProps {
@@ -670,6 +651,11 @@ interface AddEquipmentModalProps {
     fuelTypes: string[]
     licenseTypes: string[]
     crews: Crew[]
+}
+
+interface EquipmentCategory {
+    id: string
+    name: string
 }
 
 const AddEquipmentModal = ({
@@ -684,6 +670,7 @@ const AddEquipmentModal = ({
 }: AddEquipmentModalProps) => {
     const [activeTab, setActiveTab] = useState<'basic' | 'maintenance' | 'training'>('basic')
     const [isSaving, setIsSaving] = useState(false)
+    const [focusedField, setFocusedField] = useState<string | null>(null)
 
     const handleSave = async () => {
         setIsSaving(true)
@@ -694,7 +681,28 @@ const AddEquipmentModal = ({
         }
     }
 
-    // Dynamic field sets based on category (unchanged functionality)
+    // Enhanced input class with vibrant colors
+    const getInputClasses = (fieldName: string, isSelect: boolean = false) => {
+        const baseClasses = `w-full px-4 py-3 rounded-xl transition-all duration-300 
+            border-2 outline-none appearance-none
+            ${isSelect ? 'cursor-pointer' : ''}`
+
+        const focusedClasses = focusedField === fieldName
+            ? 'border-green-500 ring-4 ring-green-500/20 bg-green-50 dark:bg-green-900/10'
+            : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-green-300 dark:hover:border-green-700'
+
+        const textClasses = 'text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500'
+
+        return `${baseClasses} ${focusedClasses} ${textClasses}`
+    }
+
+    // Enhanced label class
+    const labelClasses = "block text-sm font-semibold mb-2 bg-gradient-to-r from-gray-700 to-gray-900 dark:from-gray-300 dark:to-gray-100 bg-clip-text text-transparent"
+
+    // Required star
+    const requiredStar = <span className="text-transparent bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text">*</span>
+
+    // Dynamic field sets based on category
     const getCategorySpecificFields = (category: string) => {
         switch (category) {
             case "Mowers":
@@ -702,83 +710,91 @@ const AddEquipmentModal = ({
             case "Blowers":
             case "Power Equipment":
                 return (
-                    <div className="space-y-4 mt-6 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                            <WrenchScrewdriverIcon className="w-4 h-4" />
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-5 mt-6 p-6 bg-gradient-to-br from-green-50 to-emerald-50/50 
+                                 dark:from-green-950/30 dark:to-emerald-950/30 rounded-2xl 
+                                 border-2 border-green-200 dark:border-green-800"
+                    >
+                        <h3 className="text-sm font-bold text-transparent bg-gradient-to-r 
+                                     from-green-600 to-emerald-600 bg-clip-text flex items-center gap-2 
+                                     pb-2 border-b border-green-200 dark:border-green-800">
+                            <WrenchScrewdriverIcon className="w-4 h-4 text-green-500" />
                             Equipment Details
                         </h3>
 
-                        <div className="grid grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                        <div className="grid grid-cols-3 gap-5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     Manufacturer
                                 </label>
                                 <input
                                     type="text"
                                     value={newEquipment.manufacturer || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, manufacturer: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('manufacturer')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('manufacturer')}
                                     placeholder="e.g., John Deere"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     Model
                                 </label>
                                 <input
                                     type="text"
                                     value={newEquipment.model || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, model: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('model')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('model')}
                                     placeholder="e.g., Z930M"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     Year
                                 </label>
                                 <input
                                     type="number"
                                     value={newEquipment.year || new Date().getFullYear()}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, year: parseInt(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('year')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('year')}
                                     min="1900"
                                     max={new Date().getFullYear() + 1}
                                 />
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                        <div className="grid grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     Serial Number
                                 </label>
                                 <input
                                     type="text"
                                     value={newEquipment.serialNumber || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, serialNumber: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('serialNumber')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('serialNumber')}
                                     placeholder="Serial #"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     Fuel Type
                                 </label>
                                 <select
                                     value={newEquipment.fuelType || 'gasoline'}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, fuelType: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('fuelType')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('fuelType', true)}
                                 >
                                     {fuelTypes.map(type => (
                                         <option key={type} value={type}>
@@ -789,31 +805,31 @@ const AddEquipmentModal = ({
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                        <div className="grid grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     Hours Meter
                                 </label>
                                 <input
                                     type="number"
                                     value={newEquipment.hours || 0}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, hours: parseInt(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('hours')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('hours')}
                                     placeholder="0"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     Blade/Cutter Condition
                                 </label>
                                 <select
                                     value={newEquipment.bladeCondition || 'good'}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, bladeCondition: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('bladeCondition')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('bladeCondition', true)}
                                 >
                                     <option value="excellent">Excellent</option>
                                     <option value="good">Good</option>
@@ -822,101 +838,112 @@ const AddEquipmentModal = ({
                                 </select>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 )
 
             case "Trucks & Trailers":
                 return (
-                    <div className="space-y-4 mt-6 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                            <TruckIcon className="w-4 h-4" />
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-5 mt-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50/50 
+                                 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-2xl 
+                                 border-2 border-blue-200 dark:border-blue-800"
+                    >
+                        <h3 className="text-sm font-bold text-transparent bg-gradient-to-r 
+                                     from-blue-600 to-indigo-600 bg-clip-text flex items-center gap-2 
+                                     pb-2 border-b border-blue-200 dark:border-blue-800">
+                            <TruckIcon className="w-4 h-4 text-blue-500" />
                             Vehicle Details
                         </h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+
+                        <div className="grid grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     License Plate
                                 </label>
                                 <input
                                     type="text"
                                     value={newEquipment.licensePlate || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, licensePlate: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('licensePlate')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('licensePlate')}
                                     placeholder="ABC-1234"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     VIN
                                 </label>
                                 <input
                                     type="text"
                                     value={newEquipment.vin || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, vin: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('vin')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('vin')}
                                     placeholder="1HGCM82633A123456"
                                 />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+
+                        <div className="grid grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     Odometer (miles)
                                 </label>
                                 <input
                                     type="number"
                                     value={newEquipment.odometer || 0}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, odometer: parseInt(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('odometer')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('odometer')}
                                     placeholder="0"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     Registration Expiration
                                 </label>
                                 <input
                                     type="date"
                                     value={newEquipment.registrationExpiration || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, registrationExpiration: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('registrationExpiration')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('registrationExpiration')}
                                 />
                             </div>
                         </div>
+
                         {category === "Trucks & Trailers" && (
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                            <div className="grid grid-cols-2 gap-5">
+                                <div className="space-y-2">
+                                    <label className={labelClasses}>
                                         GVWR (lbs)
                                     </label>
                                     <input
                                         type="number"
                                         value={newEquipment.gvwr || ''}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, gvwr: parseInt(e.target.value) })}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                                 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                        onFocus={() => setFocusedField('gvwr')}
+                                        onBlur={() => setFocusedField(null)}
+                                        className={getInputClasses('gvwr')}
                                         placeholder="10000"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                                <div className="space-y-2">
+                                    <label className={labelClasses}>
                                         Axles
                                     </label>
                                     <select
                                         value={newEquipment.axles || '1'}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, axles: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                                 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                        onFocus={() => setFocusedField('axles')}
+                                        onBlur={() => setFocusedField(null)}
+                                        className={getInputClasses('axles', true)}
                                     >
                                         <option value="1">Single Axle</option>
                                         <option value="2">Tandem Axle</option>
@@ -925,167 +952,206 @@ const AddEquipmentModal = ({
                                 </div>
                             </div>
                         )}
-                    </div>
+                    </motion.div>
                 )
 
             case "Hand Tools":
                 return (
-                    <div className="space-y-4 mt-6 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                            <WrenchScrewdriverIcon className="w-4 h-4" />
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-5 mt-6 p-6 bg-gradient-to-br from-amber-50 to-orange-50/50 
+                                 dark:from-amber-950/30 dark:to-orange-950/30 rounded-2xl 
+                                 border-2 border-amber-200 dark:border-amber-800"
+                    >
+                        <h3 className="text-sm font-bold text-transparent bg-gradient-to-r 
+                                     from-amber-600 to-orange-600 bg-clip-text flex items-center gap-2 
+                                     pb-2 border-b border-amber-200 dark:border-amber-800">
+                            <WrenchScrewdriverIcon className="w-4 h-4 text-amber-500" />
                             Tool Details
                         </h3>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-                                Serial Number (optional)
-                            </label>
-                            <input
-                                type="text"
-                                value={newEquipment.serialNumber || ''}
-                                onChange={(e) => setNewEquipment({ ...newEquipment, serialNumber: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                         rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                         focus:ring-green-500/50 focus:border-green-500 transition-all"
-                                placeholder="Serial #"
-                            />
+
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
+                                    Serial Number (optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newEquipment.serialNumber || ''}
+                                    onChange={(e) => setNewEquipment({ ...newEquipment, serialNumber: e.target.value })}
+                                    onFocus={() => setFocusedField('serialNumber')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('serialNumber')}
+                                    placeholder="Serial #"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
+                                    Condition
+                                </label>
+                                <select
+                                    value={newEquipment.condition || 'good'}
+                                    onChange={(e) => setNewEquipment({ ...newEquipment, condition: e.target.value })}
+                                    onFocus={() => setFocusedField('condition')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('condition', true)}
+                                >
+                                    <option value="new">New</option>
+                                    <option value="good">Good</option>
+                                    <option value="fair">Fair</option>
+                                    <option value="worn">Worn</option>
+                                    <option value="needs_replace">Needs Replacement</option>
+                                </select>
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-                                Condition
-                            </label>
-                            <select
-                                value={newEquipment.condition || 'good'}
-                                onChange={(e) => setNewEquipment({ ...newEquipment, condition: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                         rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                         focus:ring-green-500/50 focus:border-green-500 transition-all"
-                            >
-                                <option value="new">New</option>
-                                <option value="good">Good</option>
-                                <option value="fair">Fair</option>
-                                <option value="worn">Worn</option>
-                                <option value="needs_replace">Needs Replacement</option>
-                            </select>
-                        </div>
-                    </div>
+                    </motion.div>
                 )
 
             case "Sprayers":
                 return (
-                    <div className="space-y-4 mt-6 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                            <WrenchScrewdriverIcon className="w-4 h-4" />
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-5 mt-6 p-6 bg-gradient-to-br from-purple-50 to-violet-50/50 
+                                 dark:from-purple-950/30 dark:to-violet-950/30 rounded-2xl 
+                                 border-2 border-purple-200 dark:border-purple-800"
+                    >
+                        <h3 className="text-sm font-bold text-transparent bg-gradient-to-r 
+                                     from-purple-600 to-violet-600 bg-clip-text flex items-center gap-2 
+                                     pb-2 border-b border-purple-200 dark:border-purple-800">
+                            <PaintBrushIcon className="w-4 h-4 text-purple-500" />
                             Sprayer Details
                         </h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+
+                        <div className="grid grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     Tank Capacity (gal)
                                 </label>
                                 <input
                                     type="number"
                                     value={newEquipment.tankCapacity || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, tankCapacity: parseInt(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('tankCapacity')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('tankCapacity')}
                                     placeholder="25"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     Last Calibration
                                 </label>
                                 <input
                                     type="date"
                                     value={newEquipment.lastCalibration || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, lastCalibration: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('lastCalibration')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('lastCalibration')}
                                 />
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 )
 
             case "Safety Equipment":
                 return (
-                    <div className="space-y-4 mt-6 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                            <ShieldCheckIcon className="w-4 h-4" />
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-5 mt-6 p-6 bg-gradient-to-br from-red-50 to-rose-50/50 
+                                 dark:from-red-950/30 dark:to-rose-950/30 rounded-2xl 
+                                 border-2 border-red-200 dark:border-red-800"
+                    >
+                        <h3 className="text-sm font-bold text-transparent bg-gradient-to-r 
+                                     from-red-600 to-rose-600 bg-clip-text flex items-center gap-2 
+                                     pb-2 border-b border-red-200 dark:border-red-800">
+                            <ShieldCheckIcon className="w-4 h-4 text-red-500" />
                             Safety Equipment Details
                         </h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+
+                        <div className="grid grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     Size
                                 </label>
                                 <input
                                     type="text"
                                     value={newEquipment.size || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, size: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('size')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('size')}
                                     placeholder="M, L, XL, etc."
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     Inspection Date
                                 </label>
                                 <input
                                     type="date"
                                     value={newEquipment.inspectionDate || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, inspectionDate: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('inspectionDate')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('inspectionDate')}
                                 />
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 )
 
             case "Storage":
                 return (
-                    <div className="space-y-4 mt-6 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                            <DocumentTextIcon className="w-4 h-4" />
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-5 mt-6 p-6 bg-gradient-to-br from-teal-50 to-cyan-50/50 
+                                 dark:from-teal-950/30 dark:to-cyan-950/30 rounded-2xl 
+                                 border-2 border-teal-200 dark:border-teal-800"
+                    >
+                        <h3 className="text-sm font-bold text-transparent bg-gradient-to-r 
+                                     from-teal-600 to-cyan-600 bg-clip-text flex items-center gap-2 
+                                     pb-2 border-b border-teal-200 dark:border-teal-800">
+                            <DocumentTextIcon className="w-4 h-4 text-teal-500" />
                             Storage Details
                         </h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+
+                        <div className="grid grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     Dimensions
                                 </label>
                                 <input
                                     type="text"
                                     value={newEquipment.dimensions || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, dimensions: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('dimensions')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('dimensions')}
                                     placeholder="10x10x8"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>
                                     Material
                                 </label>
                                 <input
                                     type="text"
                                     value={newEquipment.material || ''}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, material: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-                                             rounded-lg bg-white dark:bg-gray-800 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                    onFocus={() => setFocusedField('material')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={getInputClasses('material')}
                                     placeholder="Wood, Metal, etc."
                                 />
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 )
 
             default:
@@ -1098,379 +1164,484 @@ const AddEquipmentModal = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-black/80 via-black/70 to-black/80 backdrop-blur-md"
             onClick={onClose}
         >
             <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl h-[750px] flex flex-col overflow-hidden"
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                transition={{ duration: 0.3, type: "spring", damping: 25 }}
+                className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-4xl h-[750px] flex flex-col overflow-hidden border-2 border-white/20"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Modal Header */}
-                <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 
-                                      flex items-center justify-center shadow-lg shadow-green-500/30">
-                            <TruckIcon className="w-5 h-5 text-white" />
+                {/* Modal Header with Vibrant Gradient */}
+                <div className="relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600" />
+                    <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
+
+                    <div className="relative flex items-center justify-between px-8 py-6">
+                        <div className="flex items-center gap-4">
+                            <motion.div
+                                whileHover={{ rotate: 360, scale: 1.1 }}
+                                transition={{ duration: 0.5 }}
+                                className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm 
+                                         flex items-center justify-center border-2 border-white/30
+                                         shadow-xl"
+                            >
+                                <TruckIcon className="w-7 h-7 text-white" />
+                            </motion.div>
+                            <div>
+                                <h2 className="text-2xl font-bold text-white">
+                                    Add New Equipment
+                                </h2>
+                                <p className="text-white/80 text-sm mt-1 flex items-center gap-2">
+                                    <SparklesIcon className="w-4 h-4" />
+                                    Fill in the details below
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                Add New Equipment
-                            </h2>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                Fill in the details below
-                            </p>
-                        </div>
+
+                        <motion.button
+                            whileHover={{ scale: 1.1, rotate: 90 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={onClose}
+                            className="p-3 bg-white/20 backdrop-blur-sm rounded-xl 
+                                     hover:bg-white/30 transition-all duration-300
+                                     border-2 border-white/30 text-white"
+                            aria-label="Close modal"
+                        >
+                            <XMarkIcon className="w-5 h-5" />
+                        </motion.button>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all 
-                                 hover:rotate-90 duration-200"
-                        aria-label="Close modal"
-                    >
-                        <XMarkIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                    </button>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex gap-1 px-6 pt-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-                    <button
-                        onClick={() => setActiveTab('basic')}
-                        className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all ${activeTab === 'basic'
-                                ? 'bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                            }`}
-                    >
-                        Basic Info
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('maintenance')}
-                        className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all ${activeTab === 'maintenance'
-                                ? 'bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                            }`}
-                    >
-                        Purchase & Maintenance
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('training')}
-                        className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all ${activeTab === 'training'
-                                ? 'bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                            }`}
-                    >
-                        Training & Requirements
-                    </button>
+                {/* Tabs with Enhanced Styling */}
+                <div className="flex gap-1 px-8 pt-6 bg-gradient-to-b from-gray-50 to-white 
+                              dark:from-gray-800 dark:to-gray-800 border-b-2 border-gray-100 
+                              dark:border-gray-700">
+                    {[
+                        { id: 'basic', label: 'Basic Info', icon: DocumentTextIcon, color: 'green' },
+                        { id: 'maintenance', label: 'Purchase & Maintenance', icon: CalendarIcon, color: 'blue' },
+                        { id: 'training', label: 'Training & Requirements', icon: AcademicCapIcon, color: 'purple' }
+                    ].map((tab) => {
+                        const Icon = tab.icon
+                        const isActive = activeTab === tab.id
+                        const colorClasses = {
+                            green: 'from-green-600 to-emerald-600',
+                            blue: 'from-blue-600 to-indigo-600',
+                            purple: 'from-purple-600 to-violet-600'
+                        }[tab.color]
+
+                        return (
+                            <motion.button
+                                key={tab.id}
+                                whileHover={{ y: -2 }}
+                                whileTap={{ y: 0 }}
+                                onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                                className={`relative px-6 py-3 text-sm font-medium rounded-t-2xl 
+                                         transition-all duration-300 flex items-center gap-2
+                                         ${isActive
+                                        ? `bg-gradient-to-r ${colorClasses} text-white shadow-lg`
+                                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                                    }`}
+                            >
+                                <Icon className="w-4 h-4" />
+                                {tab.label}
+                                {isActive && (
+                                    <motion.div
+                                        layoutId="activeTab"
+                                        className="absolute bottom-0 left-0 right-0 h-0.5 
+                                                 bg-gradient-to-r from-green-500 to-emerald-600"
+                                        transition={{ type: "spring", damping: 25 }}
+                                    />
+                                )}
+                            </motion.button>
+                        )
+                    })}
                 </div>
 
-                {/* Modal Content */}
-                <div className="flex-1 p-6 overflow-y-auto">
-                    {activeTab === 'basic' && (
-                        <div className="space-y-5">
-                            <div className="grid grid-cols-2 gap-5">
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Equipment Name <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={newEquipment.name || ''}
-                                        onChange={(e) => setNewEquipment({ ...newEquipment, name: e.target.value })}
-                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
-                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
-                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
-                                        placeholder="e.g., Zero-Turn Mower"
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Type
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={newEquipment.type || ''}
-                                        onChange={(e) => setNewEquipment({ ...newEquipment, type: e.target.value })}
-                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
-                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
-                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
-                                        placeholder="e.g., Mower"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-5">
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Category <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        value={newEquipment.category || ''}
-                                        onChange={(e) => setNewEquipment({ ...newEquipment, category: e.target.value })}
-                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
-                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
-                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
-                                        required
-                                    >
-                                        <option value="">Select Category</option>
-                                        {categories.map(cat => (
-                                            <option key={cat} value={cat}>{cat}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Status
-                                    </label>
-                                    <select
-                                        value={newEquipment.status || 'operational'}
-                                        onChange={(e) => setNewEquipment({ ...newEquipment, status: e.target.value as Equipment['status'] })}
-                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
-                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
-                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
-                                    >
-                                        <option value="operational">Operational</option>
-                                        <option value="maintenance">Maintenance</option>
-                                        <option value="repair">Repair</option>
-                                        <option value="idle">Idle</option>
-                                        <option value="out_of_service">Out of Service</option>
-                                        <option value="pending_purchase">Pending Purchase</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Category-specific fields appear here */}
-                            {newEquipment.category && getCategorySpecificFields(newEquipment.category)}
-                        </div>
-                    )}
-
-                    {activeTab === 'maintenance' && (
-                        <div className="space-y-5">
-                            <div className="grid grid-cols-2 gap-5">
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Purchase Date
-                                    </label>
-                                    <input
-                                        type="date"
-                                        value={newEquipment.purchaseDate || ''}
-                                        onChange={(e) => setNewEquipment({ ...newEquipment, purchaseDate: e.target.value })}
-                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
-                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
-                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Purchase Price ($)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={newEquipment.purchasePrice || ''}
-                                        onChange={(e) => setNewEquipment({ ...newEquipment, purchasePrice: parseFloat(e.target.value) })}
-                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
-                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
-                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
-                                        min="0"
-                                        step="0.01"
-                                        placeholder="0.00"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-5">
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Location/Storage
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={newEquipment.location || ''}
-                                        onChange={(e) => setNewEquipment({ ...newEquipment, location: e.target.value })}
-                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
-                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
-                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
-                                        placeholder="e.g., Main Yard, Truck #3"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Assign to Crew
-                                    </label>
-                                    <select
-                                        value={newEquipment.currentCrew || ''}
-                                        onChange={(e) => setNewEquipment({ ...newEquipment, currentCrew: e.target.value })}
-                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
-                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
-                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
-                                    >
-                                        <option value="">Not Assigned</option>
-                                        {crews.map(crew => (
-                                            <option key={crew.id} value={crew.id}>{crew.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-5">
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Last Service Date
-                                    </label>
-                                    <input
-                                        type="date"
-                                        value={newEquipment.lastService || ''}
-                                        onChange={(e) => setNewEquipment({ ...newEquipment, lastService: e.target.value })}
-                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
-                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
-                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Next Maintenance Date
-                                    </label>
-                                    <input
-                                        type="date"
-                                        value={newEquipment.nextMaintenance || ''}
-                                        onChange={(e) => setNewEquipment({ ...newEquipment, nextMaintenance: e.target.value })}
-                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
-                                                 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
-                                                 focus:ring-green-500/50 focus:border-green-500 transition-all"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Insurance Expiration
-                                </label>
-                                <input
-                                    type="date"
-                                    value={newEquipment.insuranceExpiration || ''}
-                                    onChange={(e) => setNewEquipment({ ...newEquipment, insuranceExpiration: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
-                                             rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all"
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'training' && (
-                        <div className="space-y-5">
-                            <div className="p-5 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
-                                <div className="space-y-4">
-                                    <label className="flex items-start gap-3 p-4 bg-white dark:bg-gray-800 
-                                                    rounded-lg border border-gray-200 dark:border-gray-700
-                                                    hover:border-green-500/50 transition-colors cursor-pointer">
+                {/* Modal Content with Enhanced Inputs */}
+                <div className="flex-1 p-8 overflow-y-auto bg-gradient-to-b from-white to-gray-50 
+                              dark:from-gray-800 dark:to-gray-900">
+                    <AnimatePresence mode="wait">
+                        {activeTab === 'basic' && (
+                            <motion.div
+                                key="basic"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                transition={{ duration: 0.3 }}
+                                className="space-y-6"
+                            >
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className={labelClasses}>
+                                            Equipment Name {requiredStar}
+                                        </label>
                                         <input
-                                            type="checkbox"
-                                            checked={newEquipment.requiresLicense || false}
-                                            onChange={(e) => setNewEquipment({
-                                                ...newEquipment,
-                                                requiresLicense: e.target.checked,
-                                                requiredLicenseType: e.target.checked ? newEquipment.requiredLicenseType || '' : ''
-                                            })}
-                                            className="mt-1 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                            type="text"
+                                            value={newEquipment.name || ''}
+                                            onChange={(e) => setNewEquipment({ ...newEquipment, name: e.target.value })}
+                                            onFocus={() => setFocusedField('name')}
+                                            onBlur={() => setFocusedField(null)}
+                                            className={getInputClasses('name')}
+                                            placeholder="e.g., Zero-Turn Mower"
+                                            required
                                         />
-                                        <div className="flex-1">
-                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Requires License/Certification
-                                            </span>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                Operator must have valid license to use this equipment
-                                            </p>
-                                        </div>
-                                        <ShieldCheckIcon className="w-5 h-5 text-gray-400" />
-                                    </label>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className={labelClasses}>
+                                            Type
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={newEquipment.type || ''}
+                                            onChange={(e) => setNewEquipment({ ...newEquipment, type: e.target.value })}
+                                            onFocus={() => setFocusedField('type')}
+                                            onBlur={() => setFocusedField(null)}
+                                            className={getInputClasses('type')}
+                                            placeholder="e.g., Mower"
+                                        />
+                                    </div>
+                                </div>
 
-                                    {newEquipment.requiresLicense && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: -10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="pl-8 pr-4"
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className={labelClasses}>
+                                            Category {requiredStar}
+                                        </label>
+                                        <select
+                                            value={newEquipment.category || ''}
+                                            onChange={(e) => setNewEquipment({ ...newEquipment, category: e.target.value })}
+                                            onFocus={() => setFocusedField('category')}
+                                            onBlur={() => setFocusedField(null)}
+                                            className={getInputClasses('category', true)}
+                                            required
                                         >
+                                            <option value="">Select Category</option>
+                                            {categories.map(cat => (
+                                                <option key={cat} value={cat}>{cat}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className={labelClasses}>
+                                            Status
+                                        </label>
+                                        <select
+                                            value={newEquipment.status || 'operational'}
+                                            onChange={(e) => setNewEquipment({ ...newEquipment, status: e.target.value as Equipment['status'] })}
+                                            onFocus={() => setFocusedField('status')}
+                                            onBlur={() => setFocusedField(null)}
+                                            className={getInputClasses('status', true)}
+                                        >
+                                            <option value="operational">Operational</option>
+                                            <option value="maintenance">Maintenance</option>
+                                            <option value="repair">Repair</option>
+                                            <option value="idle">Idle</option>
+                                            <option value="out_of_service">Out of Service</option>
+                                            <option value="pending_purchase">Pending Purchase</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Category-specific fields appear here */}
+                                {newEquipment.category && getCategorySpecificFields(newEquipment.category)}
+                            </motion.div>
+                        )}
+
+                        {activeTab === 'maintenance' && (
+                            <motion.div
+                                key="maintenance"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                transition={{ duration: 0.3 }}
+                                className="space-y-6"
+                            >
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className={labelClasses}>
+                                            Purchase Date
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={newEquipment.purchaseDate || ''}
+                                            onChange={(e) => setNewEquipment({ ...newEquipment, purchaseDate: e.target.value })}
+                                            onFocus={() => setFocusedField('purchaseDate')}
+                                            onBlur={() => setFocusedField(null)}
+                                            className={getInputClasses('purchaseDate')}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className={labelClasses}>
+                                            Purchase Price ($)
+                                        </label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 
+                                                           text-gray-500 font-medium">$</span>
+                                            <input
+                                                type="number"
+                                                value={newEquipment.purchasePrice || ''}
+                                                onChange={(e) => setNewEquipment({ ...newEquipment, purchasePrice: parseFloat(e.target.value) })}
+                                                onFocus={() => setFocusedField('purchasePrice')}
+                                                onBlur={() => setFocusedField(null)}
+                                                className={`${getInputClasses('purchasePrice')} pl-8`}
+                                                min="0"
+                                                step="0.01"
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className={labelClasses}>
+                                            Location/Storage
+                                        </label>
+                                        <div className="relative">
+                                            <MapPinIcon className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5
+                                                ${focusedField === 'location' ? 'text-green-500' : 'text-gray-400'}`} />
+                                            <input
+                                                type="text"
+                                                value={newEquipment.location || ''}
+                                                onChange={(e) => setNewEquipment({ ...newEquipment, location: e.target.value })}
+                                                onFocus={() => setFocusedField('location')}
+                                                onBlur={() => setFocusedField(null)}
+                                                className={`${getInputClasses('location')} pl-10`}
+                                                placeholder="e.g., Main Yard, Truck #3"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className={labelClasses}>
+                                            Assign to Crew
+                                        </label>
+                                        <div className="relative">
+                                            <UserGroupIcon className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5
+                                                ${focusedField === 'currentCrew' ? 'text-green-500' : 'text-gray-400'}`} />
                                             <select
-                                                value={newEquipment.requiredLicenseType || ''}
-                                                onChange={(e) => setNewEquipment({ ...newEquipment, requiredLicenseType: e.target.value })}
-                                                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
-                                                         rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
-                                                         focus:ring-green-500/50 focus:border-green-500 transition-all"
+                                                value={newEquipment.currentCrew || ''}
+                                                onChange={(e) => setNewEquipment({ ...newEquipment, currentCrew: e.target.value })}
+                                                onFocus={() => setFocusedField('currentCrew')}
+                                                onBlur={() => setFocusedField(null)}
+                                                className={`${getInputClasses('currentCrew', true)} pl-10`}
                                             >
-                                                <option value="">Select License Type</option>
-                                                {licenseTypes.map(type => (
-                                                    <option key={type} value={type}>{type}</option>
+                                                <option value="">Not Assigned</option>
+                                                {crews.map(crew => (
+                                                    <option key={crew.id} value={crew.id}>{crew.name}</option>
                                                 ))}
                                             </select>
-                                        </motion.div>
-                                    )}
-                                </div>
-
-                                <div className="mt-4">
-                                    <label className="flex items-start gap-3 p-4 bg-white dark:bg-gray-800 
-                                                    rounded-lg border border-gray-200 dark:border-gray-700
-                                                    hover:border-green-500/50 transition-colors cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={newEquipment.requiresTraining || false}
-                                            onChange={(e) => setNewEquipment({ ...newEquipment, requiresTraining: e.target.checked })}
-                                            className="mt-1 rounded border-gray-300 text-green-600 focus:ring-green-500"
-                                        />
-                                        <div className="flex-1">
-                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Requires Special Training
-                                            </span>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                Additional training required before operation
-                                            </p>
                                         </div>
-                                        <AcademicCapIcon className="w-5 h-5 text-gray-400" />
-                                    </label>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Notes / Special Requirements
-                                </label>
-                                <textarea
-                                    value={newEquipment.notes || ''}
-                                    onChange={(e) => setNewEquipment({ ...newEquipment, notes: e.target.value })}
-                                    rows={4}
-                                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 
-                                             rounded-xl bg-white dark:bg-gray-700 focus:ring-2 
-                                             focus:ring-green-500/50 focus:border-green-500 transition-all resize-none"
-                                    placeholder="Any additional notes about training requirements, safety considerations, etc."
-                                />
-                            </div>
-                        </div>
-                    )}
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className={labelClasses}>
+                                            Last Service Date
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={newEquipment.lastService || ''}
+                                            onChange={(e) => setNewEquipment({ ...newEquipment, lastService: e.target.value })}
+                                            onFocus={() => setFocusedField('lastService')}
+                                            onBlur={() => setFocusedField(null)}
+                                            className={getInputClasses('lastService')}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className={labelClasses}>
+                                            Next Maintenance Date
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={newEquipment.nextMaintenance || ''}
+                                            onChange={(e) => setNewEquipment({ ...newEquipment, nextMaintenance: e.target.value })}
+                                            onFocus={() => setFocusedField('nextMaintenance')}
+                                            onBlur={() => setFocusedField(null)}
+                                            className={getInputClasses('nextMaintenance')}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className={labelClasses}>
+                                        Insurance Expiration
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={newEquipment.insuranceExpiration || ''}
+                                        onChange={(e) => setNewEquipment({ ...newEquipment, insuranceExpiration: e.target.value })}
+                                        onFocus={() => setFocusedField('insuranceExpiration')}
+                                        onBlur={() => setFocusedField(null)}
+                                        className={getInputClasses('insuranceExpiration')}
+                                    />
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {activeTab === 'training' && (
+                            <motion.div
+                                key="training"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                transition={{ duration: 0.3 }}
+                                className="space-y-6"
+                            >
+                                <div className="p-6 bg-gradient-to-br from-purple-50 to-violet-50/50 
+                                              dark:from-purple-950/30 dark:to-violet-950/30 rounded-2xl 
+                                              border-2 border-purple-200 dark:border-purple-800">
+                                    <div className="space-y-4">
+                                        <label className={`flex items-start gap-4 p-5 bg-white dark:bg-gray-800 
+                                                        rounded-xl border-2 transition-all duration-300 cursor-pointer
+                                                        ${focusedField === 'requiresLicense'
+                                                ? 'border-purple-500 ring-4 ring-purple-500/20'
+                                                : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'}`}>
+                                            <input
+                                                type="checkbox"
+                                                checked={newEquipment.requiresLicense || false}
+                                                onChange={(e) => {
+                                                    setNewEquipment({
+                                                        ...newEquipment,
+                                                        requiresLicense: e.target.checked,
+                                                        requiredLicenseType: e.target.checked ? newEquipment.requiredLicenseType || '' : ''
+                                                    })
+                                                    setFocusedField('requiresLicense')
+                                                }}
+                                                onBlur={() => setFocusedField(null)}
+                                                className="mt-1 w-5 h-5 rounded border-gray-300 
+                                                         text-purple-600 focus:ring-purple-500"
+                                            />
+                                            <div className="flex-1">
+                                                <span className="text-base font-semibold text-transparent 
+                                                               bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text">
+                                                    Requires License/Certification
+                                                </span>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                                    Operator must have valid license to use this equipment
+                                                </p>
+                                            </div>
+                                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br 
+                                                          from-purple-500 to-violet-600 flex items-center 
+                                                          justify-center text-white shadow-lg">
+                                                <ShieldCheckIcon className="w-6 h-6" />
+                                            </div>
+                                        </label>
+
+                                        {newEquipment.requiresLicense && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: -10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className="pl-16 pr-4"
+                                            >
+                                                <select
+                                                    value={newEquipment.requiredLicenseType || ''}
+                                                    onChange={(e) => setNewEquipment({ ...newEquipment, requiredLicenseType: e.target.value })}
+                                                    onFocus={() => setFocusedField('requiredLicenseType')}
+                                                    onBlur={() => setFocusedField(null)}
+                                                    className={getInputClasses('requiredLicenseType', true)}
+                                                >
+                                                    <option value="">Select License Type</option>
+                                                    {licenseTypes.map(type => (
+                                                        <option key={type} value={type}>{type}</option>
+                                                    ))}
+                                                </select>
+                                            </motion.div>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <label className={`flex items-start gap-4 p-5 bg-white dark:bg-gray-800 
+                                                        rounded-xl border-2 transition-all duration-300 cursor-pointer
+                                                        ${focusedField === 'requiresTraining'
+                                                ? 'border-purple-500 ring-4 ring-purple-500/20'
+                                                : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'}`}>
+                                            <input
+                                                type="checkbox"
+                                                checked={newEquipment.requiresTraining || false}
+                                                onChange={(e) => {
+                                                    setNewEquipment({ ...newEquipment, requiresTraining: e.target.checked })
+                                                    setFocusedField('requiresTraining')
+                                                }}
+                                                onBlur={() => setFocusedField(null)}
+                                                className="mt-1 w-5 h-5 rounded border-gray-300 
+                                                         text-purple-600 focus:ring-purple-500"
+                                            />
+                                            <div className="flex-1">
+                                                <span className="text-base font-semibold text-transparent 
+                                                               bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text">
+                                                    Requires Special Training
+                                                </span>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                                    Additional training required before operation
+                                                </p>
+                                            </div>
+                                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br 
+                                                          from-purple-500 to-violet-600 flex items-center 
+                                                          justify-center text-white shadow-lg">
+                                                <AcademicCapIcon className="w-6 h-6" />
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className={labelClasses}>
+                                        Notes / Special Requirements
+                                    </label>
+                                    <textarea
+                                        value={newEquipment.notes || ''}
+                                        onChange={(e) => setNewEquipment({ ...newEquipment, notes: e.target.value })}
+                                        onFocus={() => setFocusedField('notes')}
+                                        onBlur={() => setFocusedField(null)}
+                                        rows={5}
+                                        className={`${getInputClasses('notes')} resize-none`}
+                                        placeholder="Any additional notes about training requirements, safety considerations, etc."
+                                    />
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
-                {/* Modal Footer */}
-                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-                    <button
+                {/* Modal Footer with Enhanced Buttons */}
+                <div className="flex items-center justify-end gap-4 px-8 py-5 border-t-2 
+                              border-gray-100 dark:border-gray-700 bg-gradient-to-r 
+                              from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={onClose}
-                        className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 
-                                 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600
+                        className="px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 
+                                 bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600
                                  rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 
-                                 transition-all duration-200 hover:scale-105 active:scale-95"
+                                 transition-all duration-300 shadow-lg hover:shadow-xl"
                         disabled={isSaving}
                     >
                         Cancel
-                    </button>
-                    <button
+                    </motion.button>
+
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={handleSave}
                         disabled={!newEquipment.name || !newEquipment.category || isSaving}
-                        className="px-5 py-2.5 text-sm font-medium text-white bg-green-600 
-                                 rounded-xl hover:bg-green-700 transition-all duration-200 
-                                 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2
-                                 shadow-lg shadow-green-600/25 hover:shadow-xl hover:scale-105 active:scale-95"
+                        className="px-8 py-3 text-sm font-semibold text-white 
+                                 bg-gradient-to-r from-green-500 to-emerald-600 
+                                 rounded-xl hover:from-green-600 hover:to-emerald-700 
+                                 transition-all duration-300 disabled:opacity-50 
+                                 disabled:cursor-not-allowed flex items-center gap-3
+                                 shadow-xl shadow-green-500/30 relative overflow-hidden
+                                 group"
                     >
+                        <span className="absolute inset-0 bg-white/20 transform -skew-x-12 
+                                       -translate-x-full group-hover:translate-x-full 
+                                       transition-transform duration-700" />
+
                         {isSaving ? (
                             <>
                                 <ArrowPathIcon className="w-4 h-4 animate-spin" />
@@ -1478,11 +1649,11 @@ const AddEquipmentModal = ({
                             </>
                         ) : (
                             <>
-                                <PlusIcon className="w-4 h-4" />
+                                <PlusIcon className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
                                 Add Equipment
                             </>
                         )}
-                    </button>
+                    </motion.button>
                 </div>
             </motion.div>
         </motion.div>
