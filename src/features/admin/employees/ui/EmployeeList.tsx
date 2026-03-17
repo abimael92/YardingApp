@@ -34,6 +34,7 @@ import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
+  ArrowPathIcon,
   CalendarIcon,
   CheckCircleIcon,
   XCircleIcon,
@@ -41,8 +42,10 @@ import {
   UsersIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  MagnifyingGlassIcon,
   UserIcon,
-  EyeIcon
+  EyeIcon,
+  ChevronRightIcon, XMarkIcon
 } from "@heroicons/react/24/outline"
 
 // Types for crew management
@@ -2413,7 +2416,12 @@ function AddMemberModalInner({
   onClose: () => void
 }) {
   const [search, setSearch] = useState("")
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [searchFocused, setSearchFocused] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
+  // Filter available employees
   const available = employees
     .filter(e => !existingMemberIds.has(e.id))
     .filter(e =>
@@ -2421,52 +2429,250 @@ function AddMemberModalInner({
       e.email.toLowerCase().includes(search.toLowerCase())
     )
 
+  // Group by first letter for better organization
+  const groupedEmployees = available.reduce((groups, employee) => {
+    const firstLetter = employee.fullName.charAt(0).toUpperCase()
+    if (!groups[firstLetter]) {
+      groups[firstLetter] = []
+    }
+    groups[firstLetter].push(employee)
+    return groups
+  }, {} as Record<string, typeof available>)
+
+  // Sort letters alphabetically
+  const sortedLetters = Object.keys(groupedEmployees).sort()
+
+  // Handle select with loading state
+  const handleSelect = async (employeeId: string) => {
+    setSelectedEmployeeId(employeeId)
+    setIsSubmitting(true)
+    setError(null)
+    
+    try {
+      await onSelect(employeeId)
+      // onClose will be called by the parent after successful selection
+    } catch (err) {
+      setError('Failed to add member. Please try again.')
+      setIsSubmitting(false)
+      setSelectedEmployeeId(null)
+    }
+  }
+
+  // Clear search
+  const handleClearSearch = () => {
+    setSearch("")
+  }
+
   return (
     <div className="space-y-4">
+      {/* Search Header with Counter */}
+      <div className="flex items-center justify-between text-xs text-[#b85e1a]/70 dark:text-gray-400">
+        <span className="flex items-center gap-1">
+          <UsersIcon className="w-3 h-3" />
+          {available.length} employee{available.length !== 1 ? 's' : ''} available
+        </span>
+        {existingMemberIds.size > 0 && (
+          <span className="flex items-center gap-1">
+            <CheckCircleIcon className="w-3 h-3 text-[#2e8b57]" />
+            {existingMemberIds.size} already in crew
+          </span>
+        )}
+      </div>
+
+      {/* Search Input with Enhanced Styling */}
       <div className="relative">
         <Input
           type="search"
-          placeholder="Search employees..."
+          placeholder="Search by name or email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-10 border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800"
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
+          className={`pl-10 pr-10 border-2 transition-all duration-200
+            ${searchFocused 
+              ? 'border-[#2e8b57] ring-2 ring-[#2e8b57]/20' 
+              : 'border-[#d4a574] dark:border-[#8b4513]'
+            } 
+            bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] 
+            placeholder-[#b85e1a]/50 dark:placeholder-gray-500`}
         />
-        <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#b85e1a]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
+        <MagnifyingGlassIcon className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 
+          ${searchFocused ? 'text-[#2e8b57]' : 'text-[#b85e1a]/60'}`} 
+        />
+        {search && (
+          <button
+            onClick={handleClearSearch}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#b85e1a]/60 hover:text-[#2e8b57] transition-colors"
+          >
+            <XMarkIcon className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
-      {available.length === 0 ? (
-        <p className="text-center py-8 text-[#b85e1a]/70 dark:text-gray-400">
-          {search ? "No matching employees found" : "No employees available to add"}
-        </p>
-      ) : (
-        <ul className="max-h-96 overflow-y-auto space-y-1 pr-2">
-          {available.map((e) => (
-            <li key={e.id}>
-              <button
-                onClick={async () => {
-                  await onSelect(e.id)
-                  onClose()
-                }}
-                className="w-full text-left px-4 py-3 rounded-lg hover:bg-[#2e8b57]/10 border border-transparent hover:border-[#2e8b57]/30 transition-all"
-              >
-                <div className="font-medium text-[#8b4513] dark:text-[#d4a574]">
-                  {e.fullName}
-                </div>
-                <div className="text-sm text-[#b85e1a]/70 dark:text-gray-400">
-                  {e.email} • {e.role || "Worker"}
-                </div>
-              </button>
-            </li>
-          ))}
-        </ul>
+      {/* Search Results Count */}
+      {search && (
+        <div className="flex justify-between items-center">
+          <p className="text-xs text-[#b85e1a]/70 dark:text-gray-400">
+            Found {available.length} result{available.length !== 1 ? 's' : ''}
+          </p>
+          {available.length === 0 && (
+            <button
+              onClick={handleClearSearch}
+              className="text-xs text-[#2e8b57] hover:underline flex items-center gap-1"
+            >
+              <ArrowPathIcon className="w-3 h-3" />
+              Clear search
+            </button>
+          )}
+        </div>
       )}
 
-      <div className="flex justify-end pt-2">
-        <Button variant="outline" onClick={onClose} className="border-[#d4a574] text-[#8b4513]">
+      {/* Error Message */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 flex items-center gap-2"
+        >
+          <XCircleIcon className="w-4 h-4 text-red-500" />
+          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+        </motion.div>
+      )}
+
+      {/* Employee List */}
+      {available.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-12 px-4"
+        >
+          <UserGroupIcon className="w-12 h-12 mx-auto text-[#b85e1a]/30 dark:text-gray-600 mb-3" />
+          <p className="text-[#b85e1a]/70 dark:text-gray-400 font-medium">
+            {search ? "No matching employees found" : "No employees available to add"}
+          </p>
+          <p className="text-xs text-[#b85e1a]/50 dark:text-gray-500 mt-1">
+            {search ? "Try a different search term" : "All employees are already in this crew"}
+          </p>
+          {search && (
+            <Button
+              variant="outline"
+              onClick={handleClearSearch}
+              className="mt-4 border-[#d4a574] text-[#8b4513] dark:text-[#d4a574]"
+              size="sm"
+            >
+              Clear Search
+            </Button>
+          )}
+        </motion.div>
+      ) : (
+        <div className="max-h-96 overflow-y-auto pr-2 space-y-4">
+          {/* Grouped by letter */}
+          {sortedLetters.map(letter => (
+            <div key={letter}>
+              <div className="sticky top-0 bg-[#f5f1e6] dark:bg-gray-800 px-2 py-1 text-xs font-bold text-[#2e8b57] border-b border-[#d4a574]/30">
+                {letter}
+              </div>
+              <div className="space-y-1 mt-1">
+                {groupedEmployees[letter].map((e) => (
+                  <motion.div
+                    key={e.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.01 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <button
+                      onClick={() => handleSelect(e.id)}
+                      disabled={isSubmitting && selectedEmployeeId === e.id}
+                      className={`w-full text-left px-4 py-3 rounded-lg transition-all relative
+                        ${isSubmitting && selectedEmployeeId === e.id
+                          ? 'bg-[#2e8b57]/20 cursor-wait'
+                          : 'hover:bg-[#2e8b57]/10 border border-transparent hover:border-[#2e8b57]/30'
+                        }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Avatar placeholder with initials */}
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2e8b57] to-[#8b4513] flex items-center justify-center text-white text-sm font-bold shrink-0">
+                          {e.fullName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-[#8b4513] dark:text-[#d4a574] truncate">
+                            {e.fullName}
+                          </div>
+                          <div className="text-sm text-[#b85e1a]/70 dark:text-gray-400 truncate">
+                            {e.email}
+                          </div>
+                        </div>
+
+                        {/* Role badge */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs px-2 py-1 rounded-full bg-[#2e8b57]/10 text-[#2e8b57] whitespace-nowrap">
+                            {e.role || "Worker"}
+                          </span>
+                          
+                          {/* Loading spinner */}
+                          {isSubmitting && selectedEmployeeId === e.id && (
+                            <svg className="animate-spin h-4 w-4 text-[#2e8b57]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          )}
+                          
+                          {/* Hover indicator */}
+                          {!isSubmitting && (
+                            <ChevronRightIcon className="w-4 h-4 text-[#b85e1a]/30 group-hover:text-[#2e8b57] transition-colors" />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Progress indicator for selected state */}
+                      {isSubmitting && selectedEmployeeId === e.id && (
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: "100%" }}
+                          transition={{ duration: 2, ease: "linear" }}
+                          className="absolute bottom-0 left-0 h-0.5 bg-[#2e8b57] rounded-b-lg"
+                        />
+                      )}
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Quick Stats Footer */}
+      <div className="flex items-center justify-between pt-4 border-t border-[#d4a574]/30">
+        <div className="flex items-center gap-3 text-xs">
+          <span className="flex items-center gap-1 text-[#b85e1a]/70 dark:text-gray-400">
+            <UserGroupIcon className="w-3 h-3" />
+            Total: {employees.length}
+          </span>
+          <span className="w-1 h-1 rounded-full bg-[#d4a574]/50" />
+          <span className="flex items-center gap-1 text-[#2e8b57]">
+            <CheckCircleIcon className="w-3 h-3" />
+            In crew: {existingMemberIds.size}
+          </span>
+        </div>
+
+        {/* Cancel Button */}
+        <Button 
+          variant="outline" 
+          onClick={onClose} 
+          className="border-[#d4a574] text-[#8b4513] dark:text-[#d4a574] hover:bg-[#f5f1e6]"
+          disabled={isSubmitting}
+          size="sm"
+        >
           Cancel
         </Button>
+      </div>
+
+      {/* Keyboard shortcut hint */}
+      <div className="text-[10px] text-[#b85e1a]/40 dark:text-gray-600 text-center">
+        Press <kbd className="px-1 bg-[#f5f1e6] dark:bg-gray-700 rounded border border-[#d4a574]">ESC</kbd> to close
       </div>
     </div>
   )
