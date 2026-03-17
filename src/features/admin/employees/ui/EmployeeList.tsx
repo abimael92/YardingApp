@@ -34,6 +34,7 @@ import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
+  ArrowPathIcon,
   CalendarIcon,
   CheckCircleIcon,
   XCircleIcon,
@@ -41,8 +42,10 @@ import {
   UsersIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  MagnifyingGlassIcon,
   UserIcon,
-  EyeIcon
+  EyeIcon,
+  ChevronRightIcon, XMarkIcon
 } from "@heroicons/react/24/outline"
 
 // Types for crew management
@@ -1747,12 +1750,103 @@ function CrewFormModalInner({
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set(initialMemberIds || []))
   const [submitting, setSubmitting] = useState(false)
 
+  // Validation errors state
+  const [errors, setErrors] = useState<{
+    name?: string
+    supervisor?: string
+    members?: string
+  }>({})
+
+  // Track touched fields for validation
+  const [touched, setTouched] = useState<{
+    name: boolean
+    supervisor: boolean
+    members: boolean
+  }>({
+    name: false,
+    supervisor: false,
+    members: false
+  })
+
+  // Calculate completion percentage
+  const calculateCompletion = useCallback(() => {
+    let total = 0
+    let completed = 0
+
+    // Name is required (20%)
+    total += 20
+    if (name.trim()) completed += 20
+
+    // Supervisor (20%)
+    total += 20
+    if (supervisorId) completed += 20
+
+    // Members (40% - 5% per member up to 8 members)
+    total += 40
+    const memberCount = selectedMemberIds.size
+    completed += Math.min(memberCount * 5, 40)
+
+    // Description (20%)
+    total += 20
+    if (description.trim()) completed += 20
+
+    return Math.round((completed / total) * 100)
+  }, [name, supervisorId, selectedMemberIds.size, description])
+
+  const completionPercentage = calculateCompletion()
+
+  // Validation functions
+  const validateName = useCallback((value: string) => {
+    if (!value.trim()) return "Crew name is required"
+    if (value.trim().length < 3) return "Crew name must be at least 3 characters"
+    if (value.trim().length > 50) return "Crew name must be less than 50 characters"
+    return undefined
+  }, [])
+
+  const validateSupervisor = useCallback((value: string) => {
+    // Supervisor is optional, so no validation needed
+    return undefined
+  }, [])
+
+  const validateMembers = useCallback((members: Set<string>) => {
+    // Members are optional in create, but if provided validate
+    return undefined
+  }, [])
+
+  // Run validation on field changes
   useEffect(() => {
-    setName(initialName)
-    setDescription(initialDescription)
-    setSupervisorId(initialSupervisorId || "")
-    setSelectedMemberIds(new Set(initialMemberIds || []))
-  }, [initialName, initialDescription, initialSupervisorId, initialMemberIds])
+    if (touched.name) {
+      setErrors(prev => ({ ...prev, name: validateName(name) }))
+    }
+  }, [name, touched.name, validateName])
+
+  useEffect(() => {
+    if (touched.supervisor) {
+      setErrors(prev => ({ ...prev, supervisor: validateSupervisor(supervisorId) }))
+    }
+  }, [supervisorId, touched.supervisor, validateSupervisor])
+
+  useEffect(() => {
+    if (touched.members) {
+      setErrors(prev => ({ ...prev, members: validateMembers(selectedMemberIds) }))
+    }
+  }, [selectedMemberIds, touched.members, validateMembers])
+
+  // Handle next step - scroll to first error or next section
+  const handleNextStep = () => {
+    if (!name.trim()) {
+      setTouched(prev => ({ ...prev, name: true }))
+      document.getElementById('crew-name-input')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+    if (name.trim().length < 3) {
+      setTouched(prev => ({ ...prev, name: true }))
+      document.getElementById('crew-name-input')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+    // Scroll to supervisor section
+    document.getElementById('crew-supervisor-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 
   const toggleMember = (id: string) => {
     setSelectedMemberIds((prev) => {
@@ -1761,92 +1855,328 @@ function CrewFormModalInner({
       else next.add(id)
       return next
     })
+    setTouched(prev => ({ ...prev, members: true }))
+  }
+
+  const isFormValid = () => {
+    return !validateName(name) && !validateSupervisor(supervisorId) && !validateMembers(selectedMemberIds)
+  }
+
+  // Get color based on completion percentage
+  const getProgressColor = () => {
+    if (completionPercentage === 100) return 'bg-[#2e8b57]'
+    if (completionPercentage >= 70) return 'bg-[#2e8b57]'
+    if (completionPercentage >= 40) return 'bg-[#d88c4a]'
+    return 'bg-[#b85e1a]'
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
-          Crew Name <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-lg border border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800 px-3 py-2 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent"
-          placeholder="e.g., Morning Crew, Tree Team"
-          autoFocus
-        />
+    <div className="space-y-6">
+      {/* Progress Bar - Fill Indicator */}
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-xs font-medium text-[#8b4513] dark:text-[#d4a574]">
+            Form Completion
+          </span>
+          <span className="text-sm font-bold text-[#2e8b57] dark:text-[#4a7c5c]">
+            {completionPercentage}%
+          </span>
+        </div>
+        <div className="w-full h-2 bg-[#d4a574]/30 dark:bg-[#8b4513]/30 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${completionPercentage}%` }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className={`h-full rounded-full ${getProgressColor()}`}
+          />
+        </div>
+        <div className="flex justify-between text-[10px] text-[#b85e1a]/60 dark:text-gray-500">
+          <span>Name (20%)</span>
+          <span>Leader (20%)</span>
+          <span>Members (40%)</span>
+          <span>Details (20%)</span>
+        </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
-          Crew Leader (Supervisor)
-        </label>
+      {/* Required Fields Indicator */}
+      <div className="flex items-center gap-2 text-xs text-[#b85e1a]/70 dark:text-gray-400">
+        <span className="text-red-500">*</span>
+        <span>Required fields</span>
+        {!isEdit && (
+          <span className="ml-auto text-[#2e8b57] flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#2e8b57] animate-pulse" />
+            Next: Fill in crew details
+          </span>
+        )}
+      </div>
+
+      {/* Crew Name Field */}
+      <div id="crew-name-section" className="space-y-2">
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574]">
+            Crew Name <span className="text-red-500">*</span>
+          </label>
+          {touched.name && errors.name && (
+            <motion.span
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="text-xs text-red-500 flex items-center gap-1"
+            >
+              <XCircleIcon className="w-3 h-3" />
+              {errors.name}
+            </motion.span>
+          )}
+          {touched.name && !errors.name && name.trim() && (
+            <motion.span
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-xs text-[#2e8b57] flex items-center gap-1"
+            >
+              <CheckCircleIcon className="w-3 h-3" />
+              Looks good
+            </motion.span>
+          )}
+        </div>
+        <div className="relative">
+          <input
+            id="crew-name-input"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => setTouched(prev => ({ ...prev, name: true }))}
+            className={`w-full rounded-lg border px-3 py-2 bg-[#f5f1e6] dark:bg-gray-800 
+              text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent
+              ${touched.name && errors.name
+                ? 'border-red-500 ring-2 ring-red-500/20'
+                : touched.name && !errors.name && name.trim()
+                  ? 'border-[#2e8b57] ring-2 ring-[#2e8b57]/20'
+                  : 'border-[#d4a574] dark:border-[#8b4513]'
+              } transition-all duration-200`}
+            placeholder="e.g., Morning Crew, Tree Team"
+            autoFocus
+          />
+          {name.trim() && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#b85e1a]/60">
+              {name.length}/50
+            </span>
+          )}
+        </div>
+        {!touched.name && !name.trim() && (
+          <p className="text-xs text-[#b85e1a]/60 dark:text-gray-500 mt-1">
+            Give your crew a descriptive name
+          </p>
+        )}
+      </div>
+
+      {/* Supervisor Field */}
+      <div id="crew-supervisor-section" className="space-y-2">
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574]">
+            Crew Leader (Supervisor)
+          </label>
+          {touched.supervisor && !errors.supervisor && supervisorId && (
+            <span className="text-xs text-[#2e8b57] flex items-center gap-1">
+              <CheckCircleIcon className="w-3 h-3" />
+              Selected
+            </span>
+          )}
+        </div>
         <select
           value={supervisorId}
           onChange={(e) => setSupervisorId(e.target.value)}
-          className="w-full rounded-lg border border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800 px-3 py-2 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent"
+          onBlur={() => setTouched(prev => ({ ...prev, supervisor: true }))}
+          className={`w-full rounded-lg border px-3 py-2 bg-[#f5f1e6] dark:bg-gray-800 
+            text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent
+            ${touched.supervisor && supervisorId ? 'border-[#2e8b57] ring-2 ring-[#2e8b57]/20' : 'border-[#d4a574] dark:border-[#8b4513]'}
+            transition-all duration-200`}
         >
           <option value="">— No crew leader —</option>
           {supervisorOptions.map((emp) => (
             <option key={emp.id} value={emp.id}>{emp.name}</option>
           ))}
         </select>
+        {supervisorOptions.length === 0 && (
+          <p className="text-xs text-[#b85e1a]/60 dark:text-gray-500 mt-1 flex items-center gap-1">
+            <UserIcon className="w-3 h-3" />
+            No supervisors available. Employees will be promoted when assigned as leader.
+          </p>
+        )}
       </div>
 
+      {/* Members Section */}
       {!isEdit && (
-        <div>
-          <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-2">
-            Add members now (optional)
-          </label>
-          <div className="max-h-48 overflow-y-auto rounded-lg border border-[#d4a574]/50 dark:border-[#8b4513]/50 divide-y divide-[#d4a574]/20 dark:divide-[#8b4513]/20">
-            {memberOptions.map((emp) => (
-              <label
-                key={emp.id}
-                className="flex items-center gap-3 px-3 py-2 hover:bg-[#f5f1e6] dark:hover:bg-gray-800 cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedMemberIds.has(emp.id)}
-                  onChange={() => toggleMember(emp.id)}
-                  className="rounded text-[#2e8b57] border-[#d4a574]"
-                />
-                <span className="text-[#8b4513] dark:text-[#d4a574]">{emp.name}</span>
-              </label>
-            ))}
+        <div id="crew-members-section" className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574]">
+              Add members now <span className="text-[#b85e1a]/60 text-xs">(optional)</span>
+            </label>
+            {selectedMemberIds.size > 0 && (
+              <span className="text-xs font-medium text-[#2e8b57] bg-[#2e8b57]/10 px-2 py-0.5 rounded-full">
+                {selectedMemberIds.size} selected
+              </span>
+            )}
           </div>
+
+          {/* Search/filter for members could be added here */}
+          <div className="max-h-48 overflow-y-auto rounded-lg border border-[#d4a574]/50 dark:border-[#8b4513]/50 divide-y divide-[#d4a574]/20 dark:divide-[#8b4513]/20">
+            {memberOptions.length === 0 ? (
+              <div className="px-3 py-8 text-center text-[#b85e1a]/60 dark:text-gray-500">
+                No employees available to add
+              </div>
+            ) : (
+              memberOptions.map((emp) => (
+                <label
+                  key={emp.id}
+                  className={`flex items-center gap-3 px-3 py-2 hover:bg-[#f5f1e6] dark:hover:bg-gray-800 cursor-pointer transition-colors
+                    ${selectedMemberIds.has(emp.id) ? 'bg-[#2e8b57]/5' : ''}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedMemberIds.has(emp.id)}
+                    onChange={() => toggleMember(emp.id)}
+                    className="rounded text-[#2e8b57] border-[#d4a574] focus:ring-[#2e8b57]"
+                  />
+                  <span className="flex-1 text-[#8b4513] dark:text-[#d4a574]">{emp.name}</span>
+                  {selectedMemberIds.has(emp.id) && (
+                    <CheckCircleIcon className="w-4 h-4 text-[#2e8b57]" />
+                  )}
+                </label>
+              ))
+            )}
+          </div>
+
+          {/* Member count indicator */}
           {selectedMemberIds.size > 0 && (
-            <p className="text-xs text-[#b85e1a]/80 dark:text-gray-400 mt-1">
-              {selectedMemberIds.size} member{selectedMemberIds.size !== 1 ? "s" : ""} selected
-            </p>
+            <div className="flex items-center gap-1 text-xs text-[#b85e1a]/70 dark:text-gray-400">
+              <UsersIcon className="w-3 h-3" />
+              <span>
+                {selectedMemberIds.size} member{selectedMemberIds.size !== 1 ? 's' : ''} will be added
+              </span>
+            </div>
+          )}
+
+          {/* Member selection progress */}
+          {selectedMemberIds.size > 0 && (
+            <div className="w-full h-1 bg-[#d4a574]/30 dark:bg-[#8b4513]/30 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(selectedMemberIds.size * 12.5, 100)}%` }}
+                className="h-full bg-[#2e8b57] rounded-full"
+              />
+            </div>
           )}
         </div>
       )}
 
-      <div>
-        <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
-          Description (Optional)
-        </label>
+      {/* Description Field */}
+      <div id="crew-description-section" className="space-y-2">
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574]">
+            Description <span className="text-[#b85e1a]/60 text-xs">(optional)</span>
+          </label>
+          {description.trim() && (
+            <span className="text-xs text-[#2e8b57] flex items-center gap-1">
+              <CheckCircleIcon className="w-3 h-3" />
+              Added
+            </span>
+          )}
+        </div>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="w-full rounded-lg border border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800 px-3 py-2 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent"
-          rows={2}
+          className="w-full rounded-lg border border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800 px-3 py-2 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent resize-none"
+          rows={3}
           placeholder="Any notes about this crew..."
         />
+        {description.length > 100 && (
+          <p className="text-xs text-[#b85e1a]/60 dark:text-gray-500 text-right">
+            {description.length}/500 characters
+          </p>
+        )}
       </div>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <Button variant="outline" onClick={onCancel} className="border-[#d4a574] text-[#8b4513] dark:text-[#d4a574]">
+      {/* Next Step Hint */}
+      {!isEdit && completionPercentage < 100 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-[#2e8b57]/10 border border-[#2e8b57]/30 rounded-lg p-3 flex items-center gap-3"
+        >
+          <div className="w-8 h-8 rounded-full bg-[#2e8b57] flex items-center justify-center text-white text-sm font-bold">
+            {completionPercentage < 40 ? '1' : completionPercentage < 70 ? '2' : '3'}
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-[#8b4513] dark:text-[#d4a574]">
+              {!name.trim() && 'Start by naming your crew'}
+              {name.trim() && !supervisorId && 'Consider adding a crew leader'}
+              {name.trim() && supervisorId && selectedMemberIds.size === 0 && 'Add members to build your team'}
+              {name.trim() && supervisorId && selectedMemberIds.size > 0 && !description.trim() && 'Add a description for context'}
+              {name.trim() && supervisorId && selectedMemberIds.size > 0 && description.trim() && 'Ready to save!'}
+            </p>
+            <button
+              onClick={handleNextStep}
+              className="text-xs text-[#2e8b57] hover:underline mt-1 flex items-center gap-1"
+            >
+              Go to next step
+              <ChevronDownIcon className="w-3 h-3" />
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Validation Summary */}
+      {Object.keys(errors).filter(key => errors[key as keyof typeof errors]).length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="bg-red-500/10 border border-red-500/30 rounded-lg p-3"
+        >
+          <p className="text-xs font-medium text-red-600 dark:text-red-400 mb-2">
+            Please fix the following errors:
+          </p>
+          <ul className="space-y-1">
+            {errors.name && (
+              <li className="text-xs text-red-500 flex items-center gap-1">
+                <XCircleIcon className="w-3 h-3" />
+                {errors.name}
+              </li>
+            )}
+          </ul>
+        </motion.div>
+      )}
+
+      {/* Form Actions */}
+      <div className="flex justify-end gap-2 pt-4 border-t border-[#d4a574]/30">
+        <Button
+          variant="outline"
+          onClick={onCancel}
+          className="border-[#d4a574] text-[#8b4513] dark:text-[#d4a574] hover:bg-[#f5f1e6]"
+          disabled={submitting}
+        >
           Cancel
         </Button>
+
+        {/* Next Step Button (for multi-step feel) */}
+        {!isEdit && completionPercentage < 100 && (
+          <Button
+            onClick={handleNextStep}
+            className="bg-[#d4a574] hover:bg-[#b85e1a] text-white border-0"
+          >
+            Next Step
+            <ChevronDownIcon className="w-4 h-4 ml-1" />
+          </Button>
+        )}
+
         <Button
           onClick={async () => {
-            if (!name.trim()) {
-              alert("Crew name is required")
+            // Validate all fields before submit
+            setTouched({ name: true, supervisor: true, members: true })
+            const nameError = validateName(name)
+            if (nameError) {
+              document.getElementById('crew-name-input')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
               return
             }
+
             setSubmitting(true)
             await onSubmit(
               name.trim(),
@@ -1856,11 +2186,27 @@ function CrewFormModalInner({
             )
             setSubmitting(false)
           }}
-          disabled={!name.trim() || submitting}
-          className="bg-[#2e8b57] hover:bg-[#1f6b41] text-white min-w-[100px]"
+          disabled={!name.trim() || submitting || !!validateName(name)}
+          className={`bg-[#2e8b57] hover:bg-[#1f6b41] text-white min-w-[100px] transition-all
+            ${!name.trim() ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          {submitting ? "Saving..." : "Save Crew"}
+          {submitting ? (
+            <span className="flex items-center gap-2">
+              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Saving...
+            </span>
+          ) : (
+            'Save Crew'
+          )}
         </Button>
+      </div>
+
+      {/* Keyboard shortcuts hint */}
+      <div className="text-[10px] text-[#b85e1a]/40 dark:text-gray-600 text-center">
+        Press <kbd className="px-1 bg-[#f5f1e6] dark:bg-gray-700 rounded border border-[#d4a574]">⌘/Ctrl + Enter</kbd> to save
       </div>
     </div>
   )
@@ -2070,7 +2416,12 @@ function AddMemberModalInner({
   onClose: () => void
 }) {
   const [search, setSearch] = useState("")
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [searchFocused, setSearchFocused] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
+  // Filter available employees
   const available = employees
     .filter(e => !existingMemberIds.has(e.id))
     .filter(e =>
@@ -2078,52 +2429,250 @@ function AddMemberModalInner({
       e.email.toLowerCase().includes(search.toLowerCase())
     )
 
+  // Group by first letter for better organization
+  const groupedEmployees = available.reduce((groups, employee) => {
+    const firstLetter = employee.fullName.charAt(0).toUpperCase()
+    if (!groups[firstLetter]) {
+      groups[firstLetter] = []
+    }
+    groups[firstLetter].push(employee)
+    return groups
+  }, {} as Record<string, typeof available>)
+
+  // Sort letters alphabetically
+  const sortedLetters = Object.keys(groupedEmployees).sort()
+
+  // Handle select with loading state
+  const handleSelect = async (employeeId: string) => {
+    setSelectedEmployeeId(employeeId)
+    setIsSubmitting(true)
+    setError(null)
+    
+    try {
+      await onSelect(employeeId)
+      // onClose will be called by the parent after successful selection
+    } catch (err) {
+      setError('Failed to add member. Please try again.')
+      setIsSubmitting(false)
+      setSelectedEmployeeId(null)
+    }
+  }
+
+  // Clear search
+  const handleClearSearch = () => {
+    setSearch("")
+  }
+
   return (
     <div className="space-y-4">
+      {/* Search Header with Counter */}
+      <div className="flex items-center justify-between text-xs text-[#b85e1a]/70 dark:text-gray-400">
+        <span className="flex items-center gap-1">
+          <UsersIcon className="w-3 h-3" />
+          {available.length} employee{available.length !== 1 ? 's' : ''} available
+        </span>
+        {existingMemberIds.size > 0 && (
+          <span className="flex items-center gap-1">
+            <CheckCircleIcon className="w-3 h-3 text-[#2e8b57]" />
+            {existingMemberIds.size} already in crew
+          </span>
+        )}
+      </div>
+
+      {/* Search Input with Enhanced Styling */}
       <div className="relative">
         <Input
           type="search"
-          placeholder="Search employees..."
+          placeholder="Search by name or email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-10 border-[#d4a574] dark:border-[#8b4513] bg-[#f5f1e6] dark:bg-gray-800"
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
+          className={`pl-10 pr-10 border-2 transition-all duration-200
+            ${searchFocused 
+              ? 'border-[#2e8b57] ring-2 ring-[#2e8b57]/20' 
+              : 'border-[#d4a574] dark:border-[#8b4513]'
+            } 
+            bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] 
+            placeholder-[#b85e1a]/50 dark:placeholder-gray-500`}
         />
-        <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#b85e1a]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
+        <MagnifyingGlassIcon className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 
+          ${searchFocused ? 'text-[#2e8b57]' : 'text-[#b85e1a]/60'}`} 
+        />
+        {search && (
+          <button
+            onClick={handleClearSearch}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#b85e1a]/60 hover:text-[#2e8b57] transition-colors"
+          >
+            <XMarkIcon className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
-      {available.length === 0 ? (
-        <p className="text-center py-8 text-[#b85e1a]/70 dark:text-gray-400">
-          {search ? "No matching employees found" : "No employees available to add"}
-        </p>
-      ) : (
-        <ul className="max-h-96 overflow-y-auto space-y-1 pr-2">
-          {available.map((e) => (
-            <li key={e.id}>
-              <button
-                onClick={async () => {
-                  await onSelect(e.id)
-                  onClose()
-                }}
-                className="w-full text-left px-4 py-3 rounded-lg hover:bg-[#2e8b57]/10 border border-transparent hover:border-[#2e8b57]/30 transition-all"
-              >
-                <div className="font-medium text-[#8b4513] dark:text-[#d4a574]">
-                  {e.fullName}
-                </div>
-                <div className="text-sm text-[#b85e1a]/70 dark:text-gray-400">
-                  {e.email} • {e.role || "Worker"}
-                </div>
-              </button>
-            </li>
-          ))}
-        </ul>
+      {/* Search Results Count */}
+      {search && (
+        <div className="flex justify-between items-center">
+          <p className="text-xs text-[#b85e1a]/70 dark:text-gray-400">
+            Found {available.length} result{available.length !== 1 ? 's' : ''}
+          </p>
+          {available.length === 0 && (
+            <button
+              onClick={handleClearSearch}
+              className="text-xs text-[#2e8b57] hover:underline flex items-center gap-1"
+            >
+              <ArrowPathIcon className="w-3 h-3" />
+              Clear search
+            </button>
+          )}
+        </div>
       )}
 
-      <div className="flex justify-end pt-2">
-        <Button variant="outline" onClick={onClose} className="border-[#d4a574] text-[#8b4513]">
+      {/* Error Message */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 flex items-center gap-2"
+        >
+          <XCircleIcon className="w-4 h-4 text-red-500" />
+          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+        </motion.div>
+      )}
+
+      {/* Employee List */}
+      {available.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-12 px-4"
+        >
+          <UserGroupIcon className="w-12 h-12 mx-auto text-[#b85e1a]/30 dark:text-gray-600 mb-3" />
+          <p className="text-[#b85e1a]/70 dark:text-gray-400 font-medium">
+            {search ? "No matching employees found" : "No employees available to add"}
+          </p>
+          <p className="text-xs text-[#b85e1a]/50 dark:text-gray-500 mt-1">
+            {search ? "Try a different search term" : "All employees are already in this crew"}
+          </p>
+          {search && (
+            <Button
+              variant="outline"
+              onClick={handleClearSearch}
+              className="mt-4 border-[#d4a574] text-[#8b4513] dark:text-[#d4a574]"
+              size="sm"
+            >
+              Clear Search
+            </Button>
+          )}
+        </motion.div>
+      ) : (
+        <div className="max-h-96 overflow-y-auto pr-2 space-y-4">
+          {/* Grouped by letter */}
+          {sortedLetters.map(letter => (
+            <div key={letter}>
+              <div className="sticky top-0 bg-[#f5f1e6] dark:bg-gray-800 px-2 py-1 text-xs font-bold text-[#2e8b57] border-b border-[#d4a574]/30">
+                {letter}
+              </div>
+              <div className="space-y-1 mt-1">
+                {groupedEmployees[letter].map((e) => (
+                  <motion.div
+                    key={e.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.01 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <button
+                      onClick={() => handleSelect(e.id)}
+                      disabled={isSubmitting && selectedEmployeeId === e.id}
+                      className={`w-full text-left px-4 py-3 rounded-lg transition-all relative
+                        ${isSubmitting && selectedEmployeeId === e.id
+                          ? 'bg-[#2e8b57]/20 cursor-wait'
+                          : 'hover:bg-[#2e8b57]/10 border border-transparent hover:border-[#2e8b57]/30'
+                        }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Avatar placeholder with initials */}
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2e8b57] to-[#8b4513] flex items-center justify-center text-white text-sm font-bold shrink-0">
+                          {e.fullName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-[#8b4513] dark:text-[#d4a574] truncate">
+                            {e.fullName}
+                          </div>
+                          <div className="text-sm text-[#b85e1a]/70 dark:text-gray-400 truncate">
+                            {e.email}
+                          </div>
+                        </div>
+
+                        {/* Role badge */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs px-2 py-1 rounded-full bg-[#2e8b57]/10 text-[#2e8b57] whitespace-nowrap">
+                            {e.role || "Worker"}
+                          </span>
+                          
+                          {/* Loading spinner */}
+                          {isSubmitting && selectedEmployeeId === e.id && (
+                            <svg className="animate-spin h-4 w-4 text-[#2e8b57]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          )}
+                          
+                          {/* Hover indicator */}
+                          {!isSubmitting && (
+                            <ChevronRightIcon className="w-4 h-4 text-[#b85e1a]/30 group-hover:text-[#2e8b57] transition-colors" />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Progress indicator for selected state */}
+                      {isSubmitting && selectedEmployeeId === e.id && (
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: "100%" }}
+                          transition={{ duration: 2, ease: "linear" }}
+                          className="absolute bottom-0 left-0 h-0.5 bg-[#2e8b57] rounded-b-lg"
+                        />
+                      )}
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Quick Stats Footer */}
+      <div className="flex items-center justify-between pt-4 border-t border-[#d4a574]/30">
+        <div className="flex items-center gap-3 text-xs">
+          <span className="flex items-center gap-1 text-[#b85e1a]/70 dark:text-gray-400">
+            <UserGroupIcon className="w-3 h-3" />
+            Total: {employees.length}
+          </span>
+          <span className="w-1 h-1 rounded-full bg-[#d4a574]/50" />
+          <span className="flex items-center gap-1 text-[#2e8b57]">
+            <CheckCircleIcon className="w-3 h-3" />
+            In crew: {existingMemberIds.size}
+          </span>
+        </div>
+
+        {/* Cancel Button */}
+        <Button 
+          variant="outline" 
+          onClick={onClose} 
+          className="border-[#d4a574] text-[#8b4513] dark:text-[#d4a574] hover:bg-[#f5f1e6]"
+          disabled={isSubmitting}
+          size="sm"
+        >
           Cancel
         </Button>
+      </div>
+
+      {/* Keyboard shortcut hint */}
+      <div className="text-[10px] text-[#b85e1a]/40 dark:text-gray-600 text-center">
+        Press <kbd className="px-1 bg-[#f5f1e6] dark:bg-gray-700 rounded border border-[#d4a574]">ESC</kbd> to close
       </div>
     </div>
   )
