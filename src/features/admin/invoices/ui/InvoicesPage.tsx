@@ -1,18 +1,24 @@
 /**
- * Invoices Page Component
- * Professional invoicing management
+ * Invoices Page — admin earthy styling
  */
 
 "use client"
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { PlusIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline"
+import { PlusIcon, DocumentDuplicateIcon, BanknotesIcon, ClockIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline"
 import DataTable, { Column } from "@/src/shared/ui/DataTable"
 import LoadingState from "@/src/shared/ui/LoadingState"
 import EmptyState from "@/src/shared/ui/EmptyState"
 import { invoiceService } from "@/src/services/invoiceService"
-import type { Invoice as InvoiceType, InvoiceStatus, Money } from "@/src/domain/entities"
+import type { Invoice as InvoiceType, InvoiceStatus } from "@/src/domain/entities"
+import {
+  AdminPageHeader,
+  AdminHeaderButton,
+  AdminStatsCard,
+  adminStatusBadgeClass,
+} from "@/src/features/admin/ui"
+import { adminStaggerContainer, adminStaggerItem } from "@/src/features/admin/ui/page-styles"
 
 const InvoicesPage = () => {
   const [invoices, setInvoices] = useState<InvoiceType[]>([])
@@ -41,26 +47,11 @@ const InvoicesPage = () => {
     loadData()
   }, [])
 
-  const getStatusBadge = (status: InvoiceStatus) => {
-    const colors: Record<InvoiceStatus, string> = {
-      draft: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
-      sent: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-      paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-      overdue: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-      cancelled: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
-      viewed: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400",
-      partially_paid: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-      refunded: "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400",
-    }
-
-    return (
-      <span
-        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${colors[status]}`}
-      >
-        {status.replace("_", " ").toUpperCase()}
-      </span>
-    )
-  }
+  const getStatusBadge = (status: InvoiceStatus) => (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${adminStatusBadgeClass(status)}`}>
+      {String(status).replace("_", " ")}
+    </span>
+  )
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount)
@@ -72,7 +63,7 @@ const InvoicesPage = () => {
       key: "invoiceNumber",
       header: "Invoice #",
       render: (invoice) => (
-        <div className="font-medium text-gray-900 dark:text-white">{invoice.invoiceNumber}</div>
+        <div className="font-medium text-[#8b4513] dark:text-[#d4a574]">{invoice.invoiceNumber}</div>
       ),
     },
     {
@@ -84,7 +75,7 @@ const InvoicesPage = () => {
       key: "total",
       header: "Amount",
       render: (invoice) => (
-        <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(invoice.total.amount)}</span>
+        <span className="font-medium text-[#8b4513] dark:text-[#d4a574]">{formatCurrency(invoice.total.amount)}</span>
       ),
     },
     {
@@ -95,9 +86,7 @@ const InvoicesPage = () => {
     {
       key: "dueDate",
       header: "Due Date",
-      render: (invoice) => (
-        <div className="text-gray-600 dark:text-gray-300">{formatDate(invoice.dueDate)}</div>
-      ),
+      render: (invoice) => <div className="text-gray-600 dark:text-gray-300">{formatDate(invoice.dueDate)}</div>,
     },
   ]
 
@@ -107,62 +96,57 @@ const InvoicesPage = () => {
   const pendingCount = invoices.filter((inv) => inv.status === "sent" || inv.status === "draft").length
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-end">
-        <button className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors">
-          <PlusIcon className="w-5 h-5 mr-2" />
-          Create Invoice
-        </button>
-      </div>
+    <div className="space-y-8">
+      <AdminPageHeader
+        title="Invoices"
+        subtitle="Track outstanding balances, payments, and overdue accounts."
+        icon={<DocumentDuplicateIcon className="w-7 h-7 text-white" />}
+        actions={
+          <AdminHeaderButton onClick={() => {}}>
+            <PlusIcon className="w-5 h-5" />
+            Create Invoice
+          </AdminHeaderButton>
+        }
+      />
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {[{
-          label: "Outstanding",
-          value: formatCurrency(outstanding),
-          iconColor: "text-yellow-500",
-        }, {
-          label: "Total Paid",
-          value: formatCurrency(totalPaid),
-          iconColor: "text-green-500",
-        }, {
-          label: "Overdue",
-          value: overdueCount,
-          iconColor: "text-red-500",
-        }, {
-          label: "Pending",
-          value: pendingCount,
-          iconColor: "text-blue-500",
-        }].map((card, idx) => (
-          <motion.div
-            key={card.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
-            className="card p-6"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{card.label}</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{card.value}</p>
-              </div>
-              <DocumentDuplicateIcon className={`w-10 h-10 ${card.iconColor}`} />
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      <motion.section
+        variants={adminStaggerContainer}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
+        <motion.div variants={adminStaggerItem}>
+          <AdminStatsCard
+            label="Outstanding"
+            value={formatCurrency(outstanding)}
+            icon={<BanknotesIcon />}
+            variant="orange"
+          />
+        </motion.div>
+        <motion.div variants={adminStaggerItem}>
+          <AdminStatsCard label="Total paid" value={formatCurrency(totalPaid)} icon={<DocumentDuplicateIcon />} variant="green" />
+        </motion.div>
+        <motion.div variants={adminStaggerItem}>
+          <AdminStatsCard label="Overdue" value={overdueCount} icon={<ExclamationTriangleIcon />} variant="red" />
+        </motion.div>
+        <motion.div variants={adminStaggerItem}>
+          <AdminStatsCard label="Pending / draft" value={pendingCount} icon={<ClockIcon />} variant="brown" />
+        </motion.div>
+      </motion.section>
 
-      {/* Invoices Table */}
-      {invoices.length === 0 ? (
-        <EmptyState title="No invoices yet" message="Create your first invoice to get started." />
-      ) : (
-        <DataTable
-          data={invoices}
-          columns={columns}
-          keyExtractor={(invoice) => invoice.id}
-          emptyMessage="No invoices found"
-        />
-      )}
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-[#8b4513] dark:text-[#d4a574] uppercase tracking-wider">Invoice list</h2>
+        {invoices.length === 0 ? (
+          <EmptyState
+            title="No invoices yet"
+            message="Create your first invoice to get started."
+            actionLabel="Create invoice"
+            onAction={() => {}}
+          />
+        ) : (
+          <DataTable data={invoices} columns={columns} keyExtractor={(invoice) => invoice.id} emptyMessage="No invoices found" />
+        )}
+      </section>
     </div>
   )
 }

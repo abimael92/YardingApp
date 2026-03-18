@@ -51,22 +51,22 @@ function DataTable<T>({
 
   if (data.length === 0) {
     return (
-      <div className="card p-12">
-        <p className="text-center text-gray-500 dark:text-gray-400">{emptyMessage}</p>
+      <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-12 shadow-sm">
+        <p className="text-center text-[#b85e1a]/80 dark:text-gray-400">{emptyMessage}</p>
       </div>
     )
   }
 
   return (
-    <div className="card overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
       <div className="overflow-x-auto overflow-y-visible min-w-0" style={{ WebkitOverflowScrolling: "touch" }}>
-        <table className="w-full text-sm min-w-[640px]">
+        <table className="w-full text-sm min-w-[640px] divide-y divide-[#d4a574]/20 dark:divide-[#8b4513]/20">
           <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+            <tr className="bg-[#f5f1e6] dark:bg-gray-800">
               {columns.map((column) => (
                 <th
                   key={String(column.key)}
-                  className={`text-left py-3 px-2 sm:px-4 text-gray-600 dark:text-gray-400 font-medium ${
+                  className={`text-left py-3 px-2 sm:px-4 text-xs font-medium uppercase tracking-wider text-[#8b4513] dark:text-[#d4a574] ${
                     column.className || ""
                   }`}
                 >
@@ -74,20 +74,20 @@ function DataTable<T>({
                 </th>
               ))}
               {(onEdit || onDelete || onView) && (
-                <th className="text-left py-3 px-2 sm:px-4 text-gray-600 dark:text-gray-400 font-medium whitespace-nowrap">
+                <th className="text-left py-3 px-2 sm:px-4 text-xs font-medium uppercase tracking-wider text-[#8b4513] dark:text-[#d4a574] whitespace-nowrap">
                   Actions
                 </th>
               )}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[#d4a574]/20 dark:divide-[#8b4513]/20">
             {data.map((item, index) => (
               <motion.tr
                 key={keyExtractor(item)}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                className="hover:bg-[#f5f1e6]/50 dark:hover:bg-gray-800/50 transition-colors"
               >
                 {columns.map((column) => (
                   <td key={String(column.key)} className="py-3 px-2 sm:px-4 max-w-[200px] sm:max-w-none truncate sm:truncate-none">
@@ -104,7 +104,7 @@ function DataTable<T>({
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => onView(item)}
-                          className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                          className="p-1 text-[#b85e1a] hover:text-[#2e8b57] dark:text-[#d88c4a] dark:hover:text-[#4a7c5c]"
                           title="View"
                         >
                           <EyeIcon className="w-4 h-4" />
@@ -115,7 +115,7 @@ function DataTable<T>({
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => onEdit(item)}
-                          className="p-1 text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400"
+                          className="p-1 text-[#b85e1a] hover:text-[#2e8b57] dark:text-[#d88c4a] dark:hover:text-[#4a7c5c]"
                           title="Edit"
                         >
                           <PencilIcon className="w-4 h-4" />
@@ -126,7 +126,7 @@ function DataTable<T>({
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => onDelete(item)}
-                          className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                          className="p-1 text-[#b85e1a] hover:text-red-600 dark:text-[#d88c4a]"
                           title="Delete"
                         >
                           <TrashIcon className="w-4 h-4" />
