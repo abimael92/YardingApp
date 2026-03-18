@@ -1,21 +1,33 @@
 /**
- * Client List Component
- * 
- * Displays all clients in a table with CRUD actions
+ * Client List Component — admin earthy styling
  */
 
 "use client"
 
-import { useState, useEffect } from "react"
-import { PlusIcon } from "@heroicons/react/24/outline"
+import { useState, useEffect, useMemo } from "react"
+import {
+  PlusIcon,
+  UserGroupIcon,
+  BuildingOfficeIcon,
+  CurrencyDollarIcon,
+  ChartBarIcon,
+} from "@heroicons/react/24/outline"
 import DataTable, { Column } from "@/src/shared/ui/DataTable"
 import LoadingState from "@/src/shared/ui/LoadingState"
-import EmptyState from "@/src/shared/ui/EmptyState"
 import { getAllClients, deleteClient } from "@/src/services/clientService"
 import type { Client as ClientEntity } from "@/src/domain/entities"
 import { ClientStatus, ClientSegment } from "@/src/domain/entities"
 import ClientForm from "./ClientForm"
 import ClientDetail from "./ClientDetail"
+import {
+  AdminPageHeader,
+  AdminHeaderButton,
+  AdminStatsCard,
+  AdminFilterSection,
+  AdminSearchInput,
+  AdminFilterSelect,
+  adminStatusBadgeClass,
+} from "@/src/features/admin/ui"
 
 const ClientList = () => {
   const [clients, setClients] = useState<ClientEntity[]>([])
@@ -24,14 +36,14 @@ const ClientList = () => {
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [selectedClient, setSelectedClient] = useState<ClientEntity | null>(null)
   const [editingClient, setEditingClient] = useState<ClientEntity | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
 
   const loadClients = async () => {
     setIsLoading(true)
     try {
-      // Only show Active clients
       const allClients = await getAllClients()
-      const activeClients = allClients.filter((c) => c.status === ClientStatus.ACTIVE)
-      setClients(activeClients)
+      setClients(allClients)
     } catch (error) {
       console.error("Failed to load clients:", error)
     } finally {
@@ -42,6 +54,27 @@ const ClientList = () => {
   useEffect(() => {
     loadClients()
   }, [])
+
+  const filteredClients = useMemo(() => {
+    return clients.filter((c) => {
+      const matchesStatus = statusFilter === "all" || c.status === statusFilter
+      const q = searchQuery.toLowerCase()
+      const matchesSearch =
+        !q ||
+        c.name.toLowerCase().includes(q) ||
+        c.contactInfo.email.toLowerCase().includes(q) ||
+        c.contactInfo.phone.includes(q)
+      return matchesStatus && matchesSearch
+    })
+  }, [clients, searchQuery, statusFilter])
+
+  const stats = useMemo(() => {
+    const total = clients.length
+    const active = clients.filter((c) => c.status === ClientStatus.ACTIVE).length
+    const pending = clients.filter((c) => c.status === ClientStatus.PENDING).length
+    const vip = clients.filter((c) => c.segment === ClientSegment.VIP).length
+    return { total, active, pending, vip }
+  }, [clients])
 
   const handleCreate = () => {
     setEditingClient(null)
@@ -59,10 +92,7 @@ const ClientList = () => {
   }
 
   const handleDelete = async (client: ClientEntity) => {
-    if (!confirm(`Are you sure you want to delete ${client.name}?`)) {
-      return
-    }
-
+    if (!confirm(`Are you sure you want to delete ${client.name}?`)) return
     try {
       await deleteClient(client.id)
       await loadClients()
@@ -82,36 +112,21 @@ const ClientList = () => {
     await loadClients()
   }
 
-  const formatCurrency = (money: { amount: number; currency: string }) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: money.currency,
-    }).format(money.amount)
-  }
+  const formatCurrency = (money: { amount: number; currency: string }) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: money.currency }).format(money.amount)
 
-  const getStatusBadge = (status: ClientStatus) => {
-    const colors: Record<ClientStatus, string> = {
-      [ClientStatus.ACTIVE]: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-      [ClientStatus.INACTIVE]:
-        "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
-      [ClientStatus.PENDING]:
-        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-      [ClientStatus.SUSPENDED]:
-        "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-    }
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[status]}`}>
-        {status}
-      </span>
-    )
-  }
+  const getStatusBadge = (status: ClientStatus) => (
+    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${adminStatusBadgeClass(status)}`}>
+      {status}
+    </span>
+  )
 
   const columns: Column<ClientEntity>[] = [
     {
       key: "name",
       header: "Name",
       render: (client) => (
-        <div className="font-medium text-gray-900 dark:text-white">{client.name}</div>
+        <div className="font-medium text-[#8b4513] dark:text-[#d4a574]">{client.name}</div>
       ),
     },
     {
@@ -120,7 +135,7 @@ const ClientList = () => {
       render: (client) => (
         <div>
           <div className="text-gray-900 dark:text-white">{client.contactInfo.email}</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">{client.contactInfo.phone}</div>
+          <div className="text-xs text-[#b85e1a]/70 dark:text-gray-400">{client.contactInfo.phone}</div>
         </div>
       ),
     },
@@ -142,9 +157,7 @@ const ClientList = () => {
       key: "totalSpent",
       header: "Total Spent",
       render: (client) => (
-        <span className="font-medium text-gray-900 dark:text-white">
-          {formatCurrency(client.totalSpent)}
-        </span>
+        <span className="font-medium text-[#8b4513] dark:text-[#d4a574]">{formatCurrency(client.totalSpent)}</span>
       ),
     },
   ]
@@ -155,37 +168,69 @@ const ClientList = () => {
 
   return (
     <>
-      <div className="space-y-4 sm:space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Clients</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">
-              Manage all client accounts and information
-            </p>
-          </div>
-          <button
-            onClick={handleCreate}
-            className="inline-flex items-center justify-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors shrink-0 w-full sm:w-auto"
-          >
-            <PlusIcon className="w-5 h-5 mr-2" />
-            Add Client
-          </button>
-        </div>
-
-        {/* Table */}
-        <DataTable
-          data={clients}
-          columns={columns}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onView={handleView}
-          keyExtractor={(client) => client.id}
-          emptyMessage="No clients found. Create your first client to get started."
+      <div className="space-y-8">
+        <AdminPageHeader
+          title="Clients"
+          subtitle="Manage all client accounts, contact info, and service history."
+          icon={<UserGroupIcon className="w-7 h-7 text-white" />}
+          actions={
+            <>
+              <AdminHeaderButton onClick={handleCreate}>
+                <PlusIcon className="w-5 h-5" />
+                Add Client
+              </AdminHeaderButton>
+            </>
+          }
         />
+
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold text-[#8b4513] dark:text-[#d4a574] uppercase tracking-wider">Overview</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <AdminStatsCard label="Total clients" value={stats.total} icon={<UserGroupIcon />} variant="default" />
+            <AdminStatsCard label="Active" value={stats.active} icon={<ChartBarIcon />} variant="green" />
+            <AdminStatsCard label="Pending" value={stats.pending} icon={<BuildingOfficeIcon />} variant="orange" />
+            <AdminStatsCard label="VIP segment" value={stats.vip} icon={<CurrencyDollarIcon />} variant="brown" />
+          </div>
+        </section>
+
+        <AdminFilterSection title="Search & filters">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <AdminSearchInput
+              placeholder="Search by name, email, or phone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search clients"
+            />
+            <AdminFilterSelect
+              value={statusFilter}
+              onChange={setStatusFilter}
+              label="Status"
+              icon={<UserGroupIcon className="w-4 h-4" />}
+              options={[
+                { value: "all", label: "All statuses" },
+                { value: ClientStatus.ACTIVE, label: "Active" },
+                { value: ClientStatus.PENDING, label: "Pending" },
+                { value: ClientStatus.INACTIVE, label: "Inactive" },
+                { value: ClientStatus.SUSPENDED, label: "Suspended" },
+              ]}
+            />
+          </div>
+        </AdminFilterSection>
+
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold text-[#8b4513] dark:text-[#d4a574] uppercase tracking-wider">Client list</h2>
+          <DataTable
+            data={filteredClients}
+            columns={columns}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onView={handleView}
+            keyExtractor={(client) => client.id}
+            emptyMessage="No clients match your filters. Try adjusting search or add a new client."
+          />
+        </section>
       </div>
 
-      {/* Form Modal */}
       <ClientForm
         isOpen={isFormOpen}
         onClose={handleFormClose}
@@ -193,7 +238,6 @@ const ClientList = () => {
         client={editingClient}
       />
 
-      {/* Detail Modal */}
       {selectedClient && (
         <ClientDetail
           isOpen={isDetailOpen}
