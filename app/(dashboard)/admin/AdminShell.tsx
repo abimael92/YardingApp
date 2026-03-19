@@ -4,6 +4,7 @@ import Sidebar from "@/src/shared/ui/Sidebar"
 import { useState, useMemo } from "react"
 import { Bars3Icon } from "@heroicons/react/24/outline"
 import { usePathname } from "next/navigation"
+import { Toaster } from "sonner"
 
 export default function AdminShell({
     children,
@@ -55,6 +56,7 @@ export default function AdminShell({
 
     return (
         <div className="flex min-h-screen bg-gradient-to-br from-brown-200/50 to-amber-200/50 dark:bg-gray-900 min-w-0">
+            <Toaster richColors position="top-right" />
             <Sidebar
                 isOpen={sidebarOpen}
                 setIsOpen={setSidebarOpen}

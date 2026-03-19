@@ -26,6 +26,8 @@ import {
 } from "@heroicons/react/24/outline"
 import { updateQuoteRequest, sendQuoteToClient } from "@/app/actions/quoteRequest"
 import { markQuoteNotificationReadByQuoteId } from "@/app/actions/notifications"
+import { approveQuoteAndCreateJob } from "@/app/actions/quoteConversion"
+import { toast } from "sonner"
 
 export type QuoteRequestRow = {
   id: string
@@ -83,8 +85,14 @@ export default function QuoteRequestDetailModal({
   const [messageToClient, setMessageToClient] = useState("")
   const [saving, setSaving] = useState(false)
   const [sending, setSending] = useState(false)
+  const [converting, setConverting] = useState(false)
   const [error, setError] = useState("")
   const [activeTab, setActiveTab] = useState<"details" | "breakdown" | "message">("details")
+
+  const [jobStreet, setJobStreet] = useState("")
+  const [jobCity, setJobCity] = useState("")
+  const [jobState, setJobState] = useState("AZ")
+  const [jobZip, setJobZip] = useState("")
 
   const effectiveMin = useMemo(() => {
     if (overrideMin !== "") {
@@ -107,6 +115,10 @@ export default function QuoteRequestDetailModal({
       setOverrideMin("")
       setOverrideMax("")
       setMessageToClient(quote.message_to_client ?? "")
+      setJobStreet("")
+      setJobCity("")
+      setJobState("AZ")
+      setJobZip("")
     }
   }, [quote])
 
@@ -117,8 +129,40 @@ export default function QuoteRequestDetailModal({
       setMessageToClient(quote.message_to_client ?? "")
       setError("")
       markQuoteNotificationReadByQuoteId(quote.id)
+      setJobStreet("")
+      setJobCity("")
+      setJobState("AZ")
+      setJobZip("")
     }
   }, [quote])
+
+  const handleApproveAndCreateJob = useCallback(async () => {
+    if (!quote) return
+    setConverting(true)
+    setError("")
+    try {
+      const result = await approveQuoteAndCreateJob(quote.id, {
+        street: jobStreet,
+        city: jobCity,
+        state: jobState,
+        zip_code: jobZip,
+      })
+      if (!result.success) {
+        setError(result.error)
+        toast.error(result.error)
+        return
+      }
+      toast.success(result.alreadyExisted ? "Job already exists for this quote." : "Job created from quote.")
+      onSuccess()
+      onClose()
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Conversion failed"
+      setError(msg)
+      toast.error(msg)
+    } finally {
+      setConverting(false)
+    }
+  }, [quote, jobStreet, jobCity, jobState, jobZip, onSuccess, onClose])
 
   const handleSave = useCallback(async () => {
     if (!quote) return
@@ -404,6 +448,55 @@ export default function QuoteRequestDetailModal({
                       </div>
                     )}
                   </div>
+
+                  {/* Job Site Address (required for conversion) */}
+                  <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-800 p-5">
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700 mb-4">
+                      <MapPinIcon className="h-4 w-4 text-green-500" />
+                      Job Site Address
+                    </h3>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Street</label>
+                        <input
+                          value={jobStreet}
+                          onChange={(e) => setJobStreet(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-green-500 focus:ring-4 focus:ring-green-500/20 transition-all"
+                          placeholder="1234 Desert View Dr"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">City</label>
+                        <input
+                          value={jobCity}
+                          onChange={(e) => setJobCity(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-green-500 focus:ring-4 focus:ring-green-500/20 transition-all"
+                          placeholder="Phoenix"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">State</label>
+                          <input
+                            value={jobState}
+                            onChange={(e) => setJobState(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-green-500 focus:ring-4 focus:ring-green-500/20 transition-all"
+                            placeholder="AZ"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">ZIP</label>
+                          <input
+                            value={jobZip}
+                            onChange={(e) => setJobZip(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-green-500 focus:ring-4 focus:ring-green-500/20 transition-all"
+                            placeholder="85001"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </motion.div>
               )}
 
@@ -614,6 +707,25 @@ export default function QuoteRequestDetailModal({
 
             {!isSent && (
               <>
+                <div className="mr-auto flex items-center gap-2">
+                  <div className="hidden sm:block text-xs text-gray-500 dark:text-gray-400">
+                    Approve & create job requires job site address.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleApproveAndCreateJob}
+                  disabled={converting || sending || saving}
+                  className="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-xl hover:from-emerald-700 hover:to-green-700 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-green-500/20 flex items-center gap-2 disabled:opacity-60"
+                >
+                  {converting ? (
+                    <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircleIcon className="h-4 w-4" />
+                  )}
+                  {converting ? "Creating Job..." : "Approve & Create Job"}
+                </button>
+
                 <button
                   type="button"
                   onClick={handleSave}

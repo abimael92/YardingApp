@@ -153,9 +153,12 @@ model jobs {
   payments                             payments[]
   payouts                              payouts[]
   time_entries                         time_entries[]
+  quote_request_id                     String?         @db.Uuid
+  quote_requests                       quote_requests? @relation(fields: [quote_request_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   @@index([client_id], map: "idx_jobs_client_id")
   @@index([status], map: "idx_jobs_status")
+  @@index([quote_request_id], map: "idx_jobs_quote_request_id")
 }
 
 model metadata {
@@ -438,6 +441,7 @@ model quote_requests {
   updated_at          DateTime             @default(now()) @db.Timestamptz(6)
   sent_at             DateTime?            @db.Timestamptz(6)
   admin_notifications admin_notifications[]
+  jobs                jobs[]
 
   @@index([status], map: "idx_quote_requests_status")
   @@index([created_at], map: "idx_quote_requests_created_at")
