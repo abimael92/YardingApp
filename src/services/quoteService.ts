@@ -1,271 +1,156 @@
 /**
- * Quote Service
- *
- * Service layer for quote/estimate management
+ * Quote → Job conversion (server-only).
+ * Import only from Server Actions or RSC — never from client components.
  */
 
-import { mockStore } from '@/src/data/mockStore';
-import type { Quote, EntityId, QuoteLineItem } from '@/src/domain/entities';
-import { QuoteStatus } from '@/src/domain/entities';
-import { asyncify, asyncifyWithError } from './utils';
+import { prisma } from "@/app/lib/prisma"
 
-export interface QuoteTemplate {
-	id: string;
-	name: string;
-	description: string;
-	lineItems: QuoteLineItem[];
-	defaultMarkup: number;
+export type JobSiteAddress = {
+	street: string
+	city: string
+	state: string
+	zip_code: string
 }
 
-const mockQuotes: Quote[] = [
-	{
-		id: 'quote-1',
-		clientId: 'client-1',
-		quoteNumber: 'QT-2025-001',
-		jobId: 'job-1',
-		contractId: undefined,
-		status: QuoteStatus.SENT,
-		lineItems: [
-			{
-				id: 'li-1',
-				serviceId: 'service-1',
-				serviceName: 'Weekly Lawn Maintenance',
-				description: 'Lawn mowing, edging, and trimming',
-				quantity: 12,
-				unitPrice: { amount: 75, currency: 'USD' },
-				totalPrice: { amount: 900, currency: 'USD' },
-				notes: undefined,
-			},
-			{
-				id: 'li-2',
-				serviceId: 'service-2',
-				serviceName: 'Fertilizer Application',
-				description: 'Seasonal fertilizer application',
-				quantity: 3,
-				unitPrice: { amount: 150, currency: 'USD' },
-				totalPrice: { amount: 450, currency: 'USD' },
-				notes: undefined,
-			},
-		],
-		subtotal: { amount: 1350, currency: 'USD' },
-		tax: { amount: 108, currency: 'USD' },
-		discount: { amount: 0, currency: 'USD' },
-		total: { amount: 1458, currency: 'USD' },
-		validUntil: '2025-02-15T00:00:00Z',
-		expiresAt: '2025-02-15T00:00:00Z',
-		revisionNumber: 1,
-		parentQuoteId: undefined,
-		noteIds: [],
-		activityLogIds: [],
-		communicationIds: [],
-		notes: 'Includes weekly maintenance for 3 months',
-		terms: undefined,
-		createdAt: '2025-01-20T10:00:00Z',
-		updatedAt: '2025-01-20T10:00:00Z',
-		sentAt: '2025-01-20T10:00:00Z',
-		viewedAt: undefined,
-		acceptedAt: undefined,
-		rejectedAt: undefined,
-		rejectionReason: undefined,
-	},
-	{
-		id: 'quote-2',
-		clientId: 'client-2',
-		quoteNumber: 'QT-2025-002',
-		jobId: 'job-2',
-		contractId: undefined,
-		status: QuoteStatus.VIEWED,
-		lineItems: [
-			{
-				id: 'li-3',
-				serviceId: 'service-3',
-				serviceName: 'Tree Removal',
-				description: 'Large tree removal and stump grinding',
-				quantity: 1,
-				unitPrice: { amount: 3500, currency: 'USD' },
-				totalPrice: { amount: 3500, currency: 'USD' },
-				notes: undefined,
-			},
-			{
-				id: 'li-4',
-				serviceId: 'service-4',
-				serviceName: 'Debris Removal',
-				description: 'Cleanup and debris removal',
-				quantity: 1,
-				unitPrice: { amount: 500, currency: 'USD' },
-				totalPrice: { amount: 500, currency: 'USD' },
-				notes: undefined,
-			},
-		],
-		subtotal: { amount: 4000, currency: 'USD' },
-		tax: { amount: 320, currency: 'USD' },
-		discount: { amount: 0, currency: 'USD' },
-		total: { amount: 4320, currency: 'USD' },
-		validUntil: '2025-02-20T00:00:00Z',
-		expiresAt: '2025-02-20T00:00:00Z',
-		revisionNumber: 1,
-		parentQuoteId: undefined,
-		noteIds: [],
-		activityLogIds: [],
-		communicationIds: [],
-		notes: 'Tree removal and stump grinding',
-		terms: undefined,
-		createdAt: '2025-01-22T14:30:00Z',
-		updatedAt: '2025-01-23T09:15:00Z',
-		sentAt: '2025-01-22T14:30:00Z',
-		viewedAt: '2025-01-23T09:15:00Z',
-		acceptedAt: undefined,
-		rejectedAt: undefined,
-		rejectionReason: undefined,
-	},
-	{
-		id: 'quote-3',
-		clientId: 'client-3',
-		quoteNumber: 'QT-2025-003',
-		jobId: undefined,
-		contractId: undefined,
-		status: QuoteStatus.DRAFT,
-		lineItems: [
-			{
-				id: 'li-5',
-				serviceId: 'service-5',
-				serviceName: 'Irrigation System Repair',
-				description: 'Repair and maintenance of irrigation system',
-				quantity: 1,
-				unitPrice: { amount: 1500, currency: 'USD' },
-				totalPrice: { amount: 1500, currency: 'USD' },
-				notes: undefined,
-			},
-			{
-				id: 'li-6',
-				serviceId: 'service-6',
-				serviceName: 'Parts and Materials',
-				description: 'Replacement parts and materials',
-				quantity: 1,
-				unitPrice: { amount: 250, currency: 'USD' },
-				totalPrice: { amount: 250, currency: 'USD' },
-				notes: undefined,
-			},
-		],
-		subtotal: { amount: 1750, currency: 'USD' },
-		tax: { amount: 140, currency: 'USD' },
-		discount: { amount: 0, currency: 'USD' },
-		total: { amount: 1890, currency: 'USD' },
-		validUntil: '2025-02-25T00:00:00Z',
-		expiresAt: '2025-02-25T00:00:00Z',
-		revisionNumber: 1,
-		parentQuoteId: undefined,
-		noteIds: [],
-		activityLogIds: [],
-		communicationIds: [],
-		notes: 'Irrigation system repair',
-		terms: undefined,
-		createdAt: '2025-01-24T11:00:00Z',
-		updatedAt: '2025-01-24T11:00:00Z',
-		sentAt: undefined,
-		viewedAt: undefined,
-		acceptedAt: undefined,
-		rejectedAt: undefined,
-		rejectionReason: undefined,
-	},
-];
+function buildJobDescription(q: {
+	service_name: string
+	project_type: string
+	zone: string
+	hours: number
+	sqft: number
+	visits: number
+	extras: string | null
+}): string {
+	const parts = [
+		`Service: ${q.service_name}`,
+		`Project type: ${q.project_type}`,
+		`Zone: ${q.zone}`,
+		`Hours: ${q.hours}, Sq ft: ${q.sqft}, Visits: ${q.visits}`,
+	]
+	if (q.extras) parts.push(`Extras: ${q.extras}`)
+	return parts.join("\n")
+}
 
-const mockTemplates: QuoteTemplate[] = [
-	{
-		id: 'template-1',
-		name: 'Standard Lawn Care',
-		description: 'Weekly lawn maintenance package',
-		lineItems: [
-			{
-				id: 'li-1',
-				serviceId: 'service-1',
-				serviceName: 'Lawn Mowing',
-				description: 'Weekly lawn mowing service',
-				quantity: 4,
-				unitPrice: { amount: 75, currency: 'USD' },
-				totalPrice: { amount: 300, currency: 'USD' },
-				notes: undefined,
-			},
-			{
-				id: 'li-2',
-				serviceId: 'service-2',
-				serviceName: 'Edging & Trimming',
-				description: 'Edging and trimming service',
-				quantity: 4,
-				unitPrice: { amount: 25, currency: 'USD' },
-				totalPrice: { amount: 100, currency: 'USD' },
-				notes: undefined,
-			},
-			{
-				id: 'li-3',
-				serviceId: 'service-3',
-				serviceName: 'Fertilizer Application',
-				description: 'Fertilizer application',
-				quantity: 1,
-				unitPrice: { amount: 150, currency: 'USD' },
-				totalPrice: { amount: 150, currency: 'USD' },
-				notes: undefined,
-			},
-		],
-		defaultMarkup: 20,
-	},
-	{
-		id: 'template-2',
-		name: 'Tree Service Package',
-		description: 'Tree trimming and removal',
-		lineItems: [
-			{
-				id: 'li-4',
-				serviceId: 'service-4',
-				serviceName: 'Tree Trimming',
-				description: 'Professional tree trimming',
-				quantity: 1,
-				unitPrice: { amount: 350, currency: 'USD' },
-				totalPrice: { amount: 350, currency: 'USD' },
-				notes: undefined,
-			},
-			{
-				id: 'li-5',
-				serviceId: 'service-5',
-				serviceName: 'Debris Removal',
-				description: 'Debris cleanup and removal',
-				quantity: 1,
-				unitPrice: { amount: 150, currency: 'USD' },
-				totalPrice: { amount: 150, currency: 'USD' },
-				notes: undefined,
-			},
-			{
-				id: 'li-6',
-				serviceId: 'service-6',
-				serviceName: 'Equipment Rental',
-				description: 'Specialized equipment rental',
-				quantity: 1,
-				unitPrice: { amount: 200, currency: 'USD' },
-				totalPrice: { amount: 200, currency: 'USD' },
-				notes: undefined,
-			},
-		],
-		defaultMarkup: 25,
-	},
-];
+/**
+ * 1. Sets quote_requests.status to `reviewed`.
+ * 2. Creates or reuses client by email.
+ * 3. Inserts jobs row linked via quote_request_id (status `quoted`).
+ */
+export async function convertToJob(
+	quoteId: string,
+	address: JobSiteAddress,
+): Promise<
+	| { success: true; jobId: string; alreadyExisted: boolean }
+	| { success: false; error: string }
+> {
+	const street = address.street.trim()
+	const city = address.city.trim()
+	const state = address.state.trim()
+	const zip = address.zip_code.trim()
+	if (!street || !city || !state || !zip) {
+		return { success: false, error: "Job site address is required (street, city, state, ZIP)." }
+	}
 
-export const quoteService = {
-	getAll: (): Promise<Quote[]> => asyncify(() => mockQuotes),
+	const quote = await prisma.quote_requests.findUnique({ where: { id: quoteId } })
+	if (!quote) return { success: false, error: "Quote request not found." }
 
-	getById: (id: EntityId): Promise<Quote | undefined> =>
-		asyncify(() => mockQuotes.find((q) => q.id === id)),
+	if (quote.status !== "pending" && quote.status !== "reviewed") {
+		return {
+			success: false,
+			error: "Only pending or reviewed quotes can be converted to a job.",
+		}
+	}
 
-	getByClientId: (clientId: EntityId): Promise<Quote[]> =>
-		asyncify(() => mockQuotes.filter((q) => q.clientId === clientId)),
+	const existing = await prisma.jobs.findFirst({
+		where: { quote_request_id: quoteId, deleted_at: null },
+		select: { id: true },
+	})
+	if (existing) {
+		await prisma.quote_requests.update({
+			where: { id: quoteId },
+			data: { status: "reviewed", updated_at: new Date() },
+		})
+		return { success: true, jobId: existing.id, alreadyExisted: true }
+	}
 
-	getTemplates: (): Promise<QuoteTemplate[]> => asyncify(() => mockTemplates),
+	await prisma.quote_requests.update({
+		where: { id: quoteId },
+		data: { status: "reviewed", updated_at: new Date() },
+	})
 
-	getPendingQuotes: (): Promise<Quote[]> =>
-		asyncify(() =>
-			mockQuotes.filter(
-				(q) => q.status === QuoteStatus.SENT || q.status === QuoteStatus.VIEWED,
-			),
-		),
+	let client = await prisma.clients.findFirst({
+		where: {
+			email: { equals: quote.client_email.trim(), mode: "insensitive" },
+			deleted_at: null,
+		},
+	})
 
-	getConversionRate: (): Promise<number> => asyncify(() => 68.5), // 68.5% conversion rate
-};
+	if (!client) {
+		try {
+			client = await prisma.clients.create({
+				data: {
+					name: quote.client_name.trim().slice(0, 255),
+					email: quote.client_email.trim().slice(0, 255),
+					phone: (quote.client_phone ?? "").slice(0, 64) || "—",
+					street: street.slice(0, 255),
+					city: city.slice(0, 128),
+					state: state.slice(0, 64),
+					zip_code: zip.slice(0, 20),
+					country: "US",
+				},
+			})
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : "Failed to create client."
+			return { success: false, error: msg }
+		}
+	}
+
+	const priceCents = quote.approved_max_cents ?? quote.max_cents
+
+	let jobNumber: string
+	try {
+		const rows = await prisma.$queryRaw<{ n: bigint }[]>`
+      SELECT nextval('job_number_seq') AS n
+    `
+		jobNumber = `JOB-${rows[0]?.n ?? Date.now()}`
+	} catch {
+		jobNumber = `JOB-${Date.now()}`
+	}
+
+	const title = quote.service_name.trim().slice(0, 255) || "Landscaping job"
+
+	try {
+		const job = await prisma.jobs.create({
+			data: {
+				job_number: jobNumber,
+				client_id: client.id,
+				status: "quoted",
+				title,
+				description: buildJobDescription(quote),
+				street: street.slice(0, 255),
+				city: city.slice(0, 128),
+				state: state.slice(0, 64),
+				zip_code: zip.slice(0, 20),
+				country: "US",
+				quoted_price_cents: priceCents,
+				currency: "USD",
+				quote_request_id: quoteId,
+			},
+		})
+		return { success: true, jobId: job.id, alreadyExisted: false }
+	} catch (e) {
+		const raw = e instanceof Error ? e.message : String(e)
+		if (
+			raw.includes("quote_request_id") ||
+			raw.includes("column") ||
+			raw.includes("does not exist")
+		) {
+			return {
+				success: false,
+				error:
+					"Database is missing jobs.quote_request_id. Run scripts/add-jobs-quote-request-id.sql (or prisma db push), then retry.",
+			}
+		}
+		return { success: false, error: raw }
+	}
+}
