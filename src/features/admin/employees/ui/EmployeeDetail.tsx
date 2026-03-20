@@ -9,7 +9,7 @@
 "use client"
 
 import Link from "next/link"
-import FormModal from "@/src/shared/ui/Modal"
+import { Modal } from "@/src/shared/ui/Modal"
 import type { Employee } from "@/src/domain/entities"
 import { EmployeeStatus } from "@/src/domain/entities"
 import type { JobAssignment } from "@/src/domain/models"
@@ -53,12 +53,13 @@ const EmployeeDetail = ({
   }
 
   return (
-    <FormModal isOpen={isOpen} onClose={onClose} title="Employee Details" size="lg" footer={null}>
-      <div className="space-y-8">
-        {/* Basic Information — improved spacing and hierarchy */}
-        <section>
-          <h3 className="text-base font-semibold text-[#8b4513] dark:text-[#d4a574] mb-3 pb-2 border-b border-[#d4a574]/30">
-            Basic Information
+    <Modal isOpen={isOpen} onClose={onClose} size="lg">
+      <Modal.Header title="Employee Details" />
+        <div className="space-y-8">
+          {/* Basic Information — improved spacing and hierarchy */}
+          <section>
+            <h3 className="text-base font-semibold text-[#8b4513] dark:text-[#d4a574] mb-3 pb-2 border-b border-[#d4a574]/30">
+              Basic Information
           </h3>
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
             <div>
@@ -167,7 +168,7 @@ const EmployeeDetail = ({
           </section>
         ) : null}
       </div>
-    </FormModal>
+    </Modal>
   )
 }
 
