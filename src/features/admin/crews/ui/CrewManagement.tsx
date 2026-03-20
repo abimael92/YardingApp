@@ -12,10 +12,10 @@ import {
   XMarkIcon,
   ChevronDownIcon,
 } from "@heroicons/react/24/outline"
-import { Card } from "@/src/components/layout/Card"
-import { Button } from "@/src/components/layout/Button"
-import { Modal } from "@/src/components/layout/Modal"
-import { EmptyState } from "@/src/components/layout/EmptyState"
+import { Card } from "@/src/shared/ui/Card"
+import { Button } from "@/src/shared/ui/Button"
+import { Modal } from "@/src/shared/ui/Modal"
+import { EmptyState } from "@/src/shared/ui/EmptyState"
 import type { Crew, CrewMember, CrewJob } from "@/src/services/crewService"
 
 const TABS = [

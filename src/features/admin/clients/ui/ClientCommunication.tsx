@@ -14,7 +14,7 @@ import {
   BellIcon,
   PaperClipIcon,
 } from "@heroicons/react/24/outline"
-import FormModal from "@/src/shared/ui/FormModal"
+import FormModal from "@/src/shared/ui/Modal"
 import type { Client } from "@/src/domain/entities"
 import { createCommunication } from "@/src/services/communicationService"
 import { CommunicationType, CommunicationDirection, Priority } from "@/src/domain/entities"

@@ -2,7 +2,7 @@
 
 import React from "react"
 import EmptyState from "@/src/shared/ui/EmptyState"
-import { Button } from "@/src/components/layout/Button"
+import { Button } from "@/src/shared/ui/Button"
 
 export interface AdminEmptyStateProps {
   title: string

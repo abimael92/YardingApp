@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import FormModal from "@/src/shared/ui/FormModal"
+import FormModal from "@/src/shared/ui/Modal"
 import { getJobs } from "@/src/services/jobService"
 import { assignEmployeeToJob } from "@/src/services/assignmentService"
 import type { Job } from "@/src/domain/entities"

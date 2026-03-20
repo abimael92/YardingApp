@@ -1,11 +1,13 @@
 /**
  * Data Table Component
- * 
- * Reusable table component for displaying data with actions
+ *
+ * Merged shared table used across admin and feature modules.
+ * Supports legacy props from previous layout DataTable and existing shared usage.
  */
 
 "use client"
 
+import type React from "react"
 import { motion } from "framer-motion"
 import { PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/outline"
 
@@ -14,6 +16,8 @@ export interface Column<T> {
   header: string
   render?: (item: T) => React.ReactNode
   className?: string
+  hideOnMobile?: boolean
+  hideOnTablet?: boolean
 }
 
 interface DataTableProps<T> {
@@ -25,6 +29,7 @@ interface DataTableProps<T> {
   keyExtractor: (item: T) => string
   isLoading?: boolean
   emptyMessage?: string
+  className?: string
 }
 
 function DataTable<T>({
@@ -36,6 +41,7 @@ function DataTable<T>({
   keyExtractor,
   isLoading = false,
   emptyMessage = "No data available",
+  className,
 }: DataTableProps<T>) {
   if (isLoading) {
     return (
@@ -51,14 +57,14 @@ function DataTable<T>({
 
   if (data.length === 0) {
     return (
-      <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-12 shadow-sm">
-        <p className="text-center text-[#b85e1a]/80 dark:text-gray-400">{emptyMessage}</p>
+      <div className="rounded-2xl border border-[#d4a574]/40 dark:border-[#8b4513]/40 bg-white dark:bg-gray-900 p-12 shadow-sm">
+        <p className="text-center text-[#6b7280] dark:text-gray-400">{emptyMessage}</p>
       </div>
     )
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
+    <div className={`overflow-hidden rounded-2xl border border-[#d4a574]/40 dark:border-[#8b4513]/40 bg-white dark:bg-gray-900 shadow-sm ${className ?? ""}`}>
       <div className="overflow-x-auto overflow-y-visible min-w-0" style={{ WebkitOverflowScrolling: "touch" }}>
         <table className="w-full text-sm min-w-[640px] divide-y divide-[#d4a574]/20 dark:divide-[#8b4513]/20">
           <thead>
@@ -66,7 +72,11 @@ function DataTable<T>({
               {columns.map((column) => (
                 <th
                   key={String(column.key)}
-                  className={`text-left py-3 px-2 sm:px-4 text-xs font-medium uppercase tracking-wider text-[#8b4513] dark:text-[#d4a574] ${
+                  className={`text-left py-3 px-2 sm:px-4 text-xs font-semibold uppercase tracking-wider text-[#2e8b57] dark:text-[#4a7c5c] ${
+                    column.hideOnMobile ? "hidden sm:table-cell " : ""
+                  }${
+                    column.hideOnTablet ? "hidden md:table-cell " : ""
+                  }${
                     column.className || ""
                   }`}
                 >
@@ -90,7 +100,14 @@ function DataTable<T>({
                 className="hover:bg-[#f5f1e6]/50 dark:hover:bg-gray-800/50 transition-colors"
               >
                 {columns.map((column) => (
-                  <td key={String(column.key)} className="py-3 px-2 sm:px-4 max-w-[200px] sm:max-w-none truncate sm:truncate-none">
+                  <td
+                    key={String(column.key)}
+                    className={`py-3 px-2 sm:px-4 max-w-[200px] sm:max-w-none truncate sm:truncate-none ${
+                      column.hideOnMobile ? "hidden sm:table-cell " : ""
+                    }${
+                      column.hideOnTablet ? "hidden md:table-cell " : ""
+                    }`}
+                  >
                     {column.render
                       ? column.render(item)
                       : (item[column.key as keyof T] as React.ReactNode)}
@@ -145,3 +162,4 @@ function DataTable<T>({
 }
 
 export default DataTable
+export { DataTable }

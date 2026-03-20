@@ -310,7 +310,7 @@ export default function RequestQuotePage() {
           />
         </div>
 
-        {quoteResult.valid && (quoteResult.minTotal > 0 || quoteResult.maxTotal > 0) && (
+        {/* {quoteResult.valid && (quoteResult.minTotal > 0 || quoteResult.maxTotal > 0) && (
           <div className="rounded-lg border-2 border-emerald-300 bg-emerald-100 p-4 dark:border-emerald-700 dark:bg-emerald-900/40">
             <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">Estimated range</p>
             <p className="mt-1 text-2xl font-bold text-emerald-900 dark:text-emerald-100">
@@ -320,7 +320,7 @@ export default function RequestQuotePage() {
               Approximate. Final quote may vary. No tax breakdown in estimate.
             </p>
           </div>
-        )}
+        )} */}
 
         {!quoteResult.valid && quoteResult.errors.length > 0 && (
           <div className="rounded-lg border-2 border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200">

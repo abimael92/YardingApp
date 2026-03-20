@@ -2,7 +2,7 @@
 
 import React from "react"
 import { cn } from "@/src/lib/utils"
-import { Card } from "@/src/components/layout/Card"
+import { Card } from "@/src/shared/ui/Card"
 
 export type AdminStatsCardVariant = "default" | "green" | "brown" | "orange" | "red"
 
