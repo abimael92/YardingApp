@@ -9,7 +9,7 @@
 "use client"
 
 import Link from "next/link"
-import FormModal from "@/src/shared/ui/FormModal"
+import FormModal from "@/src/shared/ui/Modal"
 import type { Employee } from "@/src/domain/entities"
 import { EmployeeStatus } from "@/src/domain/entities"
 import type { JobAssignment } from "@/src/domain/models"

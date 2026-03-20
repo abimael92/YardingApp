@@ -14,7 +14,7 @@ import {
   UserCircleIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline"
-import FormModal from "@/src/shared/ui/FormModal"
+import FormModal from "@/src/shared/ui/Modal"
 import type { User } from "@/src/domain/models"
 
 const ROLES: User["role"][] = ["Admin", "Supervisor", "Worker", "Client"]

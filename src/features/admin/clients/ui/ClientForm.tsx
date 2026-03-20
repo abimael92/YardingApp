@@ -8,7 +8,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import FormModal from "@/src/shared/ui/FormModal"
+import FormModal from "@/src/shared/ui/Modal"
 import { createClient, updateClient } from "@/src/services/clientService"
 import type { Client } from "@/src/domain/entities"
 import { ClientStatus, ClientSegment } from "@/src/domain/entities"

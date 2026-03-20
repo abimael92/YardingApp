@@ -4,15 +4,15 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Grid } from "@/src/components/layout/Grid"
-import { Button } from "@/src/components/layout/Button"
-import { Card } from "@/src/components/layout/Card"
-import { Input } from "@/src/components/layout//Input"
-import { Skeleton } from "@/src/components/layout/Skeleton"
-import { Modal } from "@/src/components/layout/Modal"
-import { EmptyState } from "@/src/components/layout/EmptyState"
-import { DataTable } from "@/src/components/layout/DataTable"
-import { StatusBadge } from "@/src/components/layout/StatusBadge"
+import { Grid } from "@/src/shared/ui/Grid"
+import { Button } from "@/src/shared/ui/Button"
+import { Card } from "@/src/shared/ui/Card"
+import { Input } from "@/src/shared/ui/Input"
+import { Skeleton } from "@/src/shared/ui/Skeleton"
+import { Modal } from "@/src/shared/ui/Modal"
+import { EmptyState } from "@/src/shared/ui/EmptyState"
+import { DataTable } from "@/src/shared/ui/DataTable"
+import { StatusBadge } from "@/src/shared/ui/StatusBadge"
 import { useMediaQuery } from "@/src/hooks/useMediaQuery"
 import { useFormPersistence } from "@/src/hooks/useFormPersistence"
 import EmployeeForm from "./EmployeeForm"
@@ -1556,7 +1556,7 @@ export const EmployeeList = () => {
       </section>
 
       {/* Employee Modals */}
-      <Modal isOpen={showHireModal} onClose={() => setShowHireModal(false)} title="Hire New Employee">
+      <Modal isOpen={showHireModal} onClose={() => setShowHireModal(false)} >
         <EmployeeForm
           isOpen={showHireModal}
           onClose={() => setShowHireModal(false)}
@@ -1564,7 +1564,7 @@ export const EmployeeList = () => {
         />
       </Modal>
 
-      <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title="Edit Employee">
+      <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} >
         {selectedEmployee && (
           <EmployeeForm
             isOpen={showEditModal}
@@ -1575,7 +1575,7 @@ export const EmployeeList = () => {
         )}
       </Modal>
 
-      <Modal isOpen={showDetailModal} onClose={() => setShowDetailModal(false)} title="Employee Details" size="lg">
+      <Modal isOpen={showDetailModal} onClose={() => setShowDetailModal(false)} size="lg">
         {selectedEmployee && (
           <EmployeeDetail
             isOpen={showDetailModal}
@@ -1588,7 +1588,7 @@ export const EmployeeList = () => {
         )}
       </Modal>
 
-      <Modal isOpen={showTimeTrackingModal} onClose={() => setShowTimeTrackingModal(false)} title="Time Tracking">
+      <Modal isOpen={showTimeTrackingModal} onClose={() => setShowTimeTrackingModal(false)}>
         {selectedEmployee && (
           <TimeTrackingModal
             isOpen={showTimeTrackingModal}
@@ -1599,7 +1599,7 @@ export const EmployeeList = () => {
         )}
       </Modal>
 
-      <Modal isOpen={showAssignments} onClose={() => setShowAssignments(false)} title={`${selectedEmployee?.name}'s Jobs`} size="lg">
+      <Modal isOpen={showAssignments} onClose={() => setShowAssignments(false)} size="lg">
         {assignments.length === 0 ? (
           <EmptyState
             title="No job assignments"
@@ -1648,7 +1648,6 @@ export const EmployeeList = () => {
         <Modal
           isOpen={true}
           onClose={() => { setShowCrewForm(false); setEditingCrew(null); setEditingCrewDetail(null); }}
-          title={editingCrew || editingCrewDetail ? "Edit Crew" : "Create New Crew"}
           size="lg"
         >
           <CrewFormModalInner
@@ -1674,7 +1673,6 @@ export const EmployeeList = () => {
         <Modal
           isOpen={true}
           onClose={() => { setShowCrewDetail(false); setSelectedCrew(null); }}
-          title={selectedCrew.name}
           size="lg"
         >
           <CrewDetailModalInner
@@ -1702,7 +1700,6 @@ export const EmployeeList = () => {
         <Modal
           isOpen={true}
           onClose={() => setShowAddMemberModal(false)}
-          title={`Add Member to ${selectedCrew.name}`}
           size="md"
         >
           <AddMemberModalInner
@@ -2447,7 +2444,7 @@ function AddMemberModalInner({
     setSelectedEmployeeId(employeeId)
     setIsSubmitting(true)
     setError(null)
-    
+
     try {
       await onSelect(employeeId)
       // onClose will be called by the parent after successful selection

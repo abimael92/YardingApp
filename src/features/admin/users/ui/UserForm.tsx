@@ -8,7 +8,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import FormModal from "@/src/shared/ui/FormModal"
+import FormModal from "@/src/shared/ui/Modal"
 import { createUser, updateUser } from "@/src/services/userService"
 import type { User } from "@/src/domain/models"
 import {

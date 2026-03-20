@@ -3,9 +3,9 @@
 import { useMemo } from "react"
 import { toast } from "sonner"
 import { useDailyPlanner } from "@/src/hooks/useDailyPlanner"
-import { Card } from "@/src/components/layout/Card"
-import { Button } from "@/src/components/layout/Button"
-import { Input } from "@/src/components/layout/Input"
+import { Card } from "@/src/shared/ui/Card"
+import { Button } from "@/src/shared/ui/Button"
+import { Input } from "@/src/shared/ui/Input"
 import LoadingState from "@/src/shared/ui/LoadingState"
 
 export default function DailyPlanner() {

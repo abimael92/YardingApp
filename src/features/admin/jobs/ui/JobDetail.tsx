@@ -7,7 +7,7 @@
 "use client"
 
 import { useCallback, useEffect } from "react"
-import FormModal from "@/src/shared/ui/FormModal"
+import FormModal from "@/src/shared/ui/Modal"
 import type { Job, Client, Employee } from "@/src/domain/entities"
 import { JobStatus, Priority } from "@/src/domain/entities"
 import { mockStore } from "@/src/data/mockStore"

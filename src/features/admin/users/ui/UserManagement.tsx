@@ -28,7 +28,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import DataTable, { Column } from "@/src/shared/ui/DataTable"
 import LoadingState from "@/src/shared/ui/LoadingState"
 import EmptyState from "@/src/shared/ui/EmptyState"
-import FormModal from "@/src/shared/ui/FormModal"
+import FormModal from "@/src/shared/ui/Modal"
 import {
   getSystemUsers,
   deleteUser,

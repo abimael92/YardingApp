@@ -17,7 +17,7 @@ import {
   StarIcon,
   EnvelopeIcon,
 } from "@heroicons/react/24/outline"
-import FormModal from "@/src/shared/ui/FormModal"
+import FormModal from "@/src/shared/ui/Modal"
 import type { Client } from "@/src/domain/entities"
 import { ClientStatus } from "@/src/domain/entities"
 import { getJobs } from "@/src/services/jobService"

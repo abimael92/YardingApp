@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import FormModal from "@/src/shared/ui/FormModal"
+import FormModal from "@/src/shared/ui/Modal"
 import { createEmployee, updateEmployee } from "@/src/services/employeeService"
 import type { Employee } from "@/src/domain/entities"
 import { EmployeeRole, EmployeeStatus } from "@/src/domain/entities"
@@ -342,7 +342,6 @@ export default function EmployeeForm({ isOpen, onClose, onSuccess, employee }: E
     <FormModal
       isOpen={isOpen}
       onClose={onClose}
-      title={employee ? "Edit Employee" : "Hire New Employee"}
       size="lg"
       footer={
         <div className="flex items-center justify-end gap-3 w-full">

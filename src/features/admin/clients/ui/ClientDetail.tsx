@@ -6,7 +6,7 @@
 
 "use client"
 
-import FormModal from "@/src/shared/ui/FormModal"
+import FormModal from "@/src/shared/ui/Modal"
 import type { Client } from "@/src/domain/entities"
 import { ClientStatus } from "@/src/domain/entities"
 
