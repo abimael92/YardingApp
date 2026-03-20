@@ -980,17 +980,7 @@ export const EmployeeList = () => {
       hideOnMobile: true,
       hideOnTablet: false,
     },
-    {
-      key: "hourlyRate",
-      header: "Rate",
-      render: (user: User) => (
-        <div className="text-[#2e8b57] dark:text-[#4a7c5c] font-medium">
-          {user.hourlyRate ? `$${user.hourlyRate}/hr` : "—"}
-        </div>
-      ),
-      hideOnMobile: true,
-      hideOnTablet: true,
-    },
+
     {
       key: "actions",
       header: "",
@@ -1092,7 +1082,7 @@ export const EmployeeList = () => {
                 {user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
               </div>
               <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 ${user.status === "Active" ? "bg-[#2e8b57]" :
-                  user.status === "Pending" ? "bg-[#d88c4a]" : "bg-[#8b4513]"
+                user.status === "Pending" ? "bg-[#d88c4a]" : "bg-[#8b4513]"
                 }`} />
             </div>
             <div className="text-left">
@@ -1400,204 +1390,198 @@ export const EmployeeList = () => {
         <h2 className="text-sm font-semibold text-[#8b4513] dark:text-[#d4a574] uppercase tracking-wider">
           {activeTab === "employees" ? "Employee list" : "Crew list"}
         </h2>
-      {activeTab === "employees" ? (
-        <>
-          {filteredEmployees.length === 0 ? (
-            <EmptyState
-              title="No employees found"
-              description={searchQuery || filterStatus !== 'all' || filterRole !== 'all'
-                ? "Try adjusting your filters"
-                : "Get started by hiring your first employee"
-              }
-              action={
-                <Button variant="primary" onClick={() => setShowHireModal(true)} className="bg-[#2e8b57] hover:bg-[#1f6b41] text-white">
-                  Hire Employee
-                </Button>
-              }
-            />
-          ) : isMobile ? (
-            <div className="space-y-4">
-              {filteredEmployees.map(employee => (
-                <EmployeeCard key={employee.id} user={employee} />
-              ))}
-            </div>
-          ) : (
-            <div className="card overflow-hidden border-[#d4a574]/30 dark:border-[#8b4513]/50">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-[#d4a574]/20 dark:divide-[#8b4513]/20">
-                  <thead className="bg-[#f5f1e6] dark:bg-gray-800">
-                    <tr>
-                      {columns.filter(col => {
-                        if (isTablet && col.hideOnTablet) return false
-                        if (isMobile && col.hideOnMobile) return false
-                        return true
-                      }).map((col) => (
-                        <th key={col.key} className="px-4 py-3 text-left text-xs font-medium text-[#8b4513] dark:text-[#d4a574] uppercase tracking-wider">
-                          {col.header}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-[#d4a574]/20 dark:divide-[#8b4513]/20">
-                    {filteredEmployees.map((user) => (
-                      <React.Fragment key={user.id}>
-                        <tr className="hover:bg-[#f5f1e6]/50 dark:hover:bg-gray-800/50 transition-colors">
-                          {columns.filter(col => {
-                            if (isTablet && col.hideOnTablet) return false
-                            if (isMobile && col.hideOnMobile) return false
-                            return true
-                          }).map((col) => (
-                            <td key={col.key} className="px-4 py-3 text-sm">
-                              {col.render(user)}
-                            </td>
-                          ))}
-                        </tr>
-                        {expandedRowId === user.id && (
-                          <tr className="bg-[#f5f1e6]/30 dark:bg-gray-800/30">
-                            <td colSpan={columns.filter(c => !(isTablet && c.hideOnTablet) && !(isMobile && c.hideOnMobile)).length} className="px-4 py-3">
-                              <div className="text-sm">
-                                <h4 className="font-medium text-[#8b4513] dark:text-[#d4a574] mb-2">Assigned jobs</h4>
-                                {expandedRowAssignments.length === 0 ? (
-                                  <p className="text-[#b85e1a]/70 dark:text-gray-400">No job assignments. Manage jobs on the Jobs page.</p>
-                                ) : (
-                                  <ul className="space-y-1">
-                                    {expandedRowAssignments.map((a) => (
-                                      <li key={a.jobId} className="flex items-center justify-between py-1.5 px-2 rounded bg-white dark:bg-gray-800 border border-[#d4a574]/20">
-                                        <span className="font-mono text-[#b85e1a]">{a.jobNumber}</span>
-                                        <span className="text-[#8b4513] dark:text-[#d4a574]">{a.jobTitle}</span>
-                                        <StatusBadge type="job" value={a.status} />
-                                        <Link
-                                          href={`/admin/jobs/${a.jobId}`}
-                                          className="inline-flex items-center gap-1 text-xs text-[#2e8b57] hover:underline"
-                                        >
-                                          <EyeIcon className="w-4 h-4" />
-                                          View Job
-                                        </Link>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="space-y-4">
-          {crewsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-96 rounded-lg" />
-              ))}
-            </div>
-          ) : filteredCrews.length === 0 ? (
-            <EmptyState
-              title={crewSearchQuery.trim() ? "No crews match your search" : "No crews found"}
-              description={crewSearchQuery.trim() ? "Try a different search or filter." : "Create your first crew to start organizing your team."}
-              action={
-                !crewSearchQuery.trim() ? (
-                  <Button
-                    variant="primary"
-                    onClick={() => { setEditingCrew(null); setEditingCrewDetail(null); setShowCrewForm(true); }}
-                    className="bg-[#2e8b57] hover:bg-[#1f6b41] text-white"
-                  >
-                    <PlusIcon className="w-5 h-5 mr-2 inline" />
-                    Create Crew
+        {activeTab === "employees" ? (
+          <>
+            {filteredEmployees.length === 0 ? (
+              <EmptyState
+                title="No employees found"
+                description={searchQuery || filterStatus !== 'all' || filterRole !== 'all'
+                  ? "Try adjusting your filters"
+                  : "Get started by hiring your first employee"
+                }
+                action={
+                  <Button variant="primary" onClick={() => setShowHireModal(true)} className="bg-[#2e8b57] hover:bg-[#1f6b41] text-white">
+                    Hire Employee
                   </Button>
-                ) : undefined
-              }
-            />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredCrews.map((crew) => (
-                <CrewCard
-                  key={crew.id}
-                  crew={crew}
-                  onClick={() => loadCrewDetail(crew.id)}
-                  onEdit={(e) => {
-                    e.stopPropagation()
-                    setEditingCrew(crew)
-                    setEditingCrewDetail({
-                      id: crew.id,
-                      name: crew.crewName,
-                      supervisorName: crew.supervisor,
-                      supervisorId: crew.supervisorId || null,
-                      description: null,
-                      createdAt: new Date().toISOString(),
-                      members: crew.members?.map(m => ({
-                        id: m.id,
-                        employeeId: m.employeeId,
-                        employeeName: m.name,
-                        role: m.role,
-                        isActive: m.status === 'active',
-                        joinedAt: new Date().toISOString()
-                      })) || [],
-                      jobs: []
-                    })
-                    setShowCrewForm(true)
-                  }}
-                  onDelete={(e) => {
-                    e.stopPropagation()
-                    handleDeleteCrew(crew.id)
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                }
+              />
+            ) : isMobile ? (
+              <div className="space-y-4">
+                {filteredEmployees.map(employee => (
+                  <EmployeeCard key={employee.id} user={employee} />
+                ))}
+              </div>
+            ) : (
+              <div className="card overflow-hidden border-[#d4a574]/30 dark:border-[#8b4513]/50">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-[#d4a574]/20 dark:divide-[#8b4513]/20">
+                    <thead className="bg-[#f5f1e6] dark:bg-gray-800">
+                      <tr>
+                        {columns.filter(col => {
+                          if (isTablet && col.hideOnTablet) return false
+                          if (isMobile && col.hideOnMobile) return false
+                          return true
+                        }).map((col) => (
+                          <th key={col.key} className="px-4 py-3 text-left text-xs font-medium text-[#8b4513] dark:text-[#d4a574] uppercase tracking-wider">
+                            {col.header}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-900 divide-y divide-[#d4a574]/20 dark:divide-[#8b4513]/20">
+                      {filteredEmployees.map((user) => (
+                        <React.Fragment key={user.id}>
+                          <tr className="hover:bg-[#f5f1e6]/50 dark:hover:bg-gray-800/50 transition-colors">
+                            {columns.filter(col => {
+                              if (isTablet && col.hideOnTablet) return false
+                              if (isMobile && col.hideOnMobile) return false
+                              return true
+                            }).map((col) => (
+                              <td key={col.key} className="px-4 py-3 text-sm">
+                                {col.render(user)}
+                              </td>
+                            ))}
+                          </tr>
+                          {expandedRowId === user.id && (
+                            <tr className="bg-[#f5f1e6]/30 dark:bg-gray-800/30">
+                              <td colSpan={columns.filter(c => !(isTablet && c.hideOnTablet) && !(isMobile && c.hideOnMobile)).length} className="px-4 py-3">
+                                <div className="text-sm">
+                                  <h4 className="font-medium text-[#8b4513] dark:text-[#d4a574] mb-2">Assigned jobs</h4>
+                                  {expandedRowAssignments.length === 0 ? (
+                                    <p className="text-[#b85e1a]/70 dark:text-gray-400">No job assignments. Manage jobs on the Jobs page.</p>
+                                  ) : (
+                                    <ul className="space-y-1">
+                                      {expandedRowAssignments.map((a) => (
+                                        <li key={a.jobId} className="flex items-center justify-between py-1.5 px-2 rounded bg-white dark:bg-gray-800 border border-[#d4a574]/20">
+                                          <span className="font-mono text-[#b85e1a]">{a.jobNumber}</span>
+                                          <span className="text-[#8b4513] dark:text-[#d4a574]">{a.jobTitle}</span>
+                                          <StatusBadge type="job" value={a.status} />
+                                          <Link
+                                            href={`/admin/jobs/${a.jobId}`}
+                                            className="inline-flex items-center gap-1 text-xs text-[#2e8b57] hover:underline"
+                                          >
+                                            <EyeIcon className="w-4 h-4" />
+                                            View Job
+                                          </Link>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="space-y-4">
+            {crewsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} className="h-96 rounded-lg" />
+                ))}
+              </div>
+            ) : filteredCrews.length === 0 ? (
+              <EmptyState
+                title={crewSearchQuery.trim() ? "No crews match your search" : "No crews found"}
+                description={crewSearchQuery.trim() ? "Try a different search or filter." : "Create your first crew to start organizing your team."}
+                action={
+                  !crewSearchQuery.trim() ? (
+                    <Button
+                      variant="primary"
+                      onClick={() => { setEditingCrew(null); setEditingCrewDetail(null); setShowCrewForm(true); }}
+                      className="bg-[#2e8b57] hover:bg-[#1f6b41] text-white"
+                    >
+                      <PlusIcon className="w-5 h-5 mr-2 inline" />
+                      Create Crew
+                    </Button>
+                  ) : undefined
+                }
+              />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {filteredCrews.map((crew) => (
+                  <CrewCard
+                    key={crew.id}
+                    crew={crew}
+                    onClick={() => loadCrewDetail(crew.id)}
+                    onEdit={(e) => {
+                      e.stopPropagation()
+                      setEditingCrew(crew)
+                      setEditingCrewDetail({
+                        id: crew.id,
+                        name: crew.crewName,
+                        supervisorName: crew.supervisor,
+                        supervisorId: crew.supervisorId || null,
+                        description: null,
+                        createdAt: new Date().toISOString(),
+                        members: crew.members?.map(m => ({
+                          id: m.id,
+                          employeeId: m.employeeId,
+                          employeeName: m.name,
+                          role: m.role,
+                          isActive: m.status === 'active',
+                          joinedAt: new Date().toISOString()
+                        })) || [],
+                        jobs: []
+                      })
+                      setShowCrewForm(true)
+                    }}
+                    onDelete={(e) => {
+                      e.stopPropagation()
+                      handleDeleteCrew(crew.id)
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       {/* Employee Modals */}
-      <Modal isOpen={showHireModal} onClose={() => setShowHireModal(false)} >
+      {showHireModal && (
         <EmployeeForm
           isOpen={showHireModal}
           onClose={() => setShowHireModal(false)}
           onSuccess={handleFormSuccess}
         />
-      </Modal>
+      )}
 
-      <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} >
-        {selectedEmployee && (
-          <EmployeeForm
-            isOpen={showEditModal}
-            onClose={() => setShowEditModal(false)}
-            onSuccess={handleFormSuccess}
-            employee={mapUserToEmployee(selectedEmployee)}
-          />
-        )}
-      </Modal>
+      {showEditModal && selectedEmployee && (
+        <EmployeeForm
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={handleFormSuccess}
+          employee={mapUserToEmployee(selectedEmployee)}
+        />
+      )}
 
-      <Modal isOpen={showDetailModal} onClose={() => setShowDetailModal(false)} size="lg">
-        {selectedEmployee && (
-          <EmployeeDetail
-            isOpen={showDetailModal}
-            employee={selectedEmployee as any}
-            onClose={() => setShowDetailModal(false)}
-            crewName={employeeCrewMap[selectedEmployee.id] ?? null}
-            assignedJobs={detailModalAssignments}
-            jobDetailUrl={(jobId) => `/admin/jobs/${jobId}`}
-          />
-        )}
-      </Modal>
+      {showDetailModal && selectedEmployee && (
+        <EmployeeDetail
+          isOpen={showDetailModal}
+          employee={selectedEmployee as any}
+          onClose={() => setShowDetailModal(false)}
+          crewName={employeeCrewMap[selectedEmployee.id] ?? null}
+          assignedJobs={detailModalAssignments}
+          jobDetailUrl={(jobId) => `/admin/jobs/${jobId}`}
+        />
+      )}
 
-      <Modal isOpen={showTimeTrackingModal} onClose={() => setShowTimeTrackingModal(false)}>
-        {selectedEmployee && (
-          <TimeTrackingModal
-            isOpen={showTimeTrackingModal}
-            onClose={() => setShowTimeTrackingModal(false)}
-            employeeId={selectedEmployee.id}
-            employeeName={selectedEmployee.name}
-          />
-        )}
-      </Modal>
+      {showTimeTrackingModal && selectedEmployee && (
+        <TimeTrackingModal
+          isOpen={showTimeTrackingModal}
+          onClose={() => setShowTimeTrackingModal(false)}
+          employeeId={selectedEmployee.id}
+          employeeName={selectedEmployee.name}
+        />
+      )}
 
       <Modal isOpen={showAssignments} onClose={() => setShowAssignments(false)} size="lg">
         {assignments.length === 0 ? (
@@ -2257,8 +2241,8 @@ function CrewDetailModalInner({
         <button
           onClick={() => setActiveSection('members')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeSection === 'members'
-              ? 'border-[#2e8b57] text-[#2e8b57]'
-              : 'border-transparent text-[#b85e1a]/70 hover:text-[#8b4513]'
+            ? 'border-[#2e8b57] text-[#2e8b57]'
+            : 'border-transparent text-[#b85e1a]/70 hover:text-[#8b4513]'
             }`}
         >
           Members ({crew.members.length})
@@ -2266,8 +2250,8 @@ function CrewDetailModalInner({
         <button
           onClick={() => setActiveSection('jobs')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeSection === 'jobs'
-              ? 'border-[#2e8b57] text-[#2e8b57]'
-              : 'border-transparent text-[#b85e1a]/70 hover:text-[#8b4513]'
+            ? 'border-[#2e8b57] text-[#2e8b57]'
+            : 'border-transparent text-[#b85e1a]/70 hover:text-[#8b4513]'
             }`}
         >
           Assigned Jobs ({crew.jobs.length})
@@ -2352,8 +2336,8 @@ function CrewDetailModalInner({
                         {job.jobNumber}
                       </span>
                       <span className={`px-2 py-0.5 rounded-full text-xs ${job.status === 'completed' ? 'bg-[#2e8b57]/20 text-[#2e8b57]' :
-                          job.status === 'in_progress' ? 'bg-[#d88c4a]/20 text-[#b85e1a]' :
-                            'bg-gray-100 text-gray-600'
+                        job.status === 'in_progress' ? 'bg-[#d88c4a]/20 text-[#b85e1a]' :
+                          'bg-gray-100 text-gray-600'
                         }`}>
                         {job.status}
                       </span>
@@ -2486,15 +2470,15 @@ function AddMemberModalInner({
           onFocus={() => setSearchFocused(true)}
           onBlur={() => setSearchFocused(false)}
           className={`pl-10 pr-10 border-2 transition-all duration-200
-            ${searchFocused 
-              ? 'border-[#2e8b57] ring-2 ring-[#2e8b57]/20' 
+            ${searchFocused
+              ? 'border-[#2e8b57] ring-2 ring-[#2e8b57]/20'
               : 'border-[#d4a574] dark:border-[#8b4513]'
             } 
             bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] 
             placeholder-[#b85e1a]/50 dark:placeholder-gray-500`}
         />
         <MagnifyingGlassIcon className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 
-          ${searchFocused ? 'text-[#2e8b57]' : 'text-[#b85e1a]/60'}`} 
+          ${searchFocused ? 'text-[#2e8b57]' : 'text-[#b85e1a]/60'}`}
         />
         {search && (
           <button
@@ -2592,7 +2576,7 @@ function AddMemberModalInner({
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2e8b57] to-[#8b4513] flex items-center justify-center text-white text-sm font-bold shrink-0">
                           {e.fullName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
                         </div>
-                        
+
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-[#8b4513] dark:text-[#d4a574] truncate">
                             {e.fullName}
@@ -2607,7 +2591,7 @@ function AddMemberModalInner({
                           <span className="text-xs px-2 py-1 rounded-full bg-[#2e8b57]/10 text-[#2e8b57] whitespace-nowrap">
                             {e.role || "Worker"}
                           </span>
-                          
+
                           {/* Loading spinner */}
                           {isSubmitting && selectedEmployeeId === e.id && (
                             <svg className="animate-spin h-4 w-4 text-[#2e8b57]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -2615,7 +2599,7 @@ function AddMemberModalInner({
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                           )}
-                          
+
                           {/* Hover indicator */}
                           {!isSubmitting && (
                             <ChevronRightIcon className="w-4 h-4 text-[#b85e1a]/30 group-hover:text-[#2e8b57] transition-colors" />
@@ -2656,9 +2640,9 @@ function AddMemberModalInner({
         </div>
 
         {/* Cancel Button */}
-        <Button 
-          variant="outline" 
-          onClick={onClose} 
+        <Button
+          variant="outline"
+          onClick={onClose}
           className="border-[#d4a574] text-[#8b4513] dark:text-[#d4a574] hover:bg-[#f5f1e6]"
           disabled={isSubmitting}
           size="sm"
