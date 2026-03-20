@@ -15,6 +15,12 @@ A full-stack web application that powers the public website and internal operati
 - [Usage Guide](#usage-guide)
 - [UI/UX](#uiux)
 - [Data & Functionality](#data--functionality)
+- [System flow (source of truth)](#system-flow-source-of-truth)
+- [Technical stack deep-dive](#technical-stack-deep-dive)
+- [Functionality report (PM / roadmap)](#functionality-report-pm--roadmap)
+- [AI app context (for agents)](#ai-app-context-for-agents)
+- [Current features (QA map)](#current-features-qa-map)
+- [Roadmap & schema gaps](#roadmap--schema-gaps)
 - [Best Practices & Tips](#best-practices--tips)
 - [Screenshots & Examples](#screenshots--examples)
 - [Contributing](#contributing)
@@ -92,6 +98,8 @@ This application serves two main areas:
 - **Server state:** Neon serverless driver and Prisma in Server Components, API routes, or Server Actions.
 - **Client state:** React (useState, useEffect), custom hooks (e.g. `useFormPersistence`, `usePagination`, `useAsync`).
 - **No global store:** Feature-level state and server data fetching.
+
+For a **codebase-level** breakdown (folder layering, auth nuances, responsive patterns, Server Actions vs mock leftovers), see **[`TECH_STACK.md`](./TECH_STACK.md)**.
 
 ---
 
@@ -355,6 +363,36 @@ Enums cover statuses (e.g. job, invoice, payment, contract, user) and segments.
 - **Server:** Neon (`@neondatabase/serverless`) and Prisma run in Server Components, API routes, or Server Actions. Do not call them from client-only code; use Server Actions or API routes so `DATABASE_URL` is only on the server.
 - **Services:** `src/services/*` encapsulate CRUD and queries; many return typed DTOs (e.g. `ContractForUI`, `NoteForUI`) for the UI.
 - **Client:** Pages and features fetch via server-side calls or by calling server actions; local state and hooks (e.g. `useFormPersistence`, `usePagination`) handle UI state.
+
+### System flow (source of truth)
+
+For **end-to-end lifecycle** (quotes → jobs → schedules → assignments → invoices), **status enums**, **entity relationships**, **Mermaid diagrams** (assignment + billing), and **referential integrity** on job completion, see:
+
+**[`SYSTEM_FLOW.md`](./SYSTEM_FLOW.md)**
+
+### Technical stack deep-dive
+
+For **Neon + App Router + pnpm**, **layering** (`services` / `hooks` / `components`), **auth & roles** (`User` vs `profiles` / `user_roles`), **responsive admin vs worker UI**, and **Server Actions + cache invalidation** (vs remaining mock paths), see:
+
+**[`TECH_STACK.md`](./TECH_STACK.md)**
+
+### Functionality report (PM / roadmap)
+
+For a **service-by-service CRUD inventory**, **hooks**, **lifecycle automation vs manual**, **equipment / materials / skills** gaps, **scheduler optimization**, and **roadmap** ideas, see:
+
+**[`FUNCTIONALITY_REPORT.md`](./FUNCTIONALITY_REPORT.md)**
+
+### AI app context (for agents)
+
+**[`AI_APP_CONTEXT.md`](./AI_APP_CONTEXT.md)** — North Star principles, data dictionary, directory map, and environment rules so AI (and humans) can write code that matches this project.
+
+### Current features (QA map)
+
+What is **actually built and usable** (workflows, UI modules, Neon vs mock, role visibility): **[`CURRENT_FEATURES.md`](./CURRENT_FEATURES.md)**.
+
+### Roadmap & schema gaps
+
+**[`ROADMAP_GAPS.md`](./ROADMAP_GAPS.md)** — Compares **full DB potential** (`schema-summary.txt`) to the **current app**: logic gaps, workflow breaks, infrastructure needs, and **prioritized** action items for the next build cycle.
 
 ### Main CRUD and Queries
 
