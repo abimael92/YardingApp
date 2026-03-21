@@ -2,11 +2,12 @@
  * Client Form Component
  * 
  * Form for creating and editing clients
+ * Arizona-focused with map integration and address validation
  */
 
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import FormModal from "@/src/shared/ui/FormModal"
 import { createClient, updateClient } from "@/src/services/clientService"
@@ -22,8 +23,10 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   UserIcon,
-  GlobeAltIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  MapIcon,
+  ClipboardDocumentIcon,
+  PhotoIcon
 } from "@heroicons/react/24/outline"
 
 interface ClientFormProps {
@@ -33,11 +36,32 @@ interface ClientFormProps {
   client?: Client | null
 }
 
+// Arizona cities for dropdown
+const ARIZONA_CITIES = [
+  "Phoenix", "Tucson", "Mesa", "Chandler", "Scottsdale", "Gilbert", "Glendale",
+  "Peoria", "Surprise", "Tempe", "Avondale", "Goodyear", "Buckeye", "Flagstaff",
+  "Prescott", "Prescott Valley", "Yuma", "Lake Havasu City", "Casa Grande",
+  "Maricopa", "Oro Valley", "Marana", "Apache Junction", "Queen Creek", "El Mirage",
+  "Florence", "San Tan Valley", "Fountain Hills", "Cave Creek", "Paradise Valley"
+]
+
+// Arizona counties for dropdown
+const ARIZONA_COUNTIES = [
+  "Maricopa", "Pima", "Pinal", "Yavapai", "Mohave", "Yuma", "Coconino", "Navajo",
+  "Cochise", "Gila", "Santa Cruz", "Graham", "La Paz", "Greenlee"
+]
+
 const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState<"basic" | "address" | "details">("basic")
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [touched, setTouched] = useState<Record<string, boolean>>({})
+  const [isUsingMap, setIsUsingMap] = useState(false)
+  const [isPastingAddress, setIsPastingAddress] = useState(false)
+  const [serviceHistory, setServiceHistory] = useState<Array<{ id: string, date: string, service: string, status: string }>>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
+  const [pasteBuffer, setPasteBuffer] = useState("")
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [formData, setFormData] = useState({
     name: "",
@@ -47,13 +71,25 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
     preferredContactMethod: "email" as "email" | "phone" | "sms",
     street: "",
     city: "",
-    state: "",
+    county: "",
     zipCode: "",
-    country: "USA",
+    crossStreet: "",
+    propertyType: "residential" as "residential" | "commercial" | "industrial" | "vacant",
+    gateCode: "",
+    accessInstructions: "",
     status: ClientStatus.ACTIVE,
     segment: ClientSegment.REGULAR,
     tags: "",
     notes: "",
+    preferredContactTime: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+    serviceHistory: "",
+    referralSource: "",
+    propertySize: "",
+    hasHOA: false,
+    hoaName: "",
+    hoaContact: "",
   })
 
   useEffect(() => {
@@ -66,13 +102,25 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
         preferredContactMethod: client.contactInfo.preferredContactMethod,
         street: client.primaryAddress.street,
         city: client.primaryAddress.city,
-        state: client.primaryAddress.state,
+        county: (client as any).county || "",
         zipCode: client.primaryAddress.zipCode,
-        country: client.primaryAddress.country || "USA",
+        crossStreet: (client as any).crossStreet || "",
+        propertyType: (client as any).propertyType || "residential",
+        gateCode: (client as any).gateCode || "",
+        accessInstructions: (client as any).accessInstructions || "",
         status: client.status,
         segment: client.segment,
         tags: client.tags?.join(", ") || "",
         notes: client.notes || "",
+        preferredContactTime: (client as any).preferredContactTime || "",
+        emergencyContactName: (client as any).emergencyContactName || "",
+        emergencyContactPhone: (client as any).emergencyContactPhone || "",
+        serviceHistory: (client as any).serviceHistory || "",
+        referralSource: (client as any).referralSource || "",
+        propertySize: (client as any).propertySize || "",
+        hasHOA: (client as any).hasHOA || false,
+        hoaName: (client as any).hoaName || "",
+        hoaContact: (client as any).hoaContact || "",
       })
     } else {
       // Reset form for new client
@@ -84,41 +132,85 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
         preferredContactMethod: "email",
         street: "",
         city: "",
-        state: "",
+        county: "",
         zipCode: "",
-        country: "USA",
+        crossStreet: "",
+        propertyType: "residential",
+        gateCode: "",
+        accessInstructions: "",
         status: ClientStatus.ACTIVE,
         segment: ClientSegment.REGULAR,
         tags: "",
         notes: "",
+        preferredContactTime: "",
+        emergencyContactName: "",
+        emergencyContactPhone: "",
+        serviceHistory: "",
+        referralSource: "",
+        propertySize: "",
+        hasHOA: false,
+        hoaName: "",
+        hoaContact: "",
       })
     }
   }, [client, isOpen])
+  
+  // Load service history when editing existing client
+  useEffect(() => {
+    const loadServiceHistory = async () => {
+      if (!client?.id) return
+
+      setLoadingHistory(true)
+      try {
+        // Fetch jobs for this client
+        const jobs = await fetch(`/api/jobs?clientId=${client.id}`).then(res => res.json())
+        const history = jobs
+          .filter((job: any) => job.status === 'completed')
+          .map((job: any) => ({
+            id: job.id,
+            date: new Date(job.completed_at || job.created_at).toLocaleDateString(),
+            service: job.title,
+            status: job.status
+          }))
+        setServiceHistory(history)
+      } catch (error) {
+        console.error('Failed to load service history:', error)
+      } finally {
+        setLoadingHistory(false)
+      }
+    }
+
+    if (client?.id) {
+      loadServiceHistory()
+    }
+  }, [client?.id])
 
   // Calculate completion percentage
   const calculateCompletion = useCallback(() => {
     let total = 0
     let completed = 0
 
-    // Basic Info (40%)
-    total += 40
-    if (formData.name.trim()) completed += 15
-    if (formData.email.trim()) completed += 15
-    if (formData.phone.trim()) completed += 10
+    // Basic Info (35%)
+    total += 35
+    if (formData.name.trim()) completed += 12
+    if (formData.email.trim()) completed += 12
+    if (formData.phone.trim()) completed += 11
 
     // Address (35%)
     total += 35
     if (formData.street.trim()) completed += 10
     if (formData.city.trim()) completed += 10
-    if (formData.state.trim()) completed += 7.5
-    if (formData.zipCode.trim()) completed += 7.5
+    if (formData.zipCode.trim()) completed += 8
+    if (formData.county.trim()) completed += 7
 
-    // Details (25%)
-    total += 25
-    if (formData.status) completed += 8
-    if (formData.segment) completed += 8
-    if (formData.notes.trim()) completed += 5
-    if (formData.tags.trim()) completed += 4
+    // Details (30%)
+    total += 30
+    if (formData.status) completed += 6
+    if (formData.segment) completed += 6
+    if (formData.propertyType) completed += 6
+    if (formData.accessInstructions.trim()) completed += 4
+    if (formData.emergencyContactName.trim()) completed += 4
+    if (formData.emergencyContactPhone.trim()) completed += 4
 
     return Math.min(100, Math.round((completed / total) * 100))
   }, [formData])
@@ -146,13 +238,19 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
         return ""
       case "city":
         if (!value.trim()) return "City is required"
+        if (!ARIZONA_CITIES.includes(value)) return "Please select a valid Arizona city"
         return ""
-      case "state":
-        if (!value.trim()) return "State is required"
+      case "county":
+        if (!value.trim()) return "County is required"
+        if (!ARIZONA_COUNTIES.includes(value)) return "Please select a valid Arizona county"
         return ""
       case "zipCode":
         if (!value.trim()) return "ZIP code is required"
         return !/^\d{5}(-\d{4})?$/.test(value) ? "Invalid ZIP code" : ""
+      case "emergencyContactPhone":
+        if (value === "NONE") return ""
+        if (value && !/^[\d\s-+()]{10,}$/.test(value)) return "Invalid phone number"
+        return ""
       default:
         return ""
     }
@@ -164,12 +262,28 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
     setErrors(prev => ({ ...prev, [field]: error }))
   }
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: "" }))
   }
 
-  const handleNextStep = () => {
+  const handlePasteAddress = (e: React.ClipboardEvent) => {
+    const pastedText = e.clipboardData.getData('text')
+    // Simple address parsing - can be enhanced with geocoding API
+    const lines = pastedText.split('\n')
+    if (lines[0]) {
+      handleChange("street", lines[0])
+    }
+    setIsPastingAddress(false)
+  }
+
+  const handleNextStep = (e?: React.MouseEvent) => {
+    
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    
     const tabs = ['basic', 'address', 'details'] as const
     const currentIndex = tabs.indexOf(activeTab)
 
@@ -189,7 +303,7 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
     }
 
     if (activeTab === 'address') {
-      const addressFields = ['street', 'city', 'state', 'zipCode']
+      const addressFields = ['street', 'city', 'county', 'zipCode']
       const hasErrors = addressFields.some(field => {
         const error = validateField(field, formData[field as keyof typeof formData] as string)
         if (error) {
@@ -207,7 +321,13 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
     }
   }
 
-  const handlePrevStep = () => {
+  const handlePrevStep = (e?: React.MouseEvent) => {
+  
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    
     const tabs = ['basic', 'address', 'details'] as const
     const currentIndex = tabs.indexOf(activeTab)
     if (currentIndex > 0) {
@@ -219,7 +339,7 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
     e.preventDefault()
 
     // Validate all required fields
-    const requiredFields = ['name', 'email', 'phone', 'street', 'city', 'state', 'zipCode']
+    const requiredFields = ['name', 'email', 'phone', 'street', 'city', 'county', 'zipCode']
     const newErrors: Record<string, string> = {}
 
     requiredFields.forEach(field => {
@@ -238,7 +358,7 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
     setIsSubmitting(true)
 
     try {
-      const clientData: Omit<Client, "id" | "createdAt" | "updatedAt"> = {
+      const clientData: any = {
         name: formData.name,
         contactInfo: {
           email: formData.email,
@@ -249,13 +369,29 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
         primaryAddress: {
           street: formData.street,
           city: formData.city,
-          state: formData.state,
+          state: "AZ",
           zipCode: formData.zipCode,
-          country: formData.country,
+          country: "US",
         },
         status: formData.status,
         segment: formData.segment,
         tags: formData.tags ? formData.tags.split(",").map((t) => t.trim()) : undefined,
+        notes: formData.notes || undefined,
+        // Arizona-specific fields
+        county: formData.county,
+        crossStreet: formData.crossStreet,
+        propertyType: formData.propertyType,
+        gateCode: formData.gateCode,
+        accessInstructions: formData.accessInstructions,
+        preferredContactTime: formData.preferredContactTime,
+        emergencyContactName: formData.emergencyContactName,
+        emergencyContactPhone: formData.emergencyContactPhone,
+        serviceHistory: formData.serviceHistory,
+        referralSource: formData.referralSource,
+        propertySize: formData.propertySize,
+        hasHOA: formData.hasHOA,
+        hoaName: formData.hoaName,
+        hoaContact: formData.hoaContact,
         totalSpent: { amount: 0, currency: "USD" },
         lifetimeValue: { amount: 0, currency: "USD" },
         serviceRequestIds: [],
@@ -263,7 +399,6 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
         jobIds: [],
         paymentIds: [],
         communicationIds: [],
-        notes: formData.notes || undefined,
         invoiceIds: [],
         contractIds: [],
         propertyIds: [],
@@ -287,11 +422,16 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
   }
 
   const isFormValid = () => {
-    const requiredFields = ['name', 'email', 'phone', 'street', 'city', 'state', 'zipCode']
-    return requiredFields.every(field => {
+    const requiredFields = ['name', 'email', 'phone', 'street', 'city', 'county', 'zipCode']
+    const isValid = requiredFields.every(field => {
       const value = formData[field as keyof typeof formData] as string
-      return value && value.trim() && !validateField(field, value)
+      const fieldError = validateField(field, value)
+      const isValidField = value && value.trim() && !fieldError
+      console.log(`${field}: value="${value}", isValid=${isValidField}, error="${fieldError}"`) // Debug log
+      return isValidField
     })
+    console.log("Form valid:", isValid) // Debug log
+    return isValid
   }
 
   // Get progress color
@@ -322,7 +462,7 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
           {activeTab !== 'basic' && (
             <button
               type="button"
-              onClick={handlePrevStep}
+              onClick={(e) => handlePrevStep(e)} 
               className="px-4 py-2 text-sm font-medium text-[#8b4513] dark:text-[#d4a574] bg-transparent border border-[#d4a574] dark:border-[#8b4513] rounded-lg hover:bg-[#d4a574]/10"
             >
               Previous
@@ -333,7 +473,7 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
           {activeTab !== 'details' ? (
             <button
               type="button"
-              onClick={handleNextStep}
+              onClick={(e) => handleNextStep(e)}
               className="px-4 py-2 text-sm font-medium text-white bg-[#d4a574] hover:bg-[#b85e1a] rounded-lg"
             >
               Next Step
@@ -345,7 +485,7 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
               disabled={isSubmitting || !isFormValid()}
               className="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#2e8b57] to-[#1f6b41] rounded-lg disabled:opacity-50"
             >
-              {isSubmitting ? "Saving..." : client ? "Update" : "Create"}
+              {isSubmitting ? "Saving..." : client ? "Update Client" : "Create Client"}
             </button>
           )}
         </div>
@@ -385,9 +525,9 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
           />
         </div>
         <div className="flex justify-between text-[10px] text-[#b85e1a]/60 dark:text-gray-500">
-          <span>Basic (40%)</span>
+          <span>Basic (35%)</span>
           <span>Address (35%)</span>
-          <span>Details (25%)</span>
+          <span>Details (30%)</span>
         </div>
       </div>
 
@@ -404,7 +544,12 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setActiveTab(tab.id as any)
+              }}
               className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2
                 ${activeTab === tab.id
                   ? "bg-[#2e8b57] text-white"
@@ -439,7 +584,7 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
           <div className="flex-1">
             <p className="text-sm font-medium text-[#8b4513] dark:text-[#d4a574]">
               {activeTab === 'basic' && 'Next: Address information'}
-              {activeTab === 'address' && 'Next: Classification and notes'}
+              {activeTab === 'address' && 'Next: Additional details and preferences'}
               {activeTab === 'details' && 'Ready to create client!'}
             </p>
           </div>
@@ -481,12 +626,6 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
                   <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
                     <XCircleIcon className="w-3 h-3" />
                     {errors.name}
-                  </p>
-                )}
-                {touched.name && !errors.name && formData.name && (
-                  <p className="mt-1 text-xs text-[#2e8b57] flex items-center gap-1">
-                    <CheckCircleIcon className="w-3 h-3" />
-                    Looks good
                   </p>
                 )}
               </div>
@@ -539,7 +678,7 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
                             ? 'border-[#2e8b57] ring-2 ring-[#2e8b57]/20'
                             : 'border-[#d4a574] dark:border-[#8b4513]'
                         } transition-all duration-200`}
-                      placeholder="(555) 123-4567"
+                      placeholder="(480) 555-1234"
                     />
                   </div>
                   {touched.phone && errors.phone && (
@@ -568,7 +707,7 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
                           ? 'border-red-500 ring-2 ring-red-500/20'
                           : 'border-[#d4a574] dark:border-[#8b4513]'
                         } transition-all duration-200`}
-                      placeholder="(555) 987-6543"
+                      placeholder="(480) 987-6543"
                     />
                   </div>
                   {touched.phoneSecondary && errors.phoneSecondary && (
@@ -580,15 +719,18 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
                   <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
                     Preferred Contact
                   </label>
-                  <select
-                    value={formData.preferredContactMethod}
-                    onChange={(e) => handleChange("preferredContactMethod", e.target.value)}
-                    className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent transition-all"
-                  >
-                    <option value="email">Email</option>
-                    <option value="phone">Phone</option>
-                    <option value="sms">SMS</option>
-                  </select>
+                  <div className="relative">
+                    <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#b85e1a]/60 pointer-events-none" />
+                    <select
+                      value={formData.preferredContactMethod}
+                      onChange={(e) => handleChange("preferredContactMethod", e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent transition-all appearance-none"
+                    >
+                      <option value="email">Email</option>
+                      <option value="phone">Phone</option>
+                      <option value="sms">SMS</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -602,6 +744,51 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
               exit={{ opacity: 0, x: -20 }}
               className="space-y-4"
             >
+              {/* Address Tools */}
+              <div className="flex gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setIsUsingMap(!isUsingMap)
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#2e8b57] border border-[#2e8b57] rounded-lg hover:bg-[#2e8b57]/10"
+                >
+                  <MapIcon className="w-4 h-4" />
+                  {isUsingMap ? "Hide Map" : "Use Map"}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setIsPastingAddress(!isPastingAddress)
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#d4a574] border border-[#d4a574] rounded-lg hover:bg-[#d4a574]/10"
+                >
+                  <ClipboardDocumentIcon className="w-4 h-4" />
+                  Paste Address
+                </button>
+              </div>
+
+              {isPastingAddress && (
+                <div className="mb-4 p-3 bg-[#f5f1e6] dark:bg-gray-800 rounded-lg">
+                  <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-2">
+                    Paste Full Address
+                  </label>
+                  <textarea
+                    onPaste={handlePasteAddress}
+                    rows={3}
+                    className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-white dark:bg-gray-700"
+                    placeholder="Paste address here..."
+                  />
+                  <p className="text-xs text-[#b85e1a]/60 mt-1">
+                    Tip: Paste a complete address and it will auto-fill the fields
+                  </p>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
                   Street Address <span className="text-red-500">*</span>
@@ -631,25 +818,31 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
                     City <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    value={formData.city}
-                    onChange={(e) => handleChange("city", e.target.value)}
-                    onBlur={() => handleBlur("city")}
-                    className={`w-full px-3 py-2 border-2 rounded-lg bg-[#f5f1e6] dark:bg-gray-800
-                      ${touched.city && errors.city
-                        ? 'border-red-500 ring-2 ring-red-500/20'
-                        : touched.city && !errors.city && formData.city
-                          ? 'border-[#2e8b57] ring-2 ring-[#2e8b57]/20'
-                          : 'border-[#d4a574] dark:border-[#8b4513]'
-                      } transition-all duration-200`}
-                    placeholder="Los Angeles"
-                  />
+                  <div className="relative">
+                    <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#b85e1a]/60 pointer-events-none" />
+                    <select
+                      value={formData.city}
+                      onChange={(e) => handleChange("city", e.target.value)}
+                      onBlur={() => handleBlur("city")}
+                      className={`w-full px-3 py-2 border-2 rounded-lg bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent transition-all appearance-none
+                        ${touched.city && errors.city
+                          ? 'border-red-500 ring-2 ring-red-500/20'
+                          : touched.city && !errors.city && formData.city
+                            ? 'border-[#2e8b57] ring-2 ring-[#2e8b57]/20'
+                            : 'border-[#d4a574] dark:border-[#8b4513]'
+                        }`}
+                    >
+                      <option value="">Select Arizona City</option>
+                      {ARIZONA_CITIES.map(city => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </select>
+                  </div>
                   {touched.city && errors.city && (
                     <p className="mt-1 text-xs text-red-500">{errors.city}</p>
                   )}
@@ -657,28 +850,35 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
 
                 <div>
                   <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
-                    State <span className="text-red-500">*</span>
+                    County <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    value={formData.state}
-                    onChange={(e) => handleChange("state", e.target.value)}
-                    onBlur={() => handleBlur("state")}
-                    className={`w-full px-3 py-2 border-2 rounded-lg bg-[#f5f1e6] dark:bg-gray-800
-                      ${touched.state && errors.state
-                        ? 'border-red-500 ring-2 ring-red-500/20'
-                        : touched.state && !errors.state && formData.state
-                          ? 'border-[#2e8b57] ring-2 ring-[#2e8b57]/20'
-                          : 'border-[#d4a574] dark:border-[#8b4513]'
-                      } transition-all duration-200`}
-                    placeholder="CA"
-                    maxLength={2}
-                  />
-                  {touched.state && errors.state && (
-                    <p className="mt-1 text-xs text-red-500">{errors.state}</p>
+                  <div className="relative">
+                    <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#b85e1a]/60 pointer-events-none" />
+                    <select
+                      value={formData.county}
+                      onChange={(e) => handleChange("county", e.target.value)}
+                      onBlur={() => handleBlur("county")}
+                      className={`w-full px-3 py-2 border-2 rounded-lg bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent transition-all appearance-none
+                        ${touched.county && errors.county
+                          ? 'border-red-500 ring-2 ring-red-500/20'
+                          : touched.county && !errors.county && formData.county
+                            ? 'border-[#2e8b57] ring-2 ring-[#2e8b57]/20'
+                            : 'border-[#d4a574] dark:border-[#8b4513]'
+                        }`}
+                    >
+                      <option value="">Select Arizona County</option>
+                      {ARIZONA_COUNTIES.map(county => (
+                        <option key={county} value={county}>{county}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {touched.county && errors.county && (
+                    <p className="mt-1 text-xs text-red-500">{errors.county}</p>
                   )}
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
                     ZIP Code <span className="text-red-500">*</span>
@@ -695,28 +895,70 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
                           ? 'border-[#2e8b57] ring-2 ring-[#2e8b57]/20'
                           : 'border-[#d4a574] dark:border-[#8b4513]'
                       } transition-all duration-200`}
-                    placeholder="90210"
+                    placeholder="85001"
                   />
                   {touched.zipCode && errors.zipCode && (
                     <p className="mt-1 text-xs text-red-500">{errors.zipCode}</p>
                   )}
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
+                    Cross Street
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.crossStreet}
+                    onChange={(e) => handleChange("crossStreet", e.target.value)}
+                    className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800"
+                    placeholder="e.g., Main St & 1st Ave"
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
-                  Country
+                  Property Type
                 </label>
                 <div className="relative">
-                  <GlobeAltIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#b85e1a]/60" />
-                  <input
-                    type="text"
-                    value={formData.country}
-                    onChange={(e) => handleChange("country", e.target.value)}
-                    className="w-full pl-10 pr-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent transition-all"
-                    placeholder="USA"
-                  />
+                  <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#b85e1a]/60 pointer-events-none" />
+                  <select
+                    value={formData.propertyType}
+                    onChange={(e) => handleChange("propertyType", e.target.value)}
+                    className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent transition-all appearance-none"
+                  >
+                    <option value="residential">Residential</option>
+                    <option value="commercial">Commercial</option>
+                    <option value="industrial">Industrial</option>
+                    <option value="vacant">Vacant Land</option>
+                  </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
+                  Gate Code / Access Code
+                </label>
+                <input
+                  type="text"
+                  value={formData.gateCode}
+                  onChange={(e) => handleChange("gateCode", e.target.value)}
+                  className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800"
+                  placeholder="#1234 or code"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
+                  Access Instructions
+                </label>
+                <textarea
+                  value={formData.accessInstructions}
+                  onChange={(e) => handleChange("accessInstructions", e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800"
+                  placeholder="Parking instructions, where to enter, special considerations..."
+                />
               </div>
             </motion.div>
           )}
@@ -734,36 +976,286 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
                   <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
                     Status
                   </label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => handleChange("status", e.target.value)}
-                    className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent transition-all"
-                  >
-                    {Object.values(ClientStatus).map((status) => (
-                      <option key={status} value={status}>
-                        {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#b85e1a]/60 pointer-events-none" />
+                    <select
+                      value={formData.status}
+                      onChange={(e) => handleChange("status", e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent transition-all appearance-none"
+                    >
+                      {Object.values(ClientStatus).map((status) => (
+                        <option key={status} value={status}>
+                          {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
                     Segment
                   </label>
-                  <select
-                    value={formData.segment}
-                    onChange={(e) => handleChange("segment", e.target.value)}
-                    className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent transition-all"
-                  >
-                    {Object.values(ClientSegment).map((segment) => (
-                      <option key={segment} value={segment}>
-                        {segment.charAt(0).toUpperCase() + segment.slice(1).toLowerCase()}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#b85e1a]/60 pointer-events-none" />
+                    <select
+                      value={formData.segment}
+                      onChange={(e) => handleChange("segment", e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] focus:ring-2 focus:ring-[#2e8b57] focus:border-transparent transition-all appearance-none"
+                    >
+                      {Object.values(ClientSegment).map((segment) => (
+                        <option key={segment} value={segment}>
+                          {segment.charAt(0).toUpperCase() + segment.slice(1).toLowerCase()}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
+                    Preferred Contact Time
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.preferredContactTime}
+                    onChange={(e) => handleChange("preferredContactTime", e.target.value)}
+                    className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800"
+                    placeholder="e.g., Weekdays after 5pm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
+                    Referral Source
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.referralSource}
+                    onChange={(e) => handleChange("referralSource", e.target.value)}
+                    className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800"
+                    placeholder="How did they hear about us?"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
+                      Emergency Contact Name
+                      <div className="relative inline-block ml-2 group">
+                        <button
+                          type="button"
+                          className="text-[#b85e1a]/60 hover:text-[#b85e1a] focus:outline-none"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                          }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                          </svg>
+                        </button>
+                        <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50 w-64 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg">
+                          Optional - who to contact in case of emergency during service work
+                        </div>
+                      </div>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.emergencyContactName}
+                      onChange={(e) => handleChange("emergencyContactName", e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800"
+                      placeholder="e.g., John Doe"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
+                      Emergency Contact Phone
+                    </label>
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <input
+                          type="tel"
+                          value={formData.emergencyContactPhone}
+                          onChange={(e) => handleChange("emergencyContactPhone", e.target.value)}
+                          onBlur={() => handleBlur("emergencyContactPhone")}
+                          className={`w-full px-3 py-2 border-2 rounded-lg bg-[#f5f1e6] dark:bg-gray-800
+            ${touched.emergencyContactPhone && errors.emergencyContactPhone
+                              ? 'border-red-500 ring-2 ring-red-500/20'
+                              : 'border-[#d4a574] dark:border-[#8b4513]'
+                            }`}
+                          placeholder="(480) 555-1234"
+                          disabled={formData.emergencyContactPhone === 'NONE'}
+                        />
+                      </div>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            if (formData.emergencyContactPhone === 'NONE') {
+                              handleChange("emergencyContactPhone", "")
+                            } else {
+                              handleChange("emergencyContactPhone", "NONE")
+                            }
+                          }}
+                          className="px-3 py-2 text-sm font-medium text-[#8b4513] dark:text-[#d4a574] bg-transparent border border-[#d4a574] rounded-lg hover:bg-[#d4a574]/10 whitespace-nowrap"
+                        >
+                          {formData.emergencyContactPhone === 'NONE' ? 'Clear None' : 'None'}
+                        </button>
+                      </div>
+                    </div>
+                    {formData.emergencyContactPhone !== 'NONE' && formData.phone && !formData.emergencyContactPhone && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleChange("emergencyContactPhone", formData.phone)
+                        }}
+                        className="mt-1 text-xs text-[#2e8b57] hover:text-[#1f6b41] flex items-center gap-1"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                        </svg>
+                        Use main phone number: {formData.phone}
+                      </button>
+                    )}
+                    {touched.emergencyContactPhone && errors.emergencyContactPhone && (
+                      <p className="mt-1 text-xs text-red-500">{errors.emergencyContactPhone}</p>
+                    )}
+                  </div>
+                </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
+                    Property Size
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.propertySize}
+                    onChange={(e) => handleChange("propertySize", e.target.value)}
+                    className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800"
+                    placeholder="e.g., 1/2 acre, 5000 sq ft"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-2">
+                    Service History
+                    <div className="relative inline-block ml-2 group">
+                      <button
+                        type="button"
+                        className="text-[#b85e1a]/60 hover:text-[#b85e1a] focus:outline-none"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                        </svg>
+                      </button>
+                      <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50 w-64 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg">
+                        Previous services completed for this client. Shows job history from completed work orders.
+                      </div>
+                    </div>
+                  </label>
+
+                  {loadingHistory ? (
+                    <div className="text-center py-4 text-[#b85e1a]/60">Loading service history...</div>
+                  ) : serviceHistory.length > 0 ? (
+                    <div className="border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800 max-h-48 overflow-y-auto">
+                      {serviceHistory.map((job) => (
+                        <div key={job.id} className="p-3 border-b border-[#d4a574]/30 last:border-b-0">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-medium text-[#8b4513] dark:text-[#d4a574]">{job.service}</p>
+                              <p className="text-xs text-[#b85e1a]/60">{job.date}</p>
+                            </div>
+                            <span className="px-2 py-1 text-xs rounded-full bg-[#2e8b57]/20 text-[#2e8b57]">
+                              {job.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : client?.id ? (
+                    <div className="text-center py-4 text-[#b85e1a]/60 bg-[#f5f1e6] dark:bg-gray-800 rounded-lg border-2 border-[#d4a574]">
+                      No previous service history found
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-[#b85e1a]/60 bg-[#f5f1e6] dark:bg-gray-800 rounded-lg border-2 border-[#d4a574]">
+                      Service history will appear after first completed job
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.hasHOA}
+                    onChange={(e) => handleChange("hasHOA", e.target.checked)}
+                    className="w-4 h-4 text-[#2e8b57] rounded border-[#d4a574]"
+                  />
+                  Property has HOA
+                  <div className="relative group">
+                    <button
+                      type="button"
+                      className="ml-1 text-[#b85e1a]/60 hover:text-[#b85e1a] focus:outline-none"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                      </svg>
+                    </button>
+                    <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50 w-64 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg">
+                      Homeowners Association - many Arizona communities have HOA rules about landscaping.
+                      We'll need their contact info for approvals and to ensure compliance with community standards.
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              {formData.hasHOA && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6">
+                  <div>
+                    <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
+                      HOA Name
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.hoaName}
+                      onChange={(e) => handleChange("hoaName", e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800"
+                      placeholder="e.g., Desert Ridge Community Association"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
+                      HOA Contact
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.hoaContact}
+                      onChange={(e) => handleChange("hoaContact", e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-[#d4a574] rounded-lg bg-[#f5f1e6] dark:bg-gray-800"
+                      placeholder="Contact person and/or phone"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
@@ -800,11 +1292,6 @@ const ClientForm = ({ isOpen, onClose, onSuccess, client }: ClientFormProps) => 
                     placeholder="Any additional notes about this client..."
                   />
                 </div>
-                {formData.notes && (
-                  <p className="text-xs text-[#b85e1a]/60 mt-1 text-right">
-                    {formData.notes.length} characters
-                  </p>
-                )}
               </div>
             </motion.div>
           )}
