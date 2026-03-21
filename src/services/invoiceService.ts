@@ -98,22 +98,31 @@ export const invoiceService: InvoiceService = {
         i.created_at as "createdAt",
         i.updated_at as "updatedAt",
         i.sent_at as "sentAt",
-        json_agg(
-          json_build_object(
-            'id', il.id,
-            'description', il.description,
-            'quantity', il.quantity,
-            'unitPriceCents', il.unit_price_cents,
-            'totalCents', il.total_cents,
-            'type', il.type,
-            'referenceId', il.reference_id
-          )
-        ) FILTER (WHERE il.id IS NOT NULL) as line_items,
-        array_agg(DISTINCT p.id) FILTER (WHERE p.id IS NOT NULL) as payment_ids
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', il.id,
+              'description', il.description,
+              'quantity', il.quantity,
+              'unitPriceCents', il.unit_price_cents,
+              'totalCents', il.total_cents,
+              'type', il.type,
+              'referenceId', il.reference_id
+            )
+          ) FILTER (WHERE il.id IS NOT NULL), '[]'
+        ) as line_items,
+        COALESCE(
+          array_agg(DISTINCT p.id) FILTER (WHERE p.id IS NOT NULL), '{}'
+        ) as payment_ids
       FROM invoices i
       LEFT JOIN invoice_line_items il ON i.id = il.invoice_id
       LEFT JOIN payments p ON i.id = p.invoice_id
-      GROUP BY i.id
+      GROUP BY 
+        i.id, i.invoice_number, i.client_id, i.job_id, i.quote_id, i.contract_id,
+        i.status, i.subtotal_cents, i.tax_cents, i.discount_cents, i.total_cents,
+        i.balance_cents, i.currency, i.issue_date, i.due_date, i.paid_at,
+        i.last_reminder_sent, i.payment_terms, i.payment_instructions,
+        i.late_fee_cents, i.pdf_url, i.notes, i.created_at, i.updated_at, i.sent_at
       ORDER BY i.created_at DESC
     `;
 
