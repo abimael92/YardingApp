@@ -15,7 +15,7 @@ interface StatsCardProps {
   title: string
   value: string
   icon: HeroIcon
-  color: "primary" | "green" | "earth" | "sand" | "blue" | "red" | "brown" | "grey" | "purple"
+  color: "primary" | "green" | "yellow" | "earth" | "sand" | "blue" | "red" | "brown" | "grey" | "purple"
   change?: string | React.ReactNode
 }
 
@@ -25,6 +25,8 @@ const getColorClasses = (color: string) => {
       return "bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400"
     case "green":
       return "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+    case "yellow":
+      return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400"
     case "earth":
       return "bg-earth-100 dark:bg-earth-900/30 text-earth-600 dark:text-earth-400"
     case "sand":
