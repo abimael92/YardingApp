@@ -53,4 +53,4 @@ CREATE INDEX "idx_admin_notifications_read" ON "admin_notifications"("read");
 CREATE INDEX "idx_admin_notifications_quote_request" ON "admin_notifications"("quote_request_id");
 
 -- AddForeignKey
-ALTER TABLE "admin_notifications" ADD CONSTRAINT "admin_notifications_quote_request_id_fkey" FOREIGN KEY ("quote_request_id") REFERENCES "quote_requests"("id") ON DELETE CASCADE ON UPDATE NOACTION;
+ALTER TABLE "admin_notifications" ADD CONSTRAINT "admin_notifications_quote_request_id_fkey" FOREIGN KEY ("quote_request_id") REFERENCES "quote_requests"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
