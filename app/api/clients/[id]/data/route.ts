@@ -4,7 +4,7 @@ import { prisma } from '@/app/lib/prisma';
 
 export async function GET(
 	req: NextRequest,
-	{ params }: { params: { id: string } },
+	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
 		const session = await getServerSession();
@@ -12,7 +12,8 @@ export async function GET(
 			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 		}
 
-		const clientId = params.id;
+		const { id } = await params;
+		const clientId = id;
 
 		// Get client to get email for quote_requests
 		const client = await prisma.clients.findUnique({
@@ -99,7 +100,7 @@ export async function GET(
 						status: latestQuoteRequest.status,
 					}
 				: null,
-			upcomingAppointment: null, // No schedule table in your schema
+			upcomingAppointment: null,
 		});
 	} catch (error) {
 		console.error('Failed to fetch client data:', error);
