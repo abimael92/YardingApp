@@ -10,6 +10,7 @@
  * - Properties (multiple addresses)
  * - Preferences (contact method, marketing consent)
  * - Notes (internal notes)
+ * - Client Status Tracking (last contact, next follow-up, activity indicators)
  * 
  * Same visual style and functionality as EmployeeList
  */
@@ -74,6 +75,8 @@ import ClientPaymentHistory from "./ClientPaymentHistory"
 import ClientProperties from "./ClientProperties"
 import ClientPreferences from "./ClientPreferences"
 import ClientNotes from "./ClientNotes"
+import ClientStatusBadge from "./ClientStatusBadge"
+import LogContactModal from "./LogContactModal"
 
 type ViewMode = "list" | "profile" | "communications" | "contracts" | "payments" | "properties" | "preferences" | "notes"
 
@@ -84,6 +87,7 @@ interface ClientFilters {
   location: string
   dateRange: "all" | "thisMonth" | "lastMonth" | "thisYear"
   showArchived: boolean
+  contactStatus: "all" | "ACTIVE" | "AT_RISK" | "INACTIVE"
 }
 
 // Memoized FilterSelect component (same style as EmployeeList)
@@ -129,6 +133,7 @@ export const ClientDirectory = () => {
   const [showAnalytics, setShowAnalytics] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [logContactClient, setLogContactClient] = useState<Client | null>(null)
 
   // Filters
   const [filters, setFilters] = useState<ClientFilters>({
@@ -138,6 +143,7 @@ export const ClientDirectory = () => {
     location: "all",
     dateRange: "all",
     showArchived: false,
+    contactStatus: "all",
   })
 
   // Persist filters
@@ -145,24 +151,26 @@ export const ClientDirectory = () => {
 
   // Load filters from persistence
   useEffect(() => {
-    if (!persistedFilters) return
+    if (persistedFilters) {
+      setFilters(persistedFilters)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-    setFilters(prev => {
-      if (JSON.stringify(prev) === JSON.stringify(persistedFilters)) {
-        return prev
-      }
-      return persistedFilters
-    })
-  }, [persistedFilters])
-
-  // Update persisted filters
   useEffect(() => {
-    setPersistedFilters(filters)
+    const timeoutId = setTimeout(() => {
+      setPersistedFilters(filters)
+    }, 300)
+
+    return () => clearTimeout(timeoutId)
   }, [filters, setPersistedFilters])
 
   // Check mobile
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    const checkMobile = () => {
+      const isMobileView = window.innerWidth < 768
+      setIsMobile(prev => prev !== isMobileView ? isMobileView : prev)
+    }
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
@@ -213,13 +221,26 @@ export const ClientDirectory = () => {
     loadClientDetails()
   }, [selectedClient])
 
-  // Calculate stats
+  // Calculate stats including contact status
   const stats = useMemo(() => {
     const now = new Date()
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
     const activeClients = clients.filter(c => c.status === ClientStatus.ACTIVE)
     const newThisMonth = activeClients.filter(c => new Date(c.createdAt) >= thisMonth).length
+
+    // Contact status stats
+    const activeContact = clients.filter(c => (c as any).contactStatus === 'ACTIVE').length
+    const atRiskContact = clients.filter(c => (c as any).contactStatus === 'AT_RISK').length
+    const inactiveContact = clients.filter(c => (c as any).contactStatus === 'INACTIVE').length
+
+    // Follow-ups due today
+    const followupsDueToday = clients.filter(c => {
+      const nextDate = (c as any).nextFollowupDate
+      if (!nextDate) return false
+      const next = new Date(nextDate)
+      return next.toDateString() === now.toDateString()
+    }).length
 
     const totalRevenue = clients.reduce((sum, c) => sum + c.totalSpent.amount, 0)
     const monthlyRevenue = clients
@@ -232,6 +253,10 @@ export const ClientDirectory = () => {
       totalRevenue,
       monthlyRevenue,
       averageValue: activeClients.length ? totalRevenue / activeClients.length : 0,
+      activeContact,
+      atRiskContact,
+      inactiveContact,
+      followupsDueToday,
     }
   }, [clients])
 
@@ -246,7 +271,7 @@ export const ClientDirectory = () => {
     return Array.from(locations).sort()
   }, [clients])
 
-  // Filter clients
+  // Filter clients with contact status
   const filteredClients = useMemo(() => {
     return clients.filter(client => {
       // Search
@@ -266,6 +291,9 @@ export const ClientDirectory = () => {
 
       // Segment
       if (filters.segment !== "all" && client.segment !== filters.segment) return false
+
+      // Contact Status
+      if (filters.contactStatus !== "all" && (client as any).contactStatus !== filters.contactStatus) return false
 
       // Location
       if (filters.location !== "all") {
@@ -332,7 +360,6 @@ export const ClientDirectory = () => {
 
     switch (action) {
       case "export":
-        // Export logic
         const exportData = clients.filter(c => selectedClients.has(c.id))
         const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" })
         const url = URL.createObjectURL(blob)
@@ -440,6 +467,18 @@ export const ClientDirectory = () => {
       ),
     },
     {
+      key: "contactStatus",
+      header: "Activity",
+      render: (client) => (
+        <ClientStatusBadge
+          status={(client as any).contactStatus || "ACTIVE"}
+          lastContactDate={(client as any).lastContactDate}
+          nextFollowupDate={(client as any).nextFollowupDate}
+          showDetails={true}
+        />
+      ),
+    },
+    {
       key: "segment",
       header: "Segment",
       render: (client) => getSegmentBadge(client.segment),
@@ -483,6 +522,13 @@ export const ClientDirectory = () => {
       header: "",
       render: (client) => (
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setLogContactClient(client)}
+            className="p-1 text-blue-500 hover:text-blue-600 transition-colors"
+            title="Log Contact"
+          >
+            <PhoneIcon className="w-5 h-5" />
+          </button>
           <button
             onClick={() => handleView(client)}
             className="p-1 text-[#b85e1a] hover:text-[#2e8b57] transition-colors"
@@ -554,7 +600,22 @@ export const ClientDirectory = () => {
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 pt-2 border-t border-[#d4a574]/30">
+      <div className="border-t border-[#d4a574]/30 pt-2">
+        <ClientStatusBadge
+          status={(client as any).contactStatus || "ACTIVE"}
+          lastContactDate={(client as any).lastContactDate}
+          nextFollowupDate={(client as any).nextFollowupDate}
+          showDetails={true}
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 pt-2">
+        <button
+          onClick={() => setLogContactClient(client)}
+          className="px-3 py-1 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+        >
+          Log Contact
+        </button>
         <button
           onClick={() => handleView(client)}
           className="px-3 py-1 text-sm bg-[#2e8b57] text-white rounded-lg hover:bg-[#1f6b41]"
@@ -657,8 +718,8 @@ export const ClientDirectory = () => {
             <button
               onClick={() => setShowAnalytics(!showAnalytics)}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${showAnalytics
-                  ? "bg-[#2e8b57] text-white shadow-md"
-                  : "bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] border border-[#d4a574]/30"
+                ? "bg-[#2e8b57] text-white shadow-md"
+                : "bg-[#f5f1e6] dark:bg-gray-800 text-[#8b4513] dark:text-[#d4a574] border border-[#d4a574]/30"
                 }`}
             >
               <ChartBarIcon className="w-4 h-4" />
@@ -677,8 +738,8 @@ export const ClientDirectory = () => {
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Quick Stats - Added Contact Status Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           <StatsCard
             title="Total Clients"
             value={stats.totalClients.toString()}
@@ -703,7 +764,29 @@ export const ClientDirectory = () => {
             icon={ChartBarIcon}
             color="purple"
           />
+          <StatsCard
+            title="Active Contacts"
+            value={stats.activeContact.toString()}
+            icon={ChatBubbleLeftIcon}
+            color="green"
+          />
+          <StatsCard
+            title="At Risk"
+            value={stats.atRiskContact.toString()}
+            icon={ExclamationTriangleIcon}
+            color="yellow"
+          />
         </div>
+
+        {/* Follow-ups Due Today Alert */}
+        {stats.followupsDueToday > 0 && (
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 flex items-center gap-3">
+            <BellIcon className="w-5 h-5 text-yellow-600" />
+            <p className="text-sm text-yellow-700 dark:text-yellow-400">
+              {stats.followupsDueToday} client(s) have follow-ups due today
+            </p>
+          </div>
+        )}
 
         {/* Search and Filters */}
         <div className="card p-4">
@@ -724,8 +807,8 @@ export const ClientDirectory = () => {
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`px-4 py-2 rounded-lg border transition-colors flex items-center gap-2 ${showFilters
-                  ? "bg-[#2e8b57] text-white border-[#2e8b57]"
-                  : "bg-[#f5f1e6] dark:bg-gray-800 border-[#d4a574] dark:border-[#8b4513] text-[#8b4513] dark:text-[#d4a574]"
+                ? "bg-[#2e8b57] text-white border-[#2e8b57]"
+                : "bg-[#f5f1e6] dark:bg-gray-800 border-[#d4a574] dark:border-[#8b4513] text-[#8b4513] dark:text-[#d4a574]"
                 }`}
             >
               <FunnelIcon className="w-4 h-4" />
@@ -740,7 +823,7 @@ export const ClientDirectory = () => {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="mt-4 pt-4 border-t border-[#d4a574]/30 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+                className="mt-4 pt-4 border-t border-[#d4a574]/30 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4"
               >
                 <div>
                   <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
@@ -757,6 +840,23 @@ export const ClientDirectory = () => {
                       { value: ClientStatus.SUSPENDED, label: "Suspended" },
                     ]}
                     label="Filter by status"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#8b4513] dark:text-[#d4a574] mb-1">
+                    Contact Status
+                  </label>
+                  <FilterSelect
+                    value={filters.contactStatus}
+                    onChange={(val) => setFilters(prev => ({ ...prev, contactStatus: val as any }))}
+                    options={[
+                      { value: "all", label: "All" },
+                      { value: "ACTIVE", label: "Active Contact" },
+                      { value: "AT_RISK", label: "At Risk" },
+                      { value: "INACTIVE", label: "Inactive" },
+                    ]}
+                    label="Filter by contact status"
                   />
                 </div>
 
@@ -810,7 +910,7 @@ export const ClientDirectory = () => {
                   />
                 </div>
 
-                <div className="sm:col-span-2 lg:col-span-4 flex items-center">
+                <div className="sm:col-span-2 lg:col-span-5 flex items-center">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -902,6 +1002,18 @@ export const ClientDirectory = () => {
           await loadClients()
         }}
         client={editingClient}
+      />
+
+      {/* Log Contact Modal */}
+      <LogContactModal
+        isOpen={!!logContactClient}
+        onClose={() => setLogContactClient(null)}
+        clientId={logContactClient?.id || ""}
+        clientName={logContactClient?.name || ""}
+        onSuccess={async () => {
+          await loadClients()
+          setLogContactClient(null)
+        }}
       />
     </>
   )
