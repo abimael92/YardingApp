@@ -1,5 +1,5 @@
 // hooks/useFormPersistence.ts
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export function useFormPersistence<T>(
 	key: string,
@@ -22,7 +22,16 @@ export function useFormPersistence<T>(
 		}
 	});
 
+	// Track if this is the initial load
+	const isInitialMount = useRef(true);
+
 	useEffect(() => {
+		// Skip saving on initial mount
+		if (isInitialMount.current) {
+			isInitialMount.current = false;
+			return;
+		}
+
 		try {
 			window.localStorage.setItem(key, JSON.stringify(value));
 		} catch (error) {
