@@ -181,6 +181,10 @@ COLUMNS
   • updated_at : timestamp with time zone NOT NULL DEFAULT now()
   • created_by : uuid  
   • deleted_at : timestamp with time zone  
+  • last_contact_date : timestamp with time zone  
+  • next_followup_date : timestamp with time zone  
+  • contact_status : character varying  DEFAULT 'ACTIVE'::character varying
+  • followup_notes : text  
 
 PRIMARY KEY
   • id
@@ -800,6 +804,11 @@ COLUMNS
   • payment_ids : ARRAY  DEFAULT '{}'::uuid[]
   • notes : text  
   • payment_terms : text  
+  • quote_id : uuid  
+  • contract_id : uuid  
+  • subtotal_cents : bigint  DEFAULT 0
+  • discount_cents : bigint  DEFAULT 0
+  • balance_cents : bigint  DEFAULT 0
 
 PRIMARY KEY
   • id
@@ -808,6 +817,8 @@ FOREIGN KEYS
   • client_id → clients.id
   • job_id → jobs.id
   • created_by → profiles.id
+  • quote_id → quotes.id
+  • contract_id → contracts.id
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TABLE: job_items
@@ -1875,152 +1886,154 @@ TABLE RELATIONSHIPS
 account.userId → user.id
 admin_notifications.quote_request_id → quote_requests.id
 audit_logs.actor_id → profiles.id
-billing_queue.invoice_id → invoices.id
 billing_queue.job_id → jobs.id
+billing_queue.invoice_id → invoices.id
 client_addresses.client_id → clients.id
-client_communications.quote_id → quotes.id
-client_communications.responded_by → profiles.id
-client_communications.sent_by → profiles.id
 client_communications.job_id → jobs.id
 client_communications.client_id → clients.id
 client_communications.parent_communication_id → client_communications.id
+client_communications.quote_id → quotes.id
+client_communications.sent_by → profiles.id
+client_communications.responded_by → profiles.id
 client_preferences.client_id → clients.id
 clients.created_by → profiles.id
 communication_reminders.communication_id → client_communications.id
 communication_reminders.assigned_to → profiles.id
 contract_amendments.contract_id → contracts.id
 contract_templates.created_by → profiles.id
-contracts.client_id → clients.id
+contracts.created_by → profiles.id
 contracts.job_id → jobs.id
+contracts.client_id → clients.id
 contracts.template_id → contract_templates.id
 contracts.signed_by_company → profiles.id
-contracts.created_by → profiles.id
-crew_jobs.job_id → jobs.id
 crew_jobs.crew_id → crews.id
-crew_members.crew_id → crews.id
+crew_jobs.job_id → jobs.id
 crew_members.employee_id → profiles.id
-crews.supervisor_id → profiles.id
+crew_members.crew_id → crews.id
 crews.vehicle_id → equipment.id
-dashboard_widget_assignments.dashboard_id → user_dashboards.id
+crews.supervisor_id → profiles.id
 dashboard_widget_assignments.widget_id → dashboard_widgets.id
+dashboard_widget_assignments.dashboard_id → user_dashboards.id
 employee_details.profile_id → profiles.id
 employee_equipment_certifications.employee_id → employee_details.id
-employee_equipment_certifications.equipment_id → equipment.id
 employee_equipment_certifications.certified_by → profiles.id
+employee_equipment_certifications.equipment_id → equipment.id
 employee_jobs.employee_id → profiles.id
 employee_jobs.job_id → jobs.id
 employee_skills.employee_id → profiles.id
 equipment.updated_by → profiles.id
 equipment.current_location_id → locations.id
+equipment.current_crew_id → crews.id
+equipment.current_job_id → jobs.id
 equipment.created_by → profiles.id
 equipment.category_id → equipment_categories.id
-equipment.current_job_id → jobs.id
-equipment.current_crew_id → crews.id
-equipment_assignments.equipment_id → equipment.id
 equipment_assignments.employee_id → profiles.id
 equipment_assignments.job_id → jobs.id
+equipment_assignments.equipment_id → equipment.id
 equipment_assignments.assigned_by → profiles.id
 equipment_categories.parent_id → equipment_categories.id
-equipment_documents.equipment_id → equipment.id
 equipment_documents.uploaded_by → profiles.id
+equipment_documents.equipment_id → equipment.id
 equipment_fuel_logs.equipment_id → equipment.id
 equipment_fuel_logs.filled_by → profiles.id
-equipment_maintenance_logs.equipment_id → equipment.id
 equipment_maintenance_logs.created_by → profiles.id
-equipment_maintenance_schedules.equipment_id → equipment.id
+equipment_maintenance_logs.equipment_id → equipment.id
 equipment_maintenance_schedules.assigned_to → profiles.id
-equipment_purchase_plans.purchase_order_id → purchase_orders.id
-equipment_purchase_plans.category_id → equipment_categories.id
-equipment_purchase_plans.requested_by → profiles.id
+equipment_maintenance_schedules.equipment_id → equipment.id
 equipment_purchase_plans.approved_by → profiles.id
+equipment_purchase_plans.requested_by → profiles.id
+equipment_purchase_plans.category_id → equipment_categories.id
+equipment_purchase_plans.purchase_order_id → purchase_orders.id
 equipment_training_requirements.equipment_id → equipment.id
 invitation.inviterId → user.id
 invitation.organizationId → organization.id
 invoice_line_items.invoice_id → invoices.id
-invoices.client_id → clients.id
 invoices.job_id → jobs.id
+invoices.client_id → clients.id
+invoices.quote_id → quotes.id
+invoices.contract_id → contracts.id
 invoices.created_by → profiles.id
 job_items.service_id → services.id
-job_items.created_by → profiles.id
 job_items.job_id → jobs.id
-job_materials.job_id → jobs.id
-job_materials.material_id → materials.id
+job_items.created_by → profiles.id
 job_materials.used_by → profiles.id
-job_milestones.job_id → jobs.id
+job_materials.material_id → materials.id
+job_materials.job_id → jobs.id
 job_milestones.completed_by → profiles.id
-job_notes.created_by → profiles.id
+job_milestones.job_id → jobs.id
 job_notes.job_id → jobs.id
-job_photos.job_id → jobs.id
+job_notes.created_by → profiles.id
 job_photos.approved_by → profiles.id
+job_photos.job_id → jobs.id
 job_photos.taken_by → profiles.id
-job_progress.completed_by → profiles.id
 job_progress.job_id → jobs.id
+job_progress.completed_by → profiles.id
 job_tasks.job_id → jobs.id
 jobs.approved_by → profiles.id
+jobs.completed_by → profiles.id
+jobs.quote_id → quotes.id
 jobs.client_id → clients.id
 jobs.created_by → profiles.id
-jobs.completed_by → profiles.id
 jobs.quote_request_id → quote_requests.id
-jobs.quote_id → quotes.id
-materials.supplier_id → suppliers.id
 materials.created_by → profiles.id
+materials.supplier_id → suppliers.id
 member.organizationId → organization.id
 member.userId → user.id
 payment_intents.created_by → profiles.id
 payment_intents.client_id → clients.id
 payment_intents.invoice_id → invoices.id
-payments.job_id → jobs.id
-payments.created_by → profiles.id
 payments.payment_intent_id → payment_intents.id
-payments.client_id → clients.id
+payments.created_by → profiles.id
+payments.job_id → jobs.id
 payments.invoice_id → invoices.id
-payouts.reference_job_id → jobs.id
+payments.client_id → clients.id
 payouts.created_by → profiles.id
+payouts.reference_job_id → jobs.id
 permissions.created_by → profiles.id
 plant_catalog.created_by → profiles.id
 plant_inventory.supplier_id → suppliers.id
 plant_inventory.plant_id → plant_catalog.id
-plant_usage.plant_inventory_id → plant_inventory.id
-plant_usage.used_by → profiles.id
 plant_usage.job_id → jobs.id
+plant_usage.used_by → profiles.id
+plant_usage.plant_inventory_id → plant_inventory.id
 profiles.created_by → profiles.id
 purchase_order_items.po_id → purchase_orders.id
 purchase_order_items.material_id → materials.id
-purchase_orders.supplier_id → suppliers.id
-purchase_orders.created_by → profiles.id
 purchase_orders.approved_by → profiles.id
-quotes.quote_request_id → quote_requests.id
-quotes.client_id → clients.id
+purchase_orders.created_by → profiles.id
+purchase_orders.supplier_id → suppliers.id
 quotes.created_by → profiles.id
-quotes.parent_quote_id → quotes.id
+quotes.quote_request_id → quote_requests.id
 quotes.job_id → jobs.id
+quotes.client_id → clients.id
+quotes.parent_quote_id → quotes.id
 refunds.created_by → profiles.id
 refunds.payment_id → payments.id
 report_definitions.created_by → profiles.id
-role_permission.permission_id → permissions.id
 role_permission.role_id → roles.id
+role_permission.permission_id → permissions.id
 roles.created_by → profiles.id
-route_optimization.optimized_by → profiles.id
 route_optimization.schedule_id → schedules.id
-saved_reports.report_definition_id → report_definitions.id
+route_optimization.optimized_by → profiles.id
 saved_reports.created_by → profiles.id
+saved_reports.report_definition_id → report_definitions.id
+schedule_jobs.schedule_id → schedules.id
 schedule_jobs.completed_by → profiles.id
 schedule_jobs.job_id → jobs.id
-schedule_jobs.schedule_id → schedules.id
 schedules.crew_id → crews.id
 schedules.created_by → profiles.id
 services.created_by → profiles.id
 session.userId → user.id
 stock_movements.moved_by → profiles.id
-stock_movements.material_id → materials.id
 stock_movements.job_id → jobs.id
+stock_movements.material_id → materials.id
 suppliers.created_by → profiles.id
-time_entries.employee_id → profiles.id
 time_entries.job_id → jobs.id
+time_entries.employee_id → profiles.id
+transactions.payout_id → payouts.id
+transactions.client_id → clients.id
 transactions.refund_id → refunds.id
 transactions.payment_id → payments.id
-transactions.client_id → clients.id
-transactions.payout_id → payouts.id
 user_dashboards.user_id → profiles.id
 user_roles.role_id → roles.id
 user_roles.profile_id → profiles.id
