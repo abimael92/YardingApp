@@ -1,324 +1,483 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import {
-    TruckIcon, WrenchScrewdriverIcon, CurrencyDollarIcon,
-    AcademicCapIcon, ShieldCheckIcon, MapPinIcon, GlobeAltIcon,
-    SparklesIcon, ClockIcon,
-    DocumentTextIcon
-} from "@heroicons/react/24/outline"
 import FormModal from "@/src/shared/ui/FormModal"
+import { equipmentService } from "@/src/services/equipmentService"
+import {
+    TruckIcon,
+    CurrencyDollarIcon,
+    MapPinIcon,
+    TagIcon,
+    DocumentTextIcon,
+    XCircleIcon,
+    ChevronDownIcon,
+    ClipboardDocumentCheckIcon,
+    ShieldCheckIcon,
+    BoltIcon,
+    Cog6ToothIcon
+} from "@heroicons/react/24/outline"
 
-interface AddEquipmentModalProps {
+interface EquipmentFormProps {
+    isOpen: boolean
     onClose: () => void
-    onSave: (data: any) => Promise<void>
+    onSuccess: () => void
+    equipment?: any | null
     categories: any[]
 }
 
-export default function AddEquipmentModal({ onClose, onSave, categories }: AddEquipmentModalProps) {
-    const [activeTab, setActiveTab] = useState<'basic' | 'purchase' | 'maintenance' | 'training'>('basic')
-    const [isSaving, setIsSaving] = useState(false)
+const FUEL_TYPES = ["gasoline", "diesel", "electric", "battery", "propane", "manual"]
+const LICENSE_TYPES = ["Driver's License", "CDL Class A", "CDL Class B", "Chainsaw Cert", "Forklift Cert", "None"]
+
+const EquipmentForm = ({
+    isOpen,
+    onClose,
+    onSuccess,
+    equipment,
+    categories = []
+}: EquipmentFormProps) => {
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [activeTab, setActiveTab] = useState<"basic" | "technical" | "admin">("basic")
     const [errors, setErrors] = useState<Record<string, string>>({})
+    const [touched, setTouched] = useState<Record<string, boolean>>({})
 
     const [formData, setFormData] = useState({
         name: "",
         type: "Machinery",
         category_id: "",
-        status: "operational",
-        hours_meter: 0,
+        status: "available",
         manufacturer: "",
         model: "",
         year: new Date().getFullYear(),
         serial_number: "",
-        purchase_date: new Date().toISOString().split('T')[0],
+        plate_number: "",
+        identification_number: "",
+        purchase_date: "",
         purchase_price_cents: 0,
-        fuel_type: "gasoline",
-        requires_license: false,
-        required_license_type: "None",
-        requires_training: false,
+        purchase_price_dollars: "", // UI-only field for decimal input
+        current_value_cents: 0,
+        condition: "Good",
         location: "Phoenix Yard",
-        service_zone_id: "",
+        storage_location: "",
+        hourly_rate_cents: 0,
+        daily_rate_cents: 0,
+        weekly_rate_cents: 0,
+        fuel_type: "gasoline",
+        hours_meter: 0,
+        last_maintenance_date: "",
+        next_maintenance_date: "",
+        maintenance_interval_hours: 250,
+        warranty_expiration: "",
+        insurance_expiration: "",
+        requires_license: false,
+        required_license_type: "",
+        requires_training: false,
         notes: "",
-        vin: "",
-        license_plate: "",
-        gvwr: 0,
-        axles: "2",
-        tank_capacity: 0,
-        blade_condition: "Good"
+        current_crew_id: null,
+        current_job_id: null
     })
 
-    // Profile Completion Logic
-    const calculateCompletion = () => {
-        let score = 0
-        if (formData.name) score += 25
-        if (formData.category_id) score += 25
-        if (formData.serial_number) score += 25
-        if (formData.manufacturer) score += 25
-        return score
-    }
-
-    const validateStep = () => {
-        const newErrors: Record<string, string> = {}
-        if (activeTab === 'basic') {
-            if (!formData.name) newErrors.name = "Asset name is required"
-            if (!formData.category_id) newErrors.category_id = "Category relation is required"
+    // Sync form data when equipment prop changes (Edit Mode)
+    useEffect(() => {
+        if (equipment && isOpen) {
+            setFormData({
+                ...equipment,
+                purchase_price_dollars: equipment.purchase_price_cents ? (equipment.purchase_price_cents / 100).toFixed(2) : ""
+            })
+        } else if (!equipment && isOpen) {
+            // Reset for New Mode
+            setFormData({
+                name: "",
+                type: "Machinery",
+                category_id: "",
+                status: "available",
+                manufacturer: "",
+                model: "",
+                year: new Date().getFullYear(),
+                serial_number: "",
+                plate_number: "",
+                identification_number: "",
+                purchase_date: "",
+                purchase_price_cents: 0,
+                purchase_price_dollars: "",
+                current_value_cents: 0,
+                condition: "Good",
+                location: "Phoenix Yard",
+                storage_location: "",
+                hourly_rate_cents: 0,
+                daily_rate_cents: 0,
+                weekly_rate_cents: 0,
+                fuel_type: "gasoline",
+                hours_meter: 0,
+                last_maintenance_date: "",
+                next_maintenance_date: "",
+                maintenance_interval_hours: 250,
+                warranty_expiration: "",
+                insurance_expiration: "",
+                requires_license: false,
+                required_license_type: "",
+                requires_training: false,
+                notes: "",
+                current_crew_id: null,
+                current_job_id: null
+            })
+            setActiveTab("basic")
+            setErrors({})
+            setTouched({})
         }
-        setErrors(newErrors)
-        return Object.keys(newErrors).length === 0
+    }, [equipment, isOpen])
+
+    const calculateCompletion = useCallback(() => {
+        let completed = 0
+        if (formData.name) completed += 20
+        if (formData.category_id) completed += 20
+        if (formData.status) completed += 20
+        if (formData.serial_number) completed += 20
+        if (formData.location) completed += 20
+        return completed
+    }, [formData])
+
+    const validateField = (name: string, value: any) => {
+        switch (name) {
+            case "name": return !value ? "Asset name is required" : ""
+            case "category_id": return !value ? "Category is required" : ""
+            case "serial_number": return !value ? "Serial Number is required" : ""
+            default: return ""
+        }
     }
 
-    const handleNext = (e: React.MouseEvent) => {
-        e.preventDefault()
-        if (!validateStep()) return
-        const steps: typeof activeTab[] = ['basic', 'purchase', 'maintenance', 'training']
-        const nextIdx = steps.indexOf(activeTab) + 1
-        if (nextIdx < steps.length) setActiveTab(steps[nextIdx])
+    const handleBlur = (field: string) => {
+        setTouched(prev => ({ ...prev, [field]: true }))
+        setErrors(prev => ({ ...prev, [field]: validateField(field, (formData as any)[field]) }))
     }
 
-    const handleBack = (e: React.MouseEvent) => {
-        e.preventDefault()
-        const steps: typeof activeTab[] = ['basic', 'purchase', 'maintenance', 'training']
-        const prevIdx = steps.indexOf(activeTab) - 1
-        if (prevIdx >= 0) setActiveTab(steps[prevIdx])
+    const handleChange = (field: string, value: any) => {
+        setFormData(prev => ({ ...prev, [field]: value }))
+        if (errors[field]) setErrors(prev => ({ ...prev, [field]: "" }))
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!validateStep()) return
-        setIsSaving(true)
+
+        // Final validation check
+        const nameError = validateField("name", formData.name)
+        const catError = validateField("category_id", formData.category_id)
+        if (nameError || catError) {
+            setErrors({ name: nameError, category_id: catError })
+            setActiveTab("basic")
+            return
+        }
+
+        setIsSubmitting(true)
         try {
-            await onSave(formData)
+            // Clean data before submission (Cents conversion already handled in onChange)
+            const submissionData = {
+                ...formData,
+                required_license_type: formData.requires_license ? formData.required_license_type : null
+            }
+
+            if (equipment) {
+                await equipmentService.update(equipment.id, submissionData)
+            } else {
+                await equipmentService.create(submissionData)
+            }
+            onSuccess()
+        } catch (err) {
+            console.error(err)
         } finally {
-            setIsSaving(false)
+            setIsSubmitting(false)
         }
     }
 
+    const completion = calculateCompletion()
+
     return (
         <FormModal
-            isOpen={true}
+            isOpen={isOpen}
             onClose={onClose}
-            title="Register New Fleet Asset"
-            size="xl"
+            title={equipment ? "Edit Equipment" : "Add Fleet Asset"}
+            size="lg"
             footer={
                 <div className="flex items-center justify-end gap-3 w-full">
-                    <button type="button" onClick={onClose} className="px-6 py-2 border-2 border-[#d4a574] rounded-xl font-bold text-[#8b4513] hover:bg-gray-50">
+                    <button type="button" onClick={onClose} className="px-4 py-2 text-[#8b4513] border border-[#d4a574] rounded-lg hover:bg-[#d4a574]/10">
                         Cancel
                     </button>
-                    {activeTab !== 'basic' && (
-                        <button type="button" onClick={handleBack} className="px-6 py-2 border-2 border-[#d4a574] rounded-xl font-bold text-[#8b4513]">
-                            Previous
-                        </button>
-                    )}
-                    {activeTab !== 'training' ? (
-                        <button type="button" onClick={handleNext} className="px-8 py-2 bg-[#d4a574] text-white rounded-xl font-bold shadow-lg hover:bg-[#b85e1a] transition-all">
+                    {activeTab !== "admin" ? (
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab(activeTab === "basic" ? "technical" : "admin")}
+                            className="px-6 py-2 text-white bg-[#d4a574] hover:bg-[#b85e1a] rounded-lg font-bold"
+                        >
                             Next Step
                         </button>
                     ) : (
-                        <button type="submit" form="equipment-form" disabled={isSaving} className="px-12 py-2 bg-gradient-to-r from-[#2e8b57] to-[#1f6b41] text-white rounded-xl font-bold shadow-xl disabled:opacity-50">
-                            {isSaving ? "Processing..." : "Confirm & Save Asset"}
+                        <button
+                            type="submit"
+                            form="equip-form"
+                            disabled={isSubmitting}
+                            className="px-8 py-2 text-white bg-gradient-to-r from-[#2e8b57] to-[#1f6b41] rounded-lg font-bold shadow-lg disabled:opacity-50"
+                        >
+                            {isSubmitting ? "Saving..." : equipment ? "Update Asset" : "Register Asset"}
                         </button>
                     )}
                 </div>
             }
         >
-            {/* Completion Header */}
-            <div className="mb-6 p-4 bg-[#f5f1e6] rounded-2xl border border-[#d4a574]/20">
-                <div className="flex justify-between items-center mb-2">
-                    <span className="text-[10px] font-black text-[#8b4513] uppercase tracking-[0.2em]">Asset Readiness Score</span>
-                    <span className="text-sm font-black text-[#2e8b57]">{calculateCompletion()}%</span>
+            {/* Form Header */}
+            <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#2e8b57] to-[#1f6b41] flex items-center justify-center text-white shadow-md">
+                    <TruckIcon className="w-7 h-7" />
                 </div>
-                <div className="w-full h-3 bg-white rounded-full overflow-hidden border border-[#d4a574]/30 p-[2px]">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${calculateCompletion()}%` }} className="h-full rounded-full bg-gradient-to-r from-[#2e8b57] to-[#4ade80]" />
+                <div>
+                    <h2 className="text-2xl font-bold text-[#8b4513]">Asset Configuration</h2>
+                    <p className="text-sm text-[#b85e1a]/70">Arizona Fleet Database Management</p>
                 </div>
             </div>
 
-            {/* Step Indicators */}
-            <div className="flex border-b border-gray-100 mb-8 bg-gray-50/50 p-1 rounded-t-2xl overflow-x-auto no-scrollbar">
+            {/* Progress Tracker */}
+            <div className="space-y-2 mb-8">
+                <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold text-[#8b4513]">Integrity Score</span>
+                    <span className="text-sm font-black text-[#2e8b57]">{completion}%</span>
+                </div>
+                <div className="w-full h-3 bg-[#d4a574]/20 rounded-full overflow-hidden">
+                    <motion.div animate={{ width: `${completion}%` }} className="h-full bg-[#2e8b57]" />
+                </div>
+            </div>
+
+            {/* Step Navigation */}
+            <div className="flex gap-2 mb-8 border-b border-[#d4a574]/30 pb-4">
                 {[
-                    { id: 'basic', label: 'Basic Info', icon: DocumentTextIcon },
-                    { id: 'purchase', label: 'Financials', icon: CurrencyDollarIcon },
-                    { id: 'maintenance', label: 'Fleet Health', icon: WrenchScrewdriverIcon },
-                    { id: 'training', label: 'Compliance', icon: AcademicCapIcon }
-                ].map((step) => (
+                    { id: "basic", label: "General", icon: TagIcon },
+                    { id: "technical", label: "Specs", icon: Cog6ToothIcon },
+                    { id: "admin", label: "Financials", icon: ClipboardDocumentCheckIcon },
+                ].map((tab) => (
                     <button
-                        key={step.id}
+                        key={tab.id}
                         type="button"
-                        onClick={() => setActiveTab(step.id as any)}
-                        className={`flex items-center gap-2 px-6 py-3 text-sm font-bold capitalize transition-all border-b-4 whitespace-nowrap ${activeTab === step.id ? 'border-[#2e8b57] text-[#2e8b57]' : 'border-transparent text-gray-400'
-                            }`}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={`px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all
+                            ${activeTab === tab.id ? "bg-[#2e8b57] text-white shadow-lg" : "text-[#8b4513] hover:bg-[#d4a574]/20"}`}
                     >
-                        <step.icon className="w-4 h-4" />
-                        {step.label}
+                        <tab.icon className="w-5 h-5" />
+                        {tab.label}
                     </button>
                 ))}
             </div>
 
-            <form id="equipment-form" onSubmit={handleSubmit} className="space-y-8 min-h-[500px]">
+            <form id="equip-form" onSubmit={handleSubmit} className="space-y-6">
                 <AnimatePresence mode="wait">
-                    {activeTab === 'basic' && (
-                        <motion.div key="basic" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-[#8b4513]">Equipment Name *</label>
-                                    <div className="relative">
-                                        <SparklesIcon className="absolute left-3 top-3.5 w-5 h-5 text-[#b85e1a]/40" />
-                                        <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className={`w-full pl-10 p-3.5 border-2 rounded-2xl bg-[#f5f1e6] focus:border-[#2e8b57] outline-none transition-all ${errors.name ? 'border-red-500' : 'border-[#d4a574]'}`} placeholder="e.g. John Deere Z735" />
-                                    </div>
+                    {activeTab === "basic" && (
+                        <motion.div key="basic" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+                            <div className="grid grid-cols-2 gap-5">
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-bold text-[#8b4513] mb-1">Asset Name *</label>
+                                    <input
+                                        type="text"
+                                        value={formData.name}
+                                        onChange={(e) => handleChange("name", e.target.value)}
+                                        onBlur={() => handleBlur("name")}
+                                        className={`w-full p-3 border-2 rounded-xl bg-[#f5f1e6] outline-none transition-all
+                                            ${touched.name && errors.name ? "border-red-500" : "border-[#d4a574]"}`}
+                                        placeholder="e.g., JD 333G Compact Track Loader"
+                                    />
+                                    {touched.name && errors.name && <p className="text-xs text-red-500 font-bold mt-1">{errors.name}</p>}
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-[#8b4513]">Category (DB Relation) *</label>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-[#8b4513] mb-1">Category *</label>
                                     <select
                                         value={formData.category_id}
-                                        onChange={e => setFormData({ ...formData, category_id: e.target.value })}
-                                        className="w-full p-3.5 border-2 border-[#d4a574] rounded-2xl bg-[#f5f1e6] outline-none text-[#8b4513]"
+                                        onChange={(e) => handleChange("category_id", e.target.value)}
+                                        onBlur={() => handleBlur("category_id")}
+                                        className={`w-full p-3 border-2 rounded-xl bg-[#f5f1e6] outline-none
+                                            ${touched.category_id && errors.category_id ? "border-red-500" : "border-[#d4a574]"}`}
                                     >
-                                        <option value="">Select Category...</option>
-                                        {categories && categories.length > 0 ? (
-                                            categories.map((c: any, idx: number) => {
-                                                const val = typeof c === 'object' ? (c.id || c.name || idx) : c;
-                                                const label = typeof c === 'object' ? (c.name || c.id || `Category ${idx}`) : c;
-                                                return (
-                                                    <option key={val} value={val}>
-                                                        {label}
-                                                    </option>
-                                                );
-                                            })
-                                        ) : (
-                                            <option disabled>Loading categories...</option>
-                                        )}
+                                        <option value="">Select Category</option>
+                                        {categories?.map((c: any) => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
                                     </select>
                                 </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-[#8b4513] mb-1">Current Status</label>
+                                    <select
+                                        value={formData.status}
+                                        onChange={(e) => handleChange("status", e.target.value)}
+                                        className="w-full p-3 border-2 border-[#d4a574] rounded-xl bg-[#f5f1e6]"
+                                    >
+                                        <option value="available">Available</option>
+                                        <option value="operational">Operational</option>
+                                        <option value="maintenance">Maintenance</option>
+                                        <option value="repair">Needs Repair</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-[#8b4513] mb-1">Manufacturer</label>
+                                    <input
+                                        type="text"
+                                        value={formData.manufacturer}
+                                        onChange={(e) => handleChange("manufacturer", e.target.value)}
+                                        className="w-full p-3 border-2 border-[#d4a574] rounded-xl bg-[#f5f1e6]"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-[#8b4513] mb-1">Model Number</label>
+                                    <input
+                                        type="text"
+                                        value={formData.model}
+                                        onChange={(e) => handleChange("model", e.target.value)}
+                                        className="w-full p-3 border-2 border-[#d4a574] rounded-xl bg-[#f5f1e6]"
+                                    />
+                                </div>
                             </div>
-                            <div className="grid grid-cols-3 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-gray-400 uppercase">Manufacturer</label>
-                                    <input type="text" value={formData.manufacturer} onChange={e => setFormData({ ...formData, manufacturer: e.target.value })} className="w-full p-3 border-2 border-[#d4a574] rounded-xl bg-[#f5f1e6]" />
+                        </motion.div>
+                    )}
+
+                    {activeTab === "technical" && (
+                        <motion.div key="tech" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+                            <div className="grid grid-cols-2 gap-5">
+                                <div>
+                                    <label className="block text-sm font-bold text-[#8b4513] mb-1">Serial Number / VIN *</label>
+                                    <input
+                                        type="text"
+                                        value={formData.serial_number}
+                                        onChange={(e) => handleChange("serial_number", e.target.value)}
+                                        onBlur={() => handleBlur("serial_number")}
+                                        className={`w-full p-3 border-2 rounded-xl bg-[#f5f1e6]
+                                            ${touched.serial_number && errors.serial_number ? "border-red-500" : "border-[#d4a574]"}`}
+                                    />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-gray-400 uppercase">Model</label>
-                                    <input type="text" value={formData.model} onChange={e => setFormData({ ...formData, model: e.target.value })} className="w-full p-3 border-2 border-[#d4a574] rounded-xl bg-[#f5f1e6]" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-gray-400 uppercase">Year</label>
-                                    <input type="number" value={formData.year} onChange={e => setFormData({ ...formData, year: parseInt(e.target.value) })} className="w-full p-3 border-2 border-[#d4a574] rounded-xl bg-[#f5f1e6]" />
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-[#8b4513]">AZ Routing Zone</label>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-[#8b4513] mb-1">Hours Meter</label>
                                     <div className="relative">
-                                        <GlobeAltIcon className="absolute left-3 top-3.5 w-5 h-5 text-[#b85e1a]/40" />
-                                        <select value={formData.service_zone_id} onChange={e => setFormData({ ...formData, service_zone_id: e.target.value })} className="w-full pl-10 p-3.5 border-2 border-[#d4a574] rounded-2xl bg-[#f5f1e6] outline-none">
-                                            <option value="">Global Service Area</option>
-                                            <option value="scottsdale">Scottsdale / Paradise Valley</option>
-                                            <option value="phoenix-north">North Phoenix</option>
-                                            <option value="east-valley">East Valley (Mesa/Gilbert)</option>
-                                            <option value="west-valley">West Valley (Glendale)</option>
+                                        <BoltIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2e8b57]" />
+                                        <input
+                                            type="number"
+                                            value={formData.hours_meter}
+                                            onChange={(e) => handleChange("hours_meter", Number(e.target.value))}
+                                            className="w-full pl-10 pr-3 py-3 border-2 border-[#d4a574] rounded-xl bg-[#f5f1e6]"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="col-span-2 p-4 bg-[#2e8b57]/5 border-2 border-[#2e8b57]/20 rounded-2xl flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <ShieldCheckIcon className="w-6 h-6 text-[#2e8b57]" />
+                                        <div>
+                                            <p className="text-sm font-bold text-[#8b4513]">License/Cert Required</p>
+                                            <p className="text-xs text-[#b85e1a]">Requires CDL or Operator Certification</p>
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.requires_license}
+                                        onChange={(e) => handleChange("requires_license", e.target.checked)}
+                                        className="w-6 h-6 rounded border-[#d4a574] text-[#2e8b57]"
+                                    />
+                                </div>
+
+                                {formData.requires_license && (
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-bold text-[#8b4513] mb-1">Required License Type</label>
+                                        <select
+                                            value={formData.required_license_type}
+                                            onChange={(e) => handleChange("required_license_type", e.target.value)}
+                                            className="w-full p-3 border-2 border-[#2e8b57] rounded-xl bg-white"
+                                        >
+                                            <option value="">Select License...</option>
+                                            {LICENSE_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
                                         </select>
                                     </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-[#8b4513]">Serial / Identification Number</label>
-                                    <input type="text" value={formData.serial_number} onChange={e => setFormData({ ...formData, serial_number: e.target.value })} className="w-full p-3.5 border-2 border-[#d4a574] rounded-2xl bg-[#f5f1e6]" placeholder="VIN or Serial #" />
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
+                                )}
 
-                    {activeTab === 'purchase' && (
-                        <motion.div key="purchase" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-[#b85e1a] uppercase">Purchase Date</label>
-                                    <input type="date" value={formData.purchase_date} onChange={e => setFormData({ ...formData, purchase_date: e.target.value })} className="w-full p-4 border-2 border-[#d4a574] rounded-2xl bg-[#f5f1e6]" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-[#b85e1a] uppercase">Purchase Price (USD)</label>
-                                    <div className="relative">
-                                        <CurrencyDollarIcon className="absolute left-3 top-4 w-5 h-5 text-emerald-600" />
-                                        <input type="number" step="0.01" onChange={e => setFormData({ ...formData, purchase_price_cents: Math.round(parseFloat(e.target.value) * 100) })} className="w-full pl-10 p-4 border-2 border-[#d4a574] rounded-2xl bg-[#f5f1e6] font-bold text-emerald-700" placeholder="0.00" />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-6">
-                                <input placeholder="License Plate" value={formData.license_plate} onChange={e => setFormData({ ...formData, license_plate: e.target.value })} className="p-4 border-2 border-[#d4a574] rounded-2xl bg-[#f5f1e6]" />
-                                <input placeholder="Vehicle VIN" value={formData.vin} onChange={e => setFormData({ ...formData, vin: e.target.value })} className="p-4 border-2 border-[#d4a574] rounded-2xl bg-[#f5f1e6]" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-gray-400 uppercase">Gross Vehicle Weight (GVWR)</label>
-                                    <input type="number" value={formData.gvwr} onChange={e => setFormData({ ...formData, gvwr: parseFloat(e.target.value) })} className="w-full p-4 border-2 border-[#d4a574] rounded-2xl bg-[#f5f1e6]" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-gray-400 uppercase">Number of Axles</label>
-                                    <input type="text" value={formData.axles} onChange={e => setFormData({ ...formData, axles: e.target.value })} className="w-full p-4 border-2 border-[#d4a574] rounded-2xl bg-[#f5f1e6]" />
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
-
-                    {activeTab === 'maintenance' && (
-                        <motion.div key="maintenance" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="p-5 bg-white rounded-3xl border border-[#d4a574]/30 shadow-sm">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <ClockIcon className="w-5 h-5 text-[#2e8b57]" />
-                                        <label className="text-xs font-black text-[#b85e1a] uppercase tracking-wider">Initial Hours Meter</label>
-                                    </div>
-                                    <input type="number" value={formData.hours_meter} onChange={e => setFormData({ ...formData, hours_meter: parseInt(e.target.value) })} className="text-3xl font-black text-[#8b4513] outline-none w-full bg-transparent" />
-                                </div>
-                                <div className="p-5 bg-white rounded-3xl border border-[#d4a574]/30 shadow-sm">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <MapPinIcon className="w-5 h-5 text-emerald-600" />
-                                        <label className="text-xs font-black text-[#b85e1a] uppercase tracking-wider">Storage Location</label>
-                                    </div>
-                                    <input type="text" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} className="text-xl font-bold text-[#8b4513] outline-none w-full bg-transparent" />
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-6">
-                                <select value={formData.fuel_type} onChange={e => setFormData({ ...formData, fuel_type: e.target.value })} className="p-4 border-2 border-[#d4a574] rounded-2xl bg-[#f5f1e6] font-bold">
-                                    <option value="gasoline">Gasoline</option>
-                                    <option value="diesel">Diesel</option>
-                                    <option value="electric">Battery / Electric</option>
-                                </select>
-                                <input placeholder="Blade / Edge Condition" value={formData.blade_condition} onChange={e => setFormData({ ...formData, blade_condition: e.target.value })} className="p-4 border-2 border-[#d4a574] rounded-2xl bg-[#f5f1e6]" />
-                            </div>
-                            <textarea placeholder="General maintenance notes, engine quirks, or special instructions..." value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} rows={4} className="w-full p-5 border-2 border-[#d4a574] rounded-3xl bg-[#f5f1e6] resize-none focus:border-[#2e8b57] outline-none" />
-                        </motion.div>
-                    )}
-
-                    {activeTab === 'training' && (
-                        <motion.div key="training" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-                            <div className="p-6 bg-white rounded-3xl border-2 border-[#2e8b57] flex items-center justify-between shadow-xl">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-[#2e8b57]"><ShieldCheckIcon className="w-8 h-8" /></div>
-                                    <div>
-                                        <p className="text-lg font-black text-[#8b4513]">Licensing Required?</p>
-                                        <p className="text-xs text-gray-500">Enable if operator needs CDL or special certs</p>
-                                    </div>
-                                </div>
-                                <input type="checkbox" checked={formData.requires_license} onChange={e => setFormData({ ...formData, requires_license: e.target.checked })} className="w-8 h-8 accent-[#2e8b57]" />
-                            </div>
-                            {formData.requires_license && (
-                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="space-y-2">
-                                    <label className="text-sm font-bold text-[#8b4513]">Select License Type</label>
-                                    <select value={formData.required_license_type} onChange={e => setFormData({ ...formData, required_license_type: e.target.value })} className="w-full p-4 border-2 border-[#d4a574] rounded-2xl bg-[#f5f1e6]">
-                                        <option value="None">Class C (Standard)</option>
-                                        <option value="CDL Class A">CDL Class A</option>
-                                        <option value="Pesticide">Pesticide Applier</option>
+                                <div>
+                                    <label className="block text-sm font-bold text-[#8b4513] mb-1">Fuel Type</label>
+                                    <select
+                                        value={formData.fuel_type}
+                                        onChange={(e) => handleChange("fuel_type", e.target.value)}
+                                        className="w-full p-3 border-2 border-[#d4a574] rounded-xl bg-[#f5f1e6]"
+                                    >
+                                        {FUEL_TYPES.map(f => <option key={f} value={f}>{f.toUpperCase()}</option>)}
                                     </select>
-                                </motion.div>
-                            )}
-                            <div className="p-6 bg-white rounded-3xl border-2 border-[#d4a574] flex items-center justify-between shadow-xl">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-[#8b4513]"><AcademicCapIcon className="w-8 h-8" /></div>
-                                    <div>
-                                        <p className="text-lg font-black text-[#8b4513]">Hands-on Training?</p>
-                                        <p className="text-xs text-gray-500">Requires internal safety demonstration</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-[#8b4513] mb-1">Maint. Interval (Hours)</label>
+                                    <input
+                                        type="number"
+                                        value={formData.maintenance_interval_hours}
+                                        onChange={(e) => handleChange("maintenance_interval_hours", Number(e.target.value))}
+                                        className="w-full p-3 border-2 border-[#d4a574] rounded-xl bg-[#f5f1e6]"
+                                    />
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {activeTab === "admin" && (
+                        <motion.div key="admin" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+                            <div className="grid grid-cols-2 gap-5">
+                                <div>
+                                    <label className="block text-sm font-bold text-[#8b4513] mb-1">Purchase Date</label>
+                                    <input
+                                        type="date"
+                                        value={formData.purchase_date}
+                                        onChange={(e) => handleChange("purchase_date", e.target.value)}
+                                        className="w-full p-3 border-2 border-[#d4a574] rounded-xl bg-[#f5f1e6]"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-[#8b4513] mb-1">Purchase Price ($)</label>
+                                    <div className="relative">
+                                        <CurrencyDollarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8b4513]" />
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={formData.purchase_price_dollars}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    purchase_price_dollars: val,
+                                                    purchase_price_cents: Math.round(Number(val) * 100)
+                                                }));
+                                            }}
+                                            className="w-full pl-10 pr-3 py-3 border-2 border-[#d4a574] rounded-xl bg-[#f5f1e6]"
+                                            placeholder="0.00"
+                                        />
                                     </div>
                                 </div>
-                                <input type="checkbox" checked={formData.requires_training} onChange={e => setFormData({ ...formData, requires_training: e.target.checked })} className="w-8 h-8 accent-[#8b4513]" />
+
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-bold text-[#8b4513] mb-1">Storage / Yard Location</label>
+                                    <div className="relative">
+                                        <MapPinIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2e8b57]" />
+                                        <input
+                                            type="text"
+                                            value={formData.location}
+                                            onChange={(e) => handleChange("location", e.target.value)}
+                                            className="w-full pl-10 pr-3 py-3 border-2 border-[#d4a574] rounded-xl bg-[#f5f1e6]"
+                                            placeholder="e.g., North Yard - Section A"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-bold text-[#8b4513] mb-1">Special Notes</label>
+                                    <textarea
+                                        value={formData.notes}
+                                        onChange={(e) => handleChange("notes", e.target.value)}
+                                        rows={4}
+                                        className="w-full p-3 border-2 border-[#d4a574] rounded-xl bg-[#f5f1e6] resize-none"
+                                        placeholder="Add maintenance history notes or unique asset details..."
+                                    />
+                                </div>
                             </div>
                         </motion.div>
                     )}
@@ -327,3 +486,5 @@ export default function AddEquipmentModal({ onClose, onSave, categories }: AddEq
         </FormModal>
     )
 }
+
+export default EquipmentForm
